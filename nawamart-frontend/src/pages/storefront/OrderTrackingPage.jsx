@@ -214,7 +214,7 @@ function OrderSummaryCard({ order }) {
   const subtotal  = order.items?.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0) ?? 0
   const shipping  = isDigital ? 0 : 1500
   const total     = subtotal + shipping
-  const customer  = order.shippingAddress?.name ?? 'عميل'
+  const customer  = order.deliveryAddress?.name ?? 'عميل'
   const createdAt = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('ar-YE', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—'

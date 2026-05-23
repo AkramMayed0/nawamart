@@ -14,7 +14,8 @@ export default function ProductDetailPage() {
   const { slug, productId } = useParams()
   const navigate  = useNavigate()
   const addItem   = useCartStore(s => s.addItem)
-  const store     = useAuthStore(s => s.store)
+  const storeRaw  = useAuthStore(s => s.store)
+  const store     = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   // ── Fetch product ────────────────────────────────────────────────────
   const { data: product, isLoading, isError } = useQuery({

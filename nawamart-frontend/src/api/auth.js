@@ -14,9 +14,14 @@ export const customerRegister = (data) =>
 export const customerLogin = (data) =>
   api.post('/auth/customer/login', data)
 
+// ── Admin Auth ──
+export const adminLogin = (data) =>
+  api.post('/admin/login', data)
+
 // ── Profile ──
 export const getProfile = () =>
   api.get('/auth/me')
 
 export const updateProfile = (data) =>
   api.put('/auth/me', data)
+

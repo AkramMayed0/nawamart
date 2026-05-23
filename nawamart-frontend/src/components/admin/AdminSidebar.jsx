@@ -1,42 +1,33 @@
-/**
- * DashboardSidebar
- * Renders nav links for desktop (always visible) and inside the mobile drawer.
- * Pass `onNavClick` to close the drawer when a link is tapped on mobile.
- */
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
+  ClipboardList,
+  Store,
   ShoppingBag,
   Package,
   Users,
-  MessageSquare,
-  Banknote,
-  Settings,
   LogOut,
-  Store,
+  ShieldCheck
 } from 'lucide-react'
-import { useAuthStore } from '@/store/authStore'
+import { useAdminStore } from '@/store/adminStore'
 
 const NAV_ITEMS = [
-  { to: '/dashboard',           label: 'الرئيسية',    icon: LayoutDashboard, end: true },
-  { to: '/dashboard/orders',    label: 'الطلبات',     icon: ShoppingBag },
-  { to: '/dashboard/products',  label: 'المنتجات',    icon: Package },
-  { to: '/dashboard/customers', label: 'العملاء',     icon: Users },
-  { to: '/dashboard/chat',      label: 'المحادثات',   icon: MessageSquare },
-  { to: '/dashboard/finance',   label: 'المالية',     icon: Banknote },
-  { to: '/dashboard/settings',  label: 'الإعدادات',   icon: Settings },
+  { to: '/admin/dashboard',               label: 'الرئيسية',     icon: LayoutDashboard, end: true },
+  { to: '/admin/dashboard/subscriptions', label: 'الاشتراكات',   icon: ClipboardList },
+  { to: '/admin/dashboard/merchants',     label: 'التجار',       icon: Store },
+  { to: '/admin/dashboard/stores',        label: 'المتاجر',      icon: ShoppingBag },
+  { to: '/admin/dashboard/orders',        label: 'الطلبات',      icon: Package },
+  { to: '/admin/dashboard/customers',     label: 'العملاء',      icon: Users },
 ]
 
-export default function DashboardSidebar({ onNavClick }) {
+export default function AdminSidebar({ onNavClick }) {
   const navigate = useNavigate()
-  const logout   = useAuthStore(s => s.logout)
-  const storeRaw = useAuthStore(s => s.store)
-  const store    = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
-  const user     = useAuthStore(s => s.user)
+  const logout   = useAdminStore(s => s.logout)
+  const admin    = useAdminStore(s => s.admin)
 
   function handleLogout() {
     logout()
-    navigate('/merchant/login', { replace: true })
+    navigate('/admin/login', { replace: true })
   }
 
   return (
@@ -44,15 +35,15 @@ export default function DashboardSidebar({ onNavClick }) {
 
       {/* ── Brand / store name ── */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-border shrink-0">
-        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-          <Store size={18} className="text-primary" />
+        <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center shrink-0 shadow-md">
+          <ShieldCheck size={18} className="text-white" />
         </div>
         <div className="min-w-0">
-          <p className="font-cairo font-bold text-sm text-text truncate leading-tight">
-            {store?.name ?? 'متجري'}
+          <p className="font-cairo font-bold text-sm text-slate-800 truncate leading-tight">
+            لوحة الإدارة
           </p>
           <p className="font-cairo text-[11px] text-text-subtle truncate mt-0.5">
-            {user?.email ?? ''}
+            {admin?.email ?? 'admin@nawamart.com'}
           </p>
         </div>
       </div>
@@ -68,14 +59,14 @@ export default function DashboardSidebar({ onNavClick }) {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl font-cairo text-sm font-semibold transition-colors ${
                 isActive
-                  ? 'bg-primary text-white'
-                  : 'text-text-muted hover:bg-bg-soft hover:text-text'
+                  ? 'bg-slate-900 text-white shadow-sm'
+                  : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <Icon size={17} className={isActive ? 'text-white' : 'text-text-subtle'} />
+                <Icon size={17} className={isActive ? 'text-white' : 'text-slate-400'} />
                 {label}
               </>
             )}

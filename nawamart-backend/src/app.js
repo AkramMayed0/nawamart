@@ -23,7 +23,8 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, Postman)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Always allow Vite dev server (5173) regardless of .env configuration
+      if (!origin || allowedOrigins.includes(origin) || origin === 'http://localhost:5173') {
         return callback(null, true);
       }
       callback(new Error(`CORS: Origin ${origin} غير مسموح`));
@@ -62,6 +63,10 @@ app.use(globalLimiter);
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ─── Static Files (Uploads) ───────────────────────────────────────────────────
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ─── HTTP Logging ─────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {

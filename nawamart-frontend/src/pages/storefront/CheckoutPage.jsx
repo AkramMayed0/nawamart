@@ -46,7 +46,7 @@ export default function CheckoutPage() {
 
       // 2. Build order payload
       const orderPayload = {
-        storeSlug:    slug,
+        storeId:      store?._id,
         items: items.map(i => ({
           product:         i.product._id,
           quantity:        i.quantity,
@@ -54,14 +54,15 @@ export default function CheckoutPage() {
           price:           i.product.price,
         })),
         paymentMethod: wallet,
-        waslUrl,
+        paymentWasl:   waslUrl,
         ...(isDigital ? {} : {
-          shippingAddress: {
+          deliveryAddress: {
             name:    form.name,
             phone:   form.phone,
             city:    form.city,
             address: form.address,
           },
+          contactPhone: form.phone,
         }),
       }
 

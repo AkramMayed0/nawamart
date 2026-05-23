@@ -81,7 +81,8 @@ function ProductRow({ product, onEdit, onDelete }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────
 export default function ProductsPage() {
-  const store       = useAuthStore(s => s.store)
+  const storeRaw    = useAuthStore(s => s.store)
+  const store       = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
   const queryClient = useQueryClient()
   const navigate    = useNavigate()
 
@@ -116,7 +117,10 @@ export default function ProductsPage() {
 
   // ── Create ──
   const { mutate: doCreate, isPending: creating } = useMutation({
-    mutationFn: (formData) => createProduct(formData),
+    mutationFn: (formData) => {
+      formData.append('storeId', store._id)
+      return createProduct(formData)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products', store._id] })
       toast.success('تم إضافة المنتج ✅')

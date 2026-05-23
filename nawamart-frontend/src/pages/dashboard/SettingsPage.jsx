@@ -9,7 +9,8 @@ import Icon from '@/components/ui/Icon'
 import Button from '@/components/ui/Button'
 
 export default function SettingsPage() {
-  const store       = useAuthStore(s => s.store)
+  const storeRaw    = useAuthStore(s => s.store)
+  const store       = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
   const syncStore   = useAuthStore(s => s.updateStore)
   const navigate    = useNavigate()
 

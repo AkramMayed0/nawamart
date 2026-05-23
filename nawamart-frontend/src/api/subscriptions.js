@@ -12,7 +12,7 @@ export const getMySubscription = () => api.get('/subscriptions/my')
  * Body: { plan, paymentMethod, waslUrl }
  * Creates a new pending subscription (admin reviews & activates).
  */
-export const createSubscription = (data) => api.post('/subscriptions', data)
+export const createSubscription = (data) => api.post('/subscriptions/request', data)
 
 /**
  * POST /api/upload/wasl

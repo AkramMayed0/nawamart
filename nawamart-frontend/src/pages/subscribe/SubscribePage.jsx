@@ -13,13 +13,13 @@
 import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowRight, Check, ChevronLeft } from 'lucide-react'
-import { PLANS, uploadSubscriptionWasl, createSubscription } from '@/api/subscriptions'
+import { PLANS, uploadSubscriptionWasl, createSubscription, getMySubscription } from '@/api/subscriptions'
+import { getMyStore } from '@/api/stores'
 import toast from 'react-hot-toast'
 import WalletSelector          from '@/components/subscribe/WalletSelector'
 import SubscribeWaslUploader   from '@/components/subscribe/SubscribeWaslUploader'
 import { Clock, CheckCircle }  from 'lucide-react'
 import { useEffect }           from 'react'
-import { getMySubscription }   from '@/api/subscriptions'
 
 // ── Step indicator ─────────────────────────────────────────────────────────
 const STEPS = ['الخطة', 'طريقة الدفع', 'الوصل', 'التأكيد']
@@ -255,13 +255,32 @@ export default function SubscribePage() {
   const [waslPreview, setWaslPreview] = useState(null)
   const [submitting,  setSubmitting]  = useState(false)
   const [activeSub,   setActiveSub]   = useState(null)   // existing active subscription
+  const [storeId,     setStoreId]     = useState(null)   // merchant's store _id
+  const [storeError,  setStoreError]  = useState(null)   // no store yet
 
-  // On mount: check if merchant already has an active subscription
+  // On mount: fetch merchant's store + check for existing active subscription
   useEffect(() => {
+    // 1. Get merchant's store to retrieve storeId (backend returns an ARRAY)
+    getMyStore()
+      .then(res => {
+        const stores = res.data.data
+        const store = Array.isArray(stores) ? stores[0] : stores
+        if (store?._id) setStoreId(store._id)
+        else setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
+      })
+      .catch(() => {
+        setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
+      })
+
+    // 2. Check if merchant already has an active subscription
     getMySubscription()
       .then(res => {
-        const sub = res.data.data
-        if (sub?.status === 'active') setActiveSub(sub)
+        // Backend returns an ARRAY of subscriptions
+        const subs = res.data.data
+        const activeSub = Array.isArray(subs)
+          ? subs.find(s => s.status === 'approved')
+          : (subs?.status === 'approved' ? subs : null)
+        if (activeSub) setActiveSub(activeSub)
       })
       .catch(() => {})   // 404 = no subscription yet, that's fine
   }, [])
@@ -275,19 +294,23 @@ export default function SubscribePage() {
 
   async function handleSubmit() {
     if (!waslFile || submitting) return
+    if (!storeId) {
+      toast.error('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً.')
+      return
+    }
     setSubmitting(true)
     try {
-      // 1. Upload وصل image
+      // 1. Upload وصل image to Cloudinary
       const fd = new FormData()
       fd.append('wasl', waslFile)
       const uploadRes = await uploadSubscriptionWasl(fd)
       const waslUrl   = uploadRes.data.data?.url ?? uploadRes.data.url
 
-      // 2. Create subscription (pending admin review)
-      await createSubscription({ plan: planKey, paymentMethod: wallet, waslUrl })
+      // 2. Create subscription — backend expects: { storeId, requestedPlan, waslUrl }
+      await createSubscription({ storeId, requestedPlan: planKey, waslUrl })
 
-      // 3. Advance to success step
-      setStep(TOTAL)          // one beyond last → success screen (added in 5d)
+      // 3. Advance to pending-review screen
+      setStep(TOTAL)
     } catch (err) {
       toast.error(err?.message ?? 'حدث خطأ، يرجى المحاولة مجدداً')
     } finally {
@@ -298,6 +321,27 @@ export default function SubscribePage() {
   // ── Already active subscription guard ──
   if (activeSub) {
     return <SuccessScreen sub={activeSub} onGoHome={() => navigate('/dashboard')} />
+  }
+
+  // ── No store yet guard ──
+  if (storeError) {
+    return (
+      <div className="min-h-screen bg-bg font-cairo flex items-center justify-center px-4" dir="rtl">
+        <div className="max-w-md w-full bg-white border border-border rounded-2xl p-8 text-center shadow-sm">
+          <div className="w-16 h-16 rounded-full bg-danger-100 flex items-center justify-center mx-auto mb-5">
+            <Clock size={30} className="text-danger" />
+          </div>
+          <h2 className="font-extrabold text-xl text-text mb-3">لا يوجد متجر</h2>
+          <p className="text-sm text-text-muted mb-6">{storeError}</p>
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full font-cairo font-bold text-[15px] py-3 rounded-xl bg-primary text-white hover:bg-primary-700 active:scale-95 transition-all"
+          >
+            العودة للوحة التحكم
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // ── After submit: show pending screen ──

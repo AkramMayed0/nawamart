@@ -1,14 +1,25 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore }  from '@/store/authStore'
+import { useAdminStore } from '@/store/adminStore'
 
 // Pages — Landing & Auth
-import LandingPage    from '@/pages/LandingPage'
-import NotFoundPage   from '@/pages/NotFoundPage'
-import MerchantLogin from '@/pages/auth/MerchantLogin'
-import MerchantRegister from '@/pages/auth/MerchantRegister'
-import CustomerLogin from '@/pages/auth/CustomerLogin'
-import OnboardingPage from '@/pages/OnboardingPage'
-import SubscribePage from '@/pages/subscribe/SubscribePage'
+import LandingPage       from '@/pages/LandingPage'
+import NotFoundPage      from '@/pages/NotFoundPage'
+import MerchantLogin     from '@/pages/auth/MerchantLogin'
+import MerchantRegister  from '@/pages/auth/MerchantRegister'
+import CustomerLogin     from '@/pages/auth/CustomerLogin'
+import OnboardingPage    from '@/pages/OnboardingPage'
+import SubscribePage     from '@/pages/subscribe/SubscribePage'
+
+// Admin
+import AdminLogin         from '@/pages/admin/AdminLogin'
+import AdminLayout        from '@/pages/admin/AdminLayout'
+import AdminOverview      from '@/pages/admin/AdminOverview'
+import AdminSubscriptions from '@/pages/admin/AdminSubscriptions'
+import AdminMerchants     from '@/pages/admin/AdminMerchants'
+import AdminStores        from '@/pages/admin/AdminStores'
+import AdminOrders        from '@/pages/admin/AdminOrders'
+import AdminCustomers     from '@/pages/admin/AdminCustomers'
 
 // Dashboard (merchant)
 import DashboardLayout from '@/pages/dashboard/DashboardLayout'
@@ -39,6 +50,18 @@ function PrivateRoute({ children }) {
 function GuestRoute({ children }) {
   const token = useAuthStore(s => s.token)
   return token ? <Navigate to="/dashboard" replace /> : children
+}
+
+// Admin guard — only lets admins through
+function AdminRoute({ children }) {
+  const token = useAdminStore(s => s.token)
+  return token ? children : <Navigate to="/admin/login" replace />
+}
+
+// Redirect logged-in admins away from admin login
+function AdminGuestRoute({ children }) {
+  const token = useAdminStore(s => s.token)
+  return token ? <Navigate to="/admin/dashboard" replace /> : children
 }
 
 export default function App() {
@@ -76,6 +99,20 @@ export default function App() {
         <Route path="order/:orderId" element={<OrderConfirmationPage />} />
         <Route path="order/:orderId/track" element={<OrderTrackingPage />} />
       </Route>
+
+      {/* ── Admin Panel ── */}
+      <Route path="/admin/login" element={<AdminGuestRoute><AdminLogin /></AdminGuestRoute>} />
+      
+      <Route path="/admin/dashboard" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+        <Route index element={<AdminOverview />} />
+        <Route path="subscriptions" element={<AdminSubscriptions />} />
+        <Route path="merchants"     element={<AdminMerchants />} />
+        <Route path="stores"        element={<AdminStores />} />
+        <Route path="orders"        element={<AdminOrders />} />
+        <Route path="customers"     element={<AdminCustomers />} />
+      </Route>
+
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
       {/* ── 404 fallback ── */}
       <Route path="*" element={<NotFoundPage />} />

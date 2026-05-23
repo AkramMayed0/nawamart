@@ -1,53 +1,38 @@
-const cloudinary = require('cloudinary').v2; // cloudinary v1 exposes .v2 API
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
-// ─── Configure Cloudinary ─────────────────────────────────────────────────────
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+// ─── Local Storage Helper ─────────────────────────────────────────────────────
+const createStorage = (folderName) => {
+  return multer.diskStorage({
+    destination: (req, file, cb) => {
+      const uploadPath = path.join(__dirname, '../../uploads', folderName);
+      cb(null, uploadPath);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
+    },
+  });
+};
 
-// ─── Storage for product images ───────────────────────────────────────────────
-const productStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'nawamart/products',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
-  },
-});
-
-// ─── Storage for payment wasl (receipt) screenshots ──────────────────────────
-const waslStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'nawamart/wasl',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-    transformation: [{ quality: 'auto' }],
-  },
-});
-
-// ─── Storage for store logos / banners ───────────────────────────────────────
-const storeStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'nawamart/stores',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
-    transformation: [{ width: 800, height: 800, crop: 'limit', quality: 'auto' }],
-  },
-});
-
-// ─── Storage for chat files ────────────────────────────────────────────────────
-const chatStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'nawamart/chat',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-    transformation: [{ quality: 'auto' }],
-  },
-});
+// Helper middleware to convert req.file.path and req.files.*.path to URLs
+const mapToUrl = (folderName) => (req, res, next) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}/uploads/${folderName}/`;
+  if (req.file) {
+    req.file.path = baseUrl + req.file.filename;
+  }
+  if (req.files) {
+    for (const key in req.files) {
+      req.files[key] = req.files[key].map(file => {
+        file.path = baseUrl + file.filename;
+        return file;
+      });
+    }
+  }
+  next();
+};
 
 // ─── File size / type filter ──────────────────────────────────────────────────
 const fileFilter = (req, file, cb) => {
@@ -60,55 +45,50 @@ const fileFilter = (req, file, cb) => {
 };
 
 // ─── Multer instances ─────────────────────────────────────────────────────────
-const uploadProduct = multer({
-  storage: productStorage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
-  fileFilter,
-});
+const uploadProduct = {
+  single: (field) => [multer({ storage: createStorage('products'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('products')],
+  array: (field, maxCount) => [multer({ storage: createStorage('products'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).array(field, maxCount), mapToUrl('products')],
+  fields: (fields) => [multer({ storage: createStorage('products'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).fields(fields), mapToUrl('products')],
+};
 
-const uploadWasl = multer({
-  storage: waslStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter,
-});
+const uploadWasl = {
+  single: (field) => [multer({ storage: createStorage('wasl'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('wasl')],
+};
 
-const uploadStore = multer({
-  storage: storeStorage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter,
-});
+const uploadStore = {
+  single: (field) => [multer({ storage: createStorage('stores'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('stores')],
+  fields: (fields) => [multer({ storage: createStorage('stores'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).fields(fields), mapToUrl('stores')],
+};
 
-const uploadChatFile = multer({
-  storage: chatStorage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
-  fileFilter,
-});
+const uploadChatFile = {
+  single: (field) => [multer({ storage: createStorage('chat'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('chat')],
+};
 
 /**
- * Delete a file from Cloudinary by its URL or public_id
+ * Delete a local file (polyfill for Cloudinary delete)
  */
-const deleteFromCloudinary = async (urlOrPublicId) => {
+const deleteFromCloudinary = async (url) => {
   try {
-    // Extract public_id from URL if a full URL is provided
-    let publicId = urlOrPublicId;
-    if (urlOrPublicId.startsWith('http')) {
-      const parts = urlOrPublicId.split('/');
-      const filenameWithExt = parts[parts.length - 1];
-      const filename = filenameWithExt.split('.')[0];
-      const folder = parts[parts.length - 2];
-      publicId = `${folder}/${filename}`;
+    if (!url) return;
+    // URL looks like: http://localhost:5000/uploads/products/images-1234.jpg
+    const parts = url.split('/uploads/');
+    if (parts.length === 2) {
+      const localPath = path.join(__dirname, '../../uploads', parts[1]);
+      if (fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+      }
     }
-    await cloudinary.uploader.destroy(publicId);
   } catch (err) {
-    console.error('⚠️  Failed to delete from Cloudinary:', err.message);
+    console.error('⚠️  Failed to delete local file:', err.message);
   }
 };
 
 module.exports = {
-  cloudinary,
+  cloudinary: {}, // Dummy export so requires don't break
   uploadProduct,
   uploadWasl,
   uploadStore,
   uploadChatFile,
   deleteFromCloudinary,
 };
+

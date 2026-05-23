@@ -39,10 +39,14 @@ api.interceptors.response.use(
     const message = error.response?.data?.message || 'حدث خطأ غير متوقع'
 
     if (status === 401) {
-      // Token expired / invalid → logout and redirect
-      useAuthStore.getState().logout()
-      toast.error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً')
-      window.location.href = '/merchant/login'
+      // Only auto-logout + redirect for merchant/customer sessions
+      // Admin login failures must NOT redirect — admin has its own flow
+      const isAdminRoute = window.location.pathname.startsWith('/admin')
+      if (!isAdminRoute) {
+        useAuthStore.getState().logout()
+        toast.error('انتهت الجلسة، يرجى تسجيل الدخول مجدداً')
+        window.location.href = '/merchant/login'
+      }
     } else if (status === 403) {
       toast.error('ليس لديك صلاحية للقيام بهذا الإجراء')
     } else if (status === 404) {

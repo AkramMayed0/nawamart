@@ -215,7 +215,7 @@ function OrderRows({ orders, filter, page, onViewWasl, onReject, navigate, query
 function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
   const total     = order.items?.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0) ?? 0
   const shortId   = String(order._id).slice(-8).toUpperCase()
-  const customer  = order.shippingAddress?.name ?? order.customerId?.name ?? 'عميل'
+  const customer  = order.deliveryAddress?.name ?? order.customerId?.name ?? 'عميل'
 
   return (
     <div className="grid grid-cols-[1.2fr_1.5fr_1fr_72px_1fr_auto] gap-3 px-4 py-3.5 items-center hover:bg-bg/50 transition-colors">
@@ -227,7 +227,7 @@ function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
       <div className="min-w-0">
         <p className="font-cairo font-semibold text-sm text-text truncate">{customer}</p>
         <p className="font-cairo text-xs text-text-muted mt-0.5">
-          {order.storeType === 'digital' ? '⚡ رقمي' : `🚚 ${order.shippingAddress?.city ?? ''}`}
+          {order.storeType === 'digital' ? '⚡ رقمي' : `🚚 ${order.deliveryAddress?.city ?? ''}`}
         </p>
       </div>
 

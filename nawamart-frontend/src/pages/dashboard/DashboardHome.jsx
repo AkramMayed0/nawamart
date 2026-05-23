@@ -127,7 +127,7 @@ function RecentOrders({ orders, loading }) {
 
                 {/* Customer name */}
                 <span className="font-cairo text-sm text-text truncate flex-1">
-                  {order.shippingAddress?.name ?? order.customer?.name ?? '—'}
+                  {order.deliveryAddress?.name ?? order.customer?.name ?? '—'}
                 </span>
 
                 {/* Status badge */}
@@ -155,7 +155,8 @@ function RecentOrders({ orders, loading }) {
 
 export default function DashboardHome() {
   const user  = useAuthStore(s => s.user)
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store    = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   const [orders,  setOrders]  = useState([])
   const [loading, setLoading] = useState(true)
