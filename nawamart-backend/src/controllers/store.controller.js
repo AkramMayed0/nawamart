@@ -7,7 +7,7 @@ const { apiResponse, asyncHandler } = require('../utils/helpers');
  * Create a new store for the logged-in merchant
  */
 const createStore = asyncHandler(async (req, res) => {
-  const { name, description, category, contactPhone, paymentAccounts } = req.body;
+  const { name, type, description, category, contactPhone, paymentAccounts } = req.body;
 
   // Check if merchant already has too many stores (optional logic, let's limit to 5 for now)
   const storeCount = await Store.countDocuments({ merchant: req.user._id });
@@ -40,6 +40,7 @@ const createStore = asyncHandler(async (req, res) => {
   const store = await Store.create({
     merchant: req.user._id,
     name,
+    type: type || 'physical',
     description,
     category,
     contactPhone,

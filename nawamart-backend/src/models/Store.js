@@ -35,6 +35,12 @@ const storeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // physical = ships products, digital = delivers via chat
+    type: {
+      type: String,
+      enum: ['physical', 'digital'],
+      default: 'physical',
+    },
     category: {
       type: String,
       trim: true,
