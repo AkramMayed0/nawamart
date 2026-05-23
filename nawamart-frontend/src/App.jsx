@@ -23,6 +23,7 @@ import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
 import StorePage from '@/pages/storefront/StorePage'
 import ProductDetailPage from '@/pages/storefront/ProductDetailPage'
 import CheckoutPage from '@/pages/storefront/CheckoutPage'
+import OrderConfirmationPage from '@/pages/storefront/OrderConfirmationPage'
 import OrderTrackingPage from '@/pages/storefront/OrderTrackingPage'
 
 // Guards
@@ -67,7 +68,8 @@ export default function App() {
         <Route index element={<StorePage />} />
         <Route path="product/:productId" element={<ProductDetailPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
-        <Route path="order/:orderId" element={<OrderTrackingPage />} />
+        <Route path="order/:orderId" element={<OrderConfirmationPage />} />
+        <Route path="order/:orderId/track" element={<OrderTrackingPage />} />
       </Route>
 
       {/* ── 404 fallback ── */}
