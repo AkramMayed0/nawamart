@@ -7,8 +7,8 @@ const orderItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: true,
     },
-    name: { type: String, required: true },   // snapshot at order time
-    price: { type: Number, required: true },   // snapshot at order time
+    name:     { type: String, required: true },  // snapshot at order time
+    price:    { type: Number, required: true },  // snapshot at order time
     quantity: {
       type: Number,
       required: true,
@@ -50,21 +50,22 @@ const orderSchema = new mongoose.Schema(
     },
     // Delivery address snapshot
     deliveryAddress: {
-      city: { type: String, required: true },
+      city:     { type: String, required: true },
       district: { type: String, default: null },
-      details: { type: String, default: null },
-      phone: { type: String, required: true },
+      details:  { type: String, default: null },
+      phone:    { type: String, required: true },
     },
     // Order lifecycle status
+    // payment_under_review = paid via transfer, awaiting merchant confirmation
     status: {
       type: String,
       enum: {
-        values: ['pending', 'confirmed', 'rejected', 'shipped', 'delivered'],
+        values: ['pending', 'payment_under_review', 'confirmed', 'rejected', 'shipped', 'delivered'],
         message: 'حالة الطلب غير صالحة',
       },
       default: 'pending',
     },
-    // Payment via Cherry/Kuraimi/OneCash
+    // Payment method
     paymentMethod: {
       type: String,
       enum: {
@@ -73,8 +74,8 @@ const orderSchema = new mongoose.Schema(
       },
       required: [true, 'طريقة الدفع مطلوبة'],
     },
-    // Wasl (receipt) screenshot uploaded by customer
-    waslImage: {
+    // Wasl (receipt) screenshot URL uploaded by customer
+    paymentWasl: {
       type: String,
       default: null,
     },
@@ -89,20 +90,20 @@ const orderSchema = new mongoose.Schema(
       maxlength: [500, 'الملاحظات لا يمكن أن تتجاوز 500 حرف'],
       default: null,
     },
-    // Timestamps for each status transition
-    confirmedAt: { type: Date, default: null },
-    rejectedAt: { type: Date, default: null },
-    shippedAt: { type: Date, default: null },
-    deliveredAt: { type: Date, default: null },
     rejectionReason: {
       type: String,
       trim: true,
       default: null,
     },
+    // Timestamps for each status transition
+    confirmedAt:  { type: Date, default: null },
+    rejectedAt:   { type: Date, default: null },
+    shippedAt:    { type: Date, default: null },
+    deliveredAt:  { type: Date, default: null },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
+    toJSON:   { virtuals: true },
     toObject: { virtuals: true },
   }
 );

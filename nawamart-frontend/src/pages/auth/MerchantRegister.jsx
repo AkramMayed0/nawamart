@@ -33,7 +33,6 @@ function validate(fields) {
   } else if (fields.password.length < 6) {
     errors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
   }
-
   return errors
 }
 
@@ -184,6 +183,7 @@ export default function MerchantRegister() {
               error={errors.password}
               disabled={loading}
             />
+
 
             <Button
               type="submit"

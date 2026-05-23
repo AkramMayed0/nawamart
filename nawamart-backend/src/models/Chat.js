@@ -3,22 +3,32 @@ const mongoose = require('mongoose');
 const messageSchema = new mongoose.Schema(
   {
     sender: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      // References either Merchant or Customer
+    },
+    senderRole: {
       type: String,
       enum: ['merchant', 'customer'],
       required: true,
     },
-    senderId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      // Could ref either Merchant or Customer — polymorphic
-    },
-    text: {
+    senderType: {
       type: String,
+      enum: ['merchant', 'customer'],
+    },
+    type: {
+      type: String,
+      enum: ['text', 'image', 'file', 'link'],
+      default: 'text',
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
       trim: true,
       maxlength: [2000, 'الرسالة لا يمكن أن تتجاوز 2000 حرف'],
-      default: null,
     },
-    image: {
+    fileName: {
       type: String,
       default: null,
     },
@@ -31,6 +41,11 @@ const messageSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Virtual for backward compatibility / aliasing if needed
+messageSchema.virtual('senderId').get(function () {
+  return this.sender;
+});
 
 const chatSchema = new mongoose.Schema(
   {
@@ -49,11 +64,19 @@ const chatSchema = new mongoose.Schema(
       ref: 'Customer',
       required: [true, 'العميل مطلوب'],
     },
-    // Optional: link chat to a specific order
+    // Link chat to a specific order
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Order',
       default: null,
+    },
+    isDelivered: {
+      type: Boolean,
+      default: false,
+    },
+    receiptConfirmed: {
+      type: Boolean,
+      default: false,
     },
     messages: {
       type: [messageSchema],
@@ -89,6 +112,8 @@ const chatSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ────────────────────────────────────────────────────────────────
+// Ensure one chat per order, or one active store chat per customer
+chatSchema.index({ order: 1 }, { unique: true, sparse: true });
 chatSchema.index({ merchant: 1, customer: 1, store: 1 }, { unique: true });
 chatSchema.index({ merchant: 1, lastMessageAt: -1 });
 chatSchema.index({ customer: 1, lastMessageAt: -1 });

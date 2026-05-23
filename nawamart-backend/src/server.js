@@ -26,10 +26,33 @@ app.set('io', io);
 io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
-  // Join a chat room
-  socket.on('join_chat', (chatId) => {
+  // Join a chat room (support both join_chat and frontend's joinRoom)
+  socket.on('joinRoom', (chatId) => {
     socket.join(chatId);
     console.log(`💬 Socket ${socket.id} joined chat: ${chatId}`);
+  });
+
+  socket.on('join_chat', (chatId) => {
+    socket.join(chatId);
+    console.log(`💬 Socket ${socket.id} joined chat (legacy): ${chatId}`);
+  });
+
+  // Leave a chat room (support both leaveRoom and leave_chat)
+  socket.on('leaveRoom', (chatId) => {
+    socket.leave(chatId);
+    console.log(`💬 Socket ${socket.id} left chat: ${chatId}`);
+  });
+
+  socket.on('leave_chat', (chatId) => {
+    socket.leave(chatId);
+    console.log(`💬 Socket ${socket.id} left chat (legacy): ${chatId}`);
+  });
+
+  // Client-to-Client socket sendMessage bypass (just in case they emit directly)
+  socket.on('sendMessage', (msgData) => {
+    if (msgData && msgData.chatId) {
+      io.to(msgData.chatId).emit('receiveMessage', msgData);
+    }
   });
 
   socket.on('disconnect', () => {
