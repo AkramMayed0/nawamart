@@ -106,6 +106,15 @@ export default {
         '18': '72px',
         '22': '88px',
       },
+      keyframes: {
+        'slide-in': {
+          from: { transform: 'translateX(-100%)' },
+          to:   { transform: 'translateX(0)' },
+        },
+      },
+      animation: {
+        'slide-in': 'slide-in 220ms cubic-bezier(.4,0,.2,1)',
+      },
     },
   },
   plugins: [

@@ -1,6 +1,8 @@
 import { Outlet, Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getStoreBySlug } from '@/api/stores'
+import { useCartStore } from '@/store/cartStore'
+import CartDrawer from '@/components/storefront/CartDrawer'
 import Icon from '@/components/ui/Icon'
 
 export default function StorefrontLayout() {
@@ -13,13 +15,16 @@ export default function StorefrontLayout() {
     retry: false,
   })
 
-  const store = data
+  const store      = data
+  const toggleCart = useCartStore(s => s.toggleCart)
+  const itemCount  = useCartStore(s => s.items.reduce((n, i) => n + i.quantity, 0))
 
   return (
     <div className="min-h-screen bg-bg" dir="rtl">
       {/* ── Top nav ── */}
       <header className="bg-white border-b border-border sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+
           {/* Store brand */}
           <Link to={`/store/${slug}`} className="flex items-center gap-2.5 min-w-0">
             {store?.logo ? (
@@ -36,7 +41,6 @@ export default function StorefrontLayout() {
             <span className="font-cairo font-bold text-text truncate">
               {store?.name || '…'}
             </span>
-            {/* Store type badge */}
             {store?.type && (
               <span className={`hidden sm:inline-flex items-center gap-1 text-xs font-semibold font-cairo px-2 py-0.5 rounded-pill shrink-0 ${
                 store.type === 'digital'
@@ -48,14 +52,30 @@ export default function StorefrontLayout() {
             )}
           </Link>
 
-          {/* Powered by */}
-          <a
-            href="/"
-            className="flex items-center gap-1.5 text-xs text-text-subtle font-cairo hover:text-text transition-colors shrink-0"
-          >
-            <Icon name="globe" size={13} />
-            نوامارت
-          </a>
+          <div className="flex items-center gap-2">
+            {/* Powered by */}
+            <a
+              href="/"
+              className="hidden sm:flex items-center gap-1.5 text-xs text-text-subtle font-cairo hover:text-text transition-colors"
+            >
+              <Icon name="globe" size={13} />
+              نوامارت
+            </a>
+
+            {/* Cart button */}
+            <button
+              onClick={toggleCart}
+              aria-label="السلة"
+              className="relative w-10 h-10 rounded-lg flex items-center justify-center text-text hover:bg-primary-50 transition-colors"
+            >
+              <Icon name="cart" size={20} />
+              {itemCount > 0 && (
+                <span className="absolute top-1 left-1 min-w-[16px] h-4 px-1 rounded-pill bg-accent text-white font-inter font-bold text-[10px] flex items-center justify-center leading-none">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
@@ -73,6 +93,9 @@ export default function StorefrontLayout() {
           </a>
         </div>
       </footer>
+
+      {/* ── Cart Drawer (portal-style, rendered here so it's above everything) ── */}
+      <CartDrawer />
     </div>
   )
 }

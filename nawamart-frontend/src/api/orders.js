@@ -12,6 +12,12 @@ export const uploadWasl      = (orderId, formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 
+// Upload wasl before order is created (returns { url, publicId })
+export const uploadWaslFile  = (formData) =>
+  api.post('/upload/wasl', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+
 // ── Chat ──
 export const getChatMessages = (chatId) => api.get(`/chats/${chatId}`)
 export const sendMessage     = (chatId, data) => api.post(`/chats/${chatId}/message`, data)
