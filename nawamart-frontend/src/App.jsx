@@ -31,6 +31,12 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/merchant/login" replace />
 }
 
+// Redirect logged-in users away from auth pages
+function GuestRoute({ children }) {
+  const token = useAuthStore(s => s.token)
+  return token ? <Navigate to="/dashboard" replace /> : children
+}
+
 export default function App() {
   return (
     <Routes>
@@ -38,9 +44,9 @@ export default function App() {
       <Route path="/" element={<LandingPage />} />
 
       {/* ── Auth ── */}
-      <Route path="/merchant/login"    element={<MerchantLogin />} />
-      <Route path="/merchant/register" element={<MerchantRegister />} />
-      <Route path="/customer/login"    element={<CustomerLogin />} />
+      <Route path="/merchant/login"    element={<GuestRoute><MerchantLogin /></GuestRoute>} />
+      <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
+      <Route path="/customer/login"    element={<GuestRoute><CustomerLogin /></GuestRoute>} />
       <Route path="/onboarding"        element={<OnboardingPage />} />
 
       {/* ── Merchant Dashboard ── */}
