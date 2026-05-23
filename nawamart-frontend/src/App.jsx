@@ -14,6 +14,7 @@ import DashboardHome from '@/pages/dashboard/DashboardHome'
 import OrdersPage from '@/pages/dashboard/OrdersPage'
 import ProductsPage from '@/pages/dashboard/ProductsPage'
 import CustomersPage from '@/pages/dashboard/CustomersPage'
+import ChatListPage from '@/pages/dashboard/ChatListPage'
 import ChatPage from '@/pages/dashboard/ChatPage'
 import FinancePage from '@/pages/dashboard/FinancePage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
@@ -58,7 +59,8 @@ export default function App() {
         <Route path="orders"    element={<OrdersPage />} />
         <Route path="products"  element={<ProductsPage />} />
         <Route path="customers" element={<CustomersPage />} />
-        <Route path="chat"      element={<ChatPage />} />
+        <Route path="chat"         element={<ChatListPage />} />
+        <Route path="chat/:chatId" element={<ChatPage />} />
         <Route path="finance"   element={<FinancePage />} />
         <Route path="settings"  element={<SettingsPage />} />
       </Route>

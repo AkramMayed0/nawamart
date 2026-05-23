@@ -21,3 +21,4 @@ export const uploadWaslFile  = (formData) =>
 // ── Chat ──
 export const getChatMessages = (chatId) => api.get(`/chats/${chatId}`)
 export const sendMessage     = (chatId, data) => api.post(`/chats/${chatId}/message`, data)
+export const getMerchantChats = () => api.get('/chats')
