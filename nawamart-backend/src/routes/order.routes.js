@@ -9,11 +9,12 @@ const {
   deliverOrder,
 } = require('../controllers/order.controller');
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
+const { enforceOrderLimit } = require('../middleware/planLimits');
 
 router.use(verifyToken);
 
 // ─── Customer Routes ──────────────────────────────────────────────────────────
-router.post('/', requireRole('customer'), createOrder);
+router.post('/', requireRole('customer'), enforceOrderLimit, createOrder);
 
 // ─── Merchant Routes ──────────────────────────────────────────────────────────
 router.get('/merchant', requireRole('merchant'), getMerchantOrders);

@@ -87,12 +87,16 @@ const productRoutes = require('./routes/product.routes');
 const orderRoutes = require('./routes/order.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const chatRoutes = require('./routes/chat.routes');
+const subscriptionRoutes = require('./routes/subscription.routes');
+const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chats', chatRoutes);
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ─── 404 & Global Error Handler ──────────────────────────────────────────────
 app.use(notFound);

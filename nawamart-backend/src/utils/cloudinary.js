@@ -39,6 +39,16 @@ const storeStorage = new CloudinaryStorage({
   },
 });
 
+// ─── Storage for chat files ────────────────────────────────────────────────────
+const chatStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'nawamart/chat',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+    transformation: [{ quality: 'auto' }],
+  },
+});
+
 // ─── File size / type filter ──────────────────────────────────────────────────
 const fileFilter = (req, file, cb) => {
   const allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
@@ -68,6 +78,12 @@ const uploadStore = multer({
   fileFilter,
 });
 
+const uploadChatFile = multer({
+  storage: chatStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter,
+});
+
 /**
  * Delete a file from Cloudinary by its URL or public_id
  */
@@ -93,5 +109,6 @@ module.exports = {
   uploadProduct,
   uploadWasl,
   uploadStore,
+  uploadChatFile,
   deleteFromCloudinary,
 };

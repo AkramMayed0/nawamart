@@ -112,16 +112,17 @@ const sendMessage = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
   }
 
-  const { content } = req.body;
+  const { content, image } = req.body;
 
-  if (!content || content.trim().length === 0) {
-    return res.status(400).json({ success: false, message: 'نص الرسالة مطلوب', data: null });
+  if ((!content || content.trim().length === 0) && !image) {
+    return res.status(400).json({ success: false, message: 'يجب إرسال نص أو صورة', data: null });
   }
 
   const newMessage = {
     sender: req.userRole === 'customer' ? 'customer' : 'merchant',
     senderId: req.user._id,
-    text: content,
+    text: content || null,
+    image: image || null,
     isRead: false,
   };
 
@@ -130,8 +131,10 @@ const sendMessage = asyncHandler(async (req, res) => {
   
   await chat.save();
 
-  // In a real implementation, you would emit a socket event here:
-  // io.to(chat._id.toString()).emit('newMessage', newMessage);
+  const io = req.app.get('io');
+  if (io) {
+    io.to(chat._id.toString()).emit('receiveMessage', newMessage);
+  }
 
   return apiResponse(res, {
     statusCode: 201,

@@ -55,6 +55,20 @@ const storeSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // ─── Subscription / Plan ─────────────────────────────────────────────────
+    plan: {
+      type: String,
+      enum: ['free', 'pro', 'business'],
+      default: 'free',
+    },
+    planExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    planWaslUrl: {
+      type: String,
+      default: null,
+    },
     // Metrics (updated via atomic ops)
     totalProducts: {
       type: Number,
