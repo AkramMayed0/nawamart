@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import {
@@ -82,6 +83,25 @@ function ProductRow({ product, onEdit, onDelete }) {
 export default function ProductsPage() {
   const store       = useAuthStore(s => s.store)
   const queryClient = useQueryClient()
+  const navigate    = useNavigate()
+
+  if (!store) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-20 text-center" dir="rtl">
+        <div className="w-16 h-16 rounded-2xl bg-warning-100 flex items-center justify-center mx-auto mb-4">
+          <span className="text-2xl">🏪</span>
+        </div>
+        <h2 className="font-cairo font-bold text-xl text-text mb-2">لم يتم إنشاء المتجر بعد</h2>
+        <p className="font-cairo text-sm text-text-muted mb-6">أنشئ متجرك أولاً لإضافة المنتجات.</p>
+        <button
+          onClick={() => navigate('/onboarding')}
+          className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-700 transition-colors"
+        >
+          إنشاء المتجر
+        </button>
+      </div>
+    )
+  }
 
   const [modalOpen,    setModalOpen]    = useState(false)
   const [editTarget,   setEditTarget]   = useState(null)

@@ -22,16 +22,16 @@ function validate(fields) {
     errors.email = 'صيغة البريد الإلكتروني غير صحيحة'
   }
 
+  if (!fields.phone.trim()) {
+    errors.phone = 'رقم الهاتف مطلوب'
+  } else if (!/^[0-9+\s\-]{7,15}$/.test(fields.phone.trim())) {
+    errors.phone = 'رقم الهاتف غير صحيح'
+  }
+
   if (!fields.password) {
     errors.password = 'كلمة المرور مطلوبة'
   } else if (fields.password.length < 6) {
     errors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
-  }
-
-  if (!fields.storeName.trim()) {
-    errors.storeName = 'اسم المتجر مطلوب'
-  } else if (fields.storeName.trim().length < 2) {
-    errors.storeName = 'اسم المتجر يجب أن يكون حرفين على الأقل'
   }
 
   return errors
@@ -43,10 +43,10 @@ export default function MerchantRegister() {
   const login    = useAuthStore(s => s.login)
 
   const [fields, setFields] = useState({
-    name:      '',
-    email:     '',
-    password:  '',
-    storeName: '',
+    name:     '',
+    email:    '',
+    phone:    '',
+    password: '',
   })
   const [errors,  setErrors]  = useState({})
   const [loading, setLoading] = useState(false)
@@ -69,16 +69,16 @@ export default function MerchantRegister() {
     setLoading(true)
     try {
       const res = await merchantRegister({
-        name:      fields.name.trim(),
-        email:     fields.email.trim().toLowerCase(),
-        password:  fields.password,
-        storeName: fields.storeName.trim(),
+        name:     fields.name.trim(),
+        email:    fields.email.trim().toLowerCase(),
+        phone:    fields.phone.trim(),
+        password: fields.password,
       })
 
       const { token, user } = res.data.data
       login(token, user)
       toast.success('تم إنشاء الحساب بنجاح! 🎉')
-      navigate('/dashboard', { replace: true })
+      navigate('/onboarding', { replace: true })
     } catch (err) {
       const msg = err?.message || 'حدث خطأ، يرجى المحاولة مجدداً'
       toast.error(msg)
@@ -162,6 +162,19 @@ export default function MerchantRegister() {
             />
 
             <Input
+              label="رقم الهاتف"
+              type="tel"
+              placeholder="7xxxxxxxx"
+              autoComplete="tel"
+              inputClassName="font-en"
+              dir="ltr"
+              value={fields.phone}
+              onChange={e => set('phone', e.target.value)}
+              error={errors.phone}
+              disabled={loading}
+            />
+
+            <Input
               label="كلمة المرور"
               type="password"
               placeholder="٦ أحرف على الأقل"
@@ -169,16 +182,6 @@ export default function MerchantRegister() {
               value={fields.password}
               onChange={e => set('password', e.target.value)}
               error={errors.password}
-              disabled={loading}
-            />
-
-            <Input
-              label="اسم المتجر"
-              placeholder="متجر المختار"
-              autoComplete="organization"
-              value={fields.storeName}
-              onChange={e => set('storeName', e.target.value)}
-              error={errors.storeName}
               disabled={loading}
             />
 

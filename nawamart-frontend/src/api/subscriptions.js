@@ -15,12 +15,12 @@ export const getMySubscription = () => api.get('/subscriptions/my')
 export const createSubscription = (data) => api.post('/subscriptions', data)
 
 /**
- * POST /api/upload/subscription-wasl
+ * POST /api/upload/wasl
  * Body: FormData { wasl: File }
- * Uploads وصل image and returns { url, publicId }
+ * Uploads وصل image and returns { url }
  */
 export const uploadSubscriptionWasl = (formData) =>
-  api.post('/upload/subscription-wasl', formData, {
+  api.post('/upload/wasl', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 

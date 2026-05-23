@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import { updateStore as updateStoreApi } from '@/api/stores'
@@ -10,6 +11,7 @@ import Button from '@/components/ui/Button'
 export default function SettingsPage() {
   const store       = useAuthStore(s => s.store)
   const syncStore   = useAuthStore(s => s.updateStore)
+  const navigate    = useNavigate()
 
   const [name,         setName]         = useState(store?.name || '')
   const [description,  setDesc]         = useState(store?.description || '')
@@ -17,6 +19,25 @@ export default function SettingsPage() {
   const [logoPreview,  setLogoPreview]  = useState(store?.logo || null)
   const [saving,       setSaving]       = useState(false)
   const fileInputRef = useRef(null)
+
+  // Guard: no store yet → redirect to onboarding
+  if (!store) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-20 text-center" dir="rtl">
+        <div className="w-16 h-16 rounded-2xl bg-warning-100 flex items-center justify-center mx-auto mb-4">
+          <Icon name="store" size={28} className="text-warning" />
+        </div>
+        <h2 className="font-cairo font-bold text-xl text-text mb-2">لم يتم إنشاء المتجر بعد</h2>
+        <p className="font-cairo text-sm text-text-muted mb-6">أكمل إعداد متجرك أولاً لتتمكن من تعديل الإعدادات.</p>
+        <button
+          onClick={() => navigate('/onboarding')}
+          className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-6 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-700 transition-colors"
+        >
+          إنشاء المتجر
+        </button>
+      </div>
+    )
+  }
 
   function handleLogoChange(e) {
     const file = e.target.files[0]
