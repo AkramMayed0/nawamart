@@ -7,6 +7,7 @@ import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
 import OnboardingPage from '@/pages/OnboardingPage'
+import SubscribePage from '@/pages/subscribe/SubscribePage'
 
 // Dashboard (merchant)
 import DashboardLayout from '@/pages/dashboard/DashboardLayout'
@@ -50,6 +51,7 @@ export default function App() {
       <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
       <Route path="/customer/login"    element={<GuestRoute><CustomerLogin /></GuestRoute>} />
       <Route path="/onboarding"        element={<OnboardingPage />} />
+      <Route path="/subscribe"         element={<PrivateRoute><SubscribePage /></PrivateRoute>} />
 
       {/* ── Merchant Dashboard ── */}
       <Route path="/dashboard" element={

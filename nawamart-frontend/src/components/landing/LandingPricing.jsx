@@ -1,30 +1,50 @@
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 import Icon from '@/components/ui/Icon'
 import Button from '@/components/ui/Button'
 
 const TIERS = [
   {
+    key: 'free',
     name: 'Free', num: '0', unit: 'ر.ي / شهر',
     sub: 'ابدأ بدون تكلفة، طوّر متجرك على راحتك.',
     features: ['حتى 20 منتج', 'نطاق فرعي على nawa.shop', 'تأكيد الوصل اليدوي', 'تقارير مبيعات أساسية'],
-    cta: 'ابدأ مجاناً', ctaVariant: 'secondary', featured: false,
+    cta: 'ابدأ مجاناً', ctaVariant: 'secondary', featured: false, paid: false,
   },
   {
+    key: 'pro',
     name: 'Pro', num: '4,900', unit: 'ر.ي / شهر',
     sub: 'للتجار النشطين — مادي أو رقمي.',
     features: ['منتجات بلا حدود', 'نطاق مخصص .com', 'قناة محادثة للمتاجر الرقمية', 'إشعارات SMS للعملاء', 'تقارير متقدمة'],
-    cta: 'اختر Pro', ctaVariant: 'accent', featured: true,
+    cta: 'اشترك الآن', ctaVariant: 'accent', featured: true, paid: true,
   },
   {
+    key: 'business',
     name: 'Business', num: '12,000', unit: 'ر.ي / شهر',
     sub: 'للمتاجر التي تتوسع.',
     features: ['كل مميزات Pro', 'حتى 5 مستخدمين فريق', 'API للتكامل الخارجي', 'أولوية الدعم 24/7', 'تقارير ضريبية مخصصة'],
-    cta: 'تواصل معنا', ctaVariant: 'secondary', featured: false,
+    cta: 'اشترك الآن', ctaVariant: 'secondary', featured: false, paid: true,
   },
 ]
 
 export default function LandingPricing() {
   const navigate = useNavigate()
+  const token    = useAuthStore(s => s.token)
+
+  function handleCta(tier) {
+    if (!tier.paid) {
+      // Free plan → go to register (or dashboard if logged in)
+      navigate(token ? '/dashboard' : '/merchant/register')
+      return
+    }
+    // Paid plan → go to subscribe page (must be logged in)
+    if (!token) {
+      navigate(`/merchant/login?redirect=/subscribe?plan=${tier.key}`)
+      return
+    }
+    navigate(`/subscribe?plan=${tier.key}`)
+  }
+
   return (
     <section id="pricing" className="px-8 py-20 bg-surface border-t border-b border-border">
       <div className="max-w-[1240px] mx-auto">
@@ -42,17 +62,17 @@ export default function LandingPricing() {
           </p>
         </div>
 
-        {/* Cards */}
-        <div className="grid grid-cols-3 gap-4 mt-10">
+        {/* Cards — responsive: stack on mobile, 3-col on lg */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10">
           {TIERS.map(t => (
             <div
               key={t.name}
-              className={`bg-white rounded-[18px] p-7 flex flex-col gap-3.5 relative
+              className={`bg-white rounded-[18px] p-7 flex flex-col gap-3.5 relative transition-shadow hover:shadow-md
                 ${t.featured ? 'border-2 border-primary' : 'border border-border'}`}
             >
               {/* "Most popular" label */}
               {t.featured && (
-                <span className="absolute -top-3 end-6 bg-accent text-white font-cairo text-[11.5px] font-bold px-3 py-1 rounded-pill">
+                <span className="absolute -top-3 end-6 bg-accent text-white font-cairo text-[11.5px] font-bold px-3 py-1 rounded-full">
                   الأكثر شعبية
                 </span>
               )}
@@ -67,7 +87,7 @@ export default function LandingPricing() {
               <p className="font-cairo text-[13.5px] text-text-muted mb-3">{t.sub}</p>
 
               {/* Feature list */}
-              <div className="flex flex-col gap-2.5 py-4 border-t border-border mb-4">
+              <div className="flex flex-col gap-2.5 py-4 border-t border-border mb-4 flex-1">
                 {t.features.map((f, i) => (
                   <div key={i} className="flex items-center gap-2.5 font-cairo text-sm text-text">
                     <Icon name="check" size={16} strokeWidth={2.5} className="text-success flex-none" />
@@ -80,10 +100,16 @@ export default function LandingPricing() {
                 variant={t.ctaVariant}
                 size="lg"
                 className="w-full justify-center mt-auto"
-                onClick={() => navigate('/merchant/register')}
+                onClick={() => handleCta(t)}
               >
                 {t.cta}
               </Button>
+
+              {t.paid && (
+                <p className="font-cairo text-[11px] text-text-subtle text-center -mt-2">
+                  الدفع عبر محفظة Cherry · الكريمي · OneCash
+                </p>
+              )}
             </div>
           ))}
         </div>
