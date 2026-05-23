@@ -56,40 +56,56 @@ export default function OrdersPage() {
       {/* Filter bar */}
       <FilterBar orders={orders} filter={filter} setFilter={f => { setFilter(f); setPage(1) }} />
 
-      {/* Table */}
+      {/* Table — horizontal scroll on mobile */}
       <div className="bg-white border border-border rounded-xl overflow-hidden">
-        {/* Table header */}
-        <div className="grid grid-cols-[1.2fr_1.5fr_1fr_72px_1fr_auto] gap-3 px-4 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
-          <span>رقم الطلب</span>
-          <span>العميل</span>
-          <span>المبلغ</span>
-          <span>الوصل</span>
-          <span>الحالة</span>
-          <span>الإجراءات</span>
-        </div>
+        <div className="overflow-x-auto">
+          <div className="min-w-[640px]">
+            {/* Table header */}
+            <div className="grid grid-cols-[1.2fr_1.5fr_1fr_72px_1fr_auto] gap-3 px-4 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
+              <span>رقم الطلب</span>
+              <span>العميل</span>
+              <span>المبلغ</span>
+              <span>الوصل</span>
+              <span>الحالة</span>
+              <span>الإجراءات</span>
+            </div>
 
-        {/* Skeleton rows */}
-        {isLoading && (
-          <div className="flex flex-col divide-y divide-border">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonRow key={i} />
-            ))}
+            {/* Skeleton rows */}
+            {isLoading && (
+              <div className="flex flex-col divide-y divide-border">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <SkeletonRow key={i} />
+                ))}
+              </div>
+            )}
+
+            {/* Data rows */}
+            {!isLoading && (
+              <OrderRows
+                orders={orders}
+                filter={filter}
+                page={page}
+                onViewWasl={setWaslModal}
+                onReject={id => { setRejectModal({ orderId: id }); setRejectReason('') }}
+                navigate={navigate}
+                queryClient={queryClient}
+              />
+            )}
           </div>
-        )}
-
-        {/* Data rows */}
-        {!isLoading && (
-          <OrderRows
-            orders={orders}
-            filter={filter}
-            page={page}
-            onViewWasl={setWaslModal}
-            onReject={id => { setRejectModal({ orderId: id }); setRejectReason('') }}
-            navigate={navigate}
-            queryClient={queryClient}
-          />
-        )}
+        </div>
       </div>
+
+      {/* Modals */}
+      {waslModal && <WaslModal url={waslModal} onClose={() => setWaslModal(null)} />}
+      {rejectModal && (
+        <RejectModal
+          orderId={rejectModal.orderId}
+          reason={rejectReason}
+          setReason={setRejectReason}
+          onClose={() => setRejectModal(null)}
+          queryClient={queryClient}
+        />
+      )}
 
       {/* Pagination */}
       {!isLoading && (() => {
@@ -122,24 +138,11 @@ function SkeletonRow() {
       </div>
       <div className="h-3.5 bg-bg-soft rounded w-20" />
       <div className="w-11 h-11 bg-bg-soft rounded-lg" />
-      <div className="h-6 bg-bg-soft rounded-pill w-24" />
+      <div className="h-6 bg-bg-soft rounded-full w-24" />
       <div className="flex gap-2">
         <div className="h-7 w-16 bg-bg-soft rounded-lg" />
         <div className="h-7 w-16 bg-bg-soft rounded-lg" />
       </div>
-      {/* وصل modal */}
-      {waslModal && <WaslModal url={waslModal} onClose={() => setWaslModal(null)} />}
-
-      {/* Reject modal */}
-      {rejectModal && (
-        <RejectModal
-          orderId={rejectModal.orderId}
-          reason={rejectReason}
-          setReason={setRejectReason}
-          onClose={() => setRejectModal(null)}
-          queryClient={queryClient}
-        />
-      )}
     </div>
   )
 }

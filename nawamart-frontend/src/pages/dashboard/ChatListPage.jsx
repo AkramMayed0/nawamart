@@ -127,7 +127,7 @@ export default function ChatListPage() {
     : chats
 
   return (
-    <div className="flex flex-col h-[100dvh] overflow-hidden bg-bg font-cairo">
+    <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
 
       {/* ── Page header ── */}
       <header className="bg-white border-b border-border px-4 py-4 shrink-0">
