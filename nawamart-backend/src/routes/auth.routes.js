@@ -5,7 +5,9 @@ const {
   merchantLogin,
   customerRegister,
   customerLogin,
+  getMe,
 } = require('../controllers/auth.controller');
+const { verifyToken } = require('../middleware/verifyToken');
 
 // ─── Merchant Auth ────────────────────────────────────────────────────────────
 // POST /api/auth/merchant/register
@@ -20,5 +22,8 @@ router.post('/customer/register', customerRegister);
 
 // POST /api/auth/customer/login
 router.post('/customer/login', customerLogin);
+
+// GET /api/auth/me
+router.get('/me', verifyToken, getMe);
 
 module.exports = router;

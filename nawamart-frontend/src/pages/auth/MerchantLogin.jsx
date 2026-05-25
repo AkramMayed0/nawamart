@@ -55,8 +55,8 @@ export default function MerchantLogin() {
         password: fields.password,
       })
 
-      const { token, user } = res.data.data
-      login(token, user)
+      const { token, user, role } = res.data.data
+      login(token, { ...user, role })
       toast.success('أهلاً بعودتك! 👋')
       navigate('/dashboard', { replace: true })
     } catch (err) {

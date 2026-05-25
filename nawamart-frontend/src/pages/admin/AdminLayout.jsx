@@ -1,60 +1,47 @@
 import { useState } from 'react'
-import { Outlet }   from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { Menu, ShieldCheck } from 'lucide-react'
-import AdminSidebar from '@/components/admin/AdminSidebar'
 import AdminMobileDrawer from '@/components/admin/AdminMobileDrawer'
+import AdminSidebar from '@/components/admin/AdminSidebar'
 
 export default function AdminLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   return (
-    <div className="min-h-screen bg-slate-50 flex" dir="rtl">
-
-      {/* ── Desktop sidebar (hidden on mobile) ── */}
-      <div className="hidden md:flex flex-col w-60 shrink-0 sticky top-0 h-screen overflow-y-auto border-l border-slate-200 shadow-sm">
+    <div className="flex min-h-screen bg-bg" dir="rtl">
+      <div className="sticky top-0 hidden h-screen w-60 shrink-0 overflow-y-auto md:flex">
         <AdminSidebar />
       </div>
 
-      {/* ── Main area ── */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-
-        {/* ── Mobile top bar (visible only on mobile) ── */}
-        <header className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 shrink-0 z-30 shadow-sm">
-          {/* Brand name */}
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center shrink-0">
-              <ShieldCheck size={16} className="text-white" />
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="z-30 flex shrink-0 items-center justify-between border-b border-border bg-white px-4 py-3 md:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary">
+              <ShieldCheck size={17} />
             </div>
-            <span className="font-cairo font-extrabold text-slate-800 truncate">
-              لوحة الإدارة
+            <span className="truncate font-cairo text-sm font-extrabold text-text">
+              إدارة نوا مارت
             </span>
           </div>
 
-          {/* Hamburger */}
           <button
+            type="button"
             onClick={() => setDrawerOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-bg-soft text-text-muted transition-colors hover:bg-border hover:text-text"
             aria-label="فتح القائمة"
           >
             <Menu size={20} />
           </button>
         </header>
 
-        {/* ── Page content ── */}
-        <main className="flex-1 overflow-y-auto min-h-0 p-4 md:p-8">
-          <div className="max-w-6xl mx-auto">
+        <main className="min-h-0 flex-1 overflow-y-auto">
+          <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 md:px-8 md:py-8">
             <Outlet />
           </div>
         </main>
-
       </div>
 
-      {/* ── Mobile drawer overlay ── */}
-      <AdminMobileDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      />
-
+      <AdminMobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </div>
   )
 }

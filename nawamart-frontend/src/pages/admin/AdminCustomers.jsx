@@ -1,56 +1,93 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { ToggleLeft, ToggleRight } from 'lucide-react'
 import { getAdminCustomers, toggleCustomerActive } from '@/api/admin'
-import { SectionHeader, SearchInput, Table, ActiveBadge, ActionBtn } from '@/components/admin/AdminUI'
+import {
+  ActionButton,
+  ActiveBadge,
+  DataTable,
+  PageHeader,
+  SearchInput,
+  TableRow,
+  Toolbar,
+} from '@/components/admin/AdminUI'
+
+const CUSTOMER_COLUMNS = 'minmax(180px,1fr) minmax(220px,1.2fr) minmax(150px,.8fr) minmax(120px,.6fr) minmax(120px,.6fr)'
 
 export default function AdminCustomers() {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
+    return () => window.clearTimeout(timer)
+  }, [search])
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-customers', search],
-    queryFn:  () => getAdminCustomers({ search, limit: 50 }).then(r => r.data),
+    queryKey: ['admin-customers', debouncedSearch],
+    queryFn: () => getAdminCustomers({ search: debouncedSearch || undefined, limit: 50 }).then((response) => response.data),
     staleTime: 15_000,
   })
-  const customers = data?.data ?? []
 
-  const inv = () => queryClient.invalidateQueries({ queryKey: ['admin-customers'] })
+  const customers = data?.data ?? []
+  const total = data?.pagination?.total ?? customers.length
+
   const toggleMut = useMutation({
-    mutationFn: (id) => toggleCustomerActive(id),
-    onSuccess: (r) => { toast.success(r.data.message); inv() },
-    onError: (e) => toast.error(e?.response?.data?.message ?? 'فشل'),
+    mutationFn: toggleCustomerActive,
+    onSuccess: (response) => {
+      toast.success(response.data.message)
+      queryClient.invalidateQueries({ queryKey: ['admin-customers'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+    },
+    onError: (error) => toast.error(error?.message || 'فشل تحديث حالة العميل'),
   })
 
   return (
-    <div>
-      <SectionHeader title={`العملاء (${customers.length})`}>
-        <SearchInput value={search} onChange={setSearch} placeholder="بحث بالاسم أو البريد..." />
-      </SectionHeader>
+    <>
+      <PageHeader
+        title="العملاء"
+        subtitle="مراجعة حسابات العملاء وحالة الوصول إلى واجهة الشراء."
+      />
 
-      <Table
+      <Toolbar>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="بحث بالاسم أو البريد أو الهاتف..."
+        />
+        <p className="font-cairo text-sm font-semibold text-text-muted">
+          {total.toLocaleString('en-US')} عميل
+        </p>
+      </Toolbar>
+
+      <DataTable
+        columns={CUSTOMER_COLUMNS}
+        headers={['الاسم', 'البريد الإلكتروني', 'الهاتف', 'الحالة', 'الإجراء']}
         isLoading={isLoading}
         isEmpty={customers.length === 0}
-        emptyMsg="لا يوجد عملاء"
-        cols="grid-cols-[1fr_1.5fr_1fr_100px_auto]"
-        headers={['الاسم', 'البريد', 'الهاتف', 'الحالة', 'إجراء']}
+        emptyTitle="لا يوجد عملاء"
+        emptyMessage="جرّب تغيير كلمات البحث أو انتظر تسجيل عميل جديد."
+        minWidth="820px"
       >
-        {customers.map(c => (
-          <div key={c._id} className="grid grid-cols-[1fr_1.5fr_1fr_100px_auto] gap-4 px-5 py-4 items-center hover:bg-slate-50 transition-colors">
-            <p className="font-cairo font-semibold text-sm text-slate-800 truncate">{c.name}</p>
-            <p className="font-en text-sm text-slate-500 truncate">{c.email}</p>
-            <p className="font-en text-sm text-slate-500">{c.phone}</p>
-            <ActiveBadge isActive={c.isActive} />
-            <ActionBtn
-              color={c.isActive ? 'red' : 'green'}
-              onClick={() => toggleMut.mutate(c._id)}
+        {customers.map((customer) => (
+          <TableRow key={customer._id} columns={CUSTOMER_COLUMNS}>
+            <p className="truncate font-cairo text-sm font-bold text-text">{customer.name ?? '—'}</p>
+            <p className="truncate font-inter text-sm text-text-muted">{customer.email ?? '—'}</p>
+            <p className="font-inter text-sm text-text-muted">{customer.phone ?? '—'}</p>
+            <ActiveBadge isActive={customer.isActive} />
+            <ActionButton
+              tone={customer.isActive ? 'danger' : 'success'}
+              icon={customer.isActive ? ToggleLeft : ToggleRight}
+              onClick={() => toggleMut.mutate(customer._id)}
               loading={toggleMut.isPending}
             >
-              {c.isActive ? 'تعليق' : 'تفعيل'}
-            </ActionBtn>
-          </div>
+              {customer.isActive ? 'تعليق' : 'تفعيل'}
+            </ActionButton>
+          </TableRow>
         ))}
-      </Table>
-    </div>
+      </DataTable>
+    </>
   )
 }

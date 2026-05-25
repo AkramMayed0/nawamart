@@ -1,5 +1,11 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
+
+export function getProductPrice(product) {
+  const salePrice = Number(product?.salePrice)
+  const price = Number(product?.price) || 0
+  return salePrice > 0 && salePrice < price ? salePrice : price
+}
 
 export const useCartStore = create(
   persist(
@@ -77,7 +83,7 @@ export const useCartStore = create(
 
       get total() {
         return get().items.reduce(
-          (sum, i) => sum + i.product.price * i.quantity,
+          (sum, i) => sum + getProductPrice(i.product) * i.quantity,
           0
         )
       },
@@ -88,6 +94,7 @@ export const useCartStore = create(
     }),
     {
       name: 'nawamart-cart',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         items: state.items,
         storeSlug: state.storeSlug,

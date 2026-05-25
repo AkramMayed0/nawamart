@@ -1,4 +1,5 @@
 import Icon from '@/components/ui/Icon'
+import { resolveAssetUrl } from '@/utils/assets'
 
 export default function StoreHeader({ store }) {
   const isDigital = store.type === 'digital'
@@ -10,7 +11,7 @@ export default function StoreHeader({ store }) {
         {/* Logo */}
         {store.logo ? (
           <img
-            src={store.logo}
+            src={resolveAssetUrl(store.logo)}
             alt={store.name}
             className="w-20 h-20 rounded-2xl object-cover border border-border shrink-0"
           />

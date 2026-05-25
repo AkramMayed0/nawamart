@@ -14,6 +14,7 @@ import Button from '@/components/ui/Button'
 import { ProductRowSkeleton } from '@/components/ui/Skeleton'
 import ProductFormModal from '@/components/dashboard/ProductForm'
 import DeleteConfirm from '@/components/dashboard/DeleteConfirm'
+import { resolveAssetUrl } from '@/utils/assets'
 
 // ── Empty state ───────────────────────────────────────────────────────────
 function EmptyProducts({ onAdd }) {
@@ -38,7 +39,7 @@ function ProductRow({ product, onEdit, onDelete }) {
     <div className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0 hover:bg-bg transition-colors">
       <div className="w-12 h-12 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0">
         {product.images?.[0]
-          ? <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+          ? <img src={resolveAssetUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center"><Icon name="image" size={18} className="text-border-strong" /></div>
         }
       </div>

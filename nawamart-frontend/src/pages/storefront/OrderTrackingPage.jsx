@@ -2,6 +2,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getOrderById } from '@/api/orders'
 import Icon from '@/components/ui/Icon'
+import { resolveAssetUrl } from '@/utils/assets'
 
 export default function OrderTrackingPage() {
   const { slug, orderId } = useParams()
@@ -229,7 +230,7 @@ function OrderSummaryCard({ order }) {
           <div key={i} className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0 flex items-center justify-center">
               {item.productId?.images?.[0]
-                ? <img src={item.productId.images[0]} alt="" className="w-full h-full object-cover" />
+                ? <img src={resolveAssetUrl(item.productId.images[0])} alt="" className="w-full h-full object-cover" />
                 : <Icon name={isDigital ? 'bolt' : 'package'} size={16} className="text-text-subtle" />
               }
             </div>
@@ -279,7 +280,7 @@ function OrderSummaryCard({ order }) {
           <a href={order.waslUrl} target="_blank" rel="noopener noreferrer"
             className="w-16 h-16 rounded-lg border border-border overflow-hidden block hover:opacity-80 transition-opacity shrink-0"
           >
-            <img src={order.waslUrl} alt="وصل" className="w-full h-full object-cover" />
+            <img src={resolveAssetUrl(order.waslUrl)} alt="وصل" className="w-full h-full object-cover" />
           </a>
           <div>
             <p className="font-cairo font-semibold text-sm text-text">وصل الدفع</p>

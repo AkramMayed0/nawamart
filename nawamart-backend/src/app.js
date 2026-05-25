@@ -88,7 +88,12 @@ app.get('/api/health', (req, res) => {
 });
 
 // ─── API Routes ───────────────────────────────────────────────────────────────
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth/merchant/register', authLimiter);
+app.use('/api/auth/merchant/login', authLimiter);
+app.use('/api/auth/customer/register', authLimiter);
+app.use('/api/auth/customer/login', authLimiter);
+app.use('/api/admin/login', authLimiter);
+app.use('/api/auth', authRoutes);
 const storeRoutes = require('./routes/store.routes');
 const productRoutes = require('./routes/product.routes');
 const orderRoutes = require('./routes/order.routes');

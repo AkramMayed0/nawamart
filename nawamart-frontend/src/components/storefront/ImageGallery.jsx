@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import clsx from 'clsx'
 import Icon from '@/components/ui/Icon'
+import { resolveAssetUrl } from '@/utils/assets'
 
 export default function ImageGallery({ images = [] }) {
   const [active, setActive] = useState(0)
@@ -18,7 +19,7 @@ export default function ImageGallery({ images = [] }) {
       {/* Main image */}
       <div className="aspect-square rounded-xl overflow-hidden border border-border bg-bg-soft">
         <img
-          src={images[active]}
+          src={resolveAssetUrl(images[active])}
           alt=""
           className="w-full h-full object-cover transition-opacity duration-200"
         />
@@ -38,7 +39,7 @@ export default function ImageGallery({ images = [] }) {
                   : 'border-border hover:border-border-strong'
               )}
             >
-              <img src={src} alt="" className="w-full h-full object-cover" />
+              <img src={resolveAssetUrl(src)} alt="" className="w-full h-full object-cover" />
             </button>
           ))}
         </div>

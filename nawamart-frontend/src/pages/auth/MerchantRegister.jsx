@@ -74,8 +74,8 @@ export default function MerchantRegister() {
         password: fields.password,
       })
 
-      const { token, user } = res.data.data
-      login(token, user)
+      const { token, user, role } = res.data.data
+      login(token, { ...user, role })
       toast.success('تم إنشاء الحساب بنجاح! 🎉')
       navigate('/onboarding', { replace: true })
     } catch (err) {

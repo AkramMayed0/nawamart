@@ -7,6 +7,7 @@ const createStorage = (folderName) => {
   return multer.diskStorage({
     destination: (req, file, cb) => {
       const uploadPath = path.join(__dirname, '../../uploads', folderName);
+      fs.mkdirSync(uploadPath, { recursive: true });
       cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
@@ -23,7 +24,12 @@ const mapToUrl = (folderName) => (req, res, next) => {
   if (req.file) {
     req.file.path = baseUrl + req.file.filename;
   }
-  if (req.files) {
+  if (Array.isArray(req.files)) {
+    req.files = req.files.map(file => {
+      file.path = baseUrl + file.filename;
+      return file;
+    });
+  } else if (req.files) {
     for (const key in req.files) {
       req.files[key] = req.files[key].map(file => {
         file.path = baseUrl + file.filename;

@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Merchant = require('../models/Merchant');
 const Customer = require('../models/Customer');
+const Store = require('../models/Store');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -18,12 +19,14 @@ const signToken = (id, role) => {
  */
 const sendAuthResponse = (res, statusCode, user, role, message) => {
   const token = signToken(user._id, role);
+  const safeUser = user.toSafeJSON ? user.toSafeJSON() : user;
+
   return res.status(statusCode).json({
     success: true,
     message,
     data: {
       token,
-      user: user.toSafeJSON ? user.toSafeJSON() : user,
+      user: { ...safeUser, role },
       role,
     },
   });
@@ -215,9 +218,39 @@ const customerLogin = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/auth/me
+ * Validate the current merchant/customer token and return fresh session data.
+ */
+const getMe = async (req, res, next) => {
+  try {
+    let stores = [];
+
+    if (req.userRole === 'merchant') {
+      stores = await Store.find({ merchant: req.user._id }).sort({ createdAt: -1 });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'تم جلب بيانات الجلسة بنجاح',
+      data: {
+        user: {
+          ...(req.user.toSafeJSON ? req.user.toSafeJSON() : req.user),
+          role: req.userRole,
+        },
+        role: req.userRole,
+        stores,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   merchantRegister,
   merchantLogin,
   customerRegister,
   customerLogin,
+  getMe,
 };

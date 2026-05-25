@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+function normalizeStore(store) {
+  return Array.isArray(store) ? store[0] ?? null : store ?? null
+}
+
 export const useAuthStore = create(
   persist(
     (set, get) => ({
@@ -13,7 +17,7 @@ export const useAuthStore = create(
       // Actions
       setToken: (token) => set({ token }),
       setUser: (user) => set({ user }),
-      setStore: (store) => set({ store }),
+      setStore: (store) => set({ store: normalizeStore(store) }),
       setLoading: (isLoading) => set({ isLoading }),
 
       login: (token, user) => set({ token, user }),
@@ -21,7 +25,7 @@ export const useAuthStore = create(
       logout: () => set({ token: null, user: null, store: null }),
 
       updateStore: (storeData) => set((state) => ({
-        store: { ...state.store, ...storeData },
+        store: { ...normalizeStore(state.store), ...storeData },
       })),
 
       // Computed helpers

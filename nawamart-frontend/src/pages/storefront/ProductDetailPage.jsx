@@ -1,9 +1,9 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import api from '@/api/axios'
+import { getProductById } from '@/api/products'
+import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
-import { useAuthStore } from '@/store/authStore'
 import NotFound from '@/components/ui/NotFound'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import ImageGallery from '@/components/storefront/ImageGallery'
@@ -14,13 +14,18 @@ export default function ProductDetailPage() {
   const { slug, productId } = useParams()
   const navigate  = useNavigate()
   const addItem   = useCartStore(s => s.addItem)
-  const storeRaw  = useAuthStore(s => s.store)
-  const store     = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
+
+  const { data: store } = useQuery({
+    queryKey: ['store', slug],
+    queryFn: () => getStoreBySlug(slug).then(r => r.data.data),
+    staleTime: 1000 * 60 * 5,
+    retry: false,
+  })
 
   // ── Fetch product ────────────────────────────────────────────────────
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['product', productId],
-    queryFn: () => api.get(`/products/${productId}`).then(r => r.data.data),
+    queryFn: () => getProductById(productId).then(r => r.data.data),
     retry: false,
   })
 

@@ -34,7 +34,7 @@ const orderSchema = new mongoose.Schema(
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
-      required: [true, 'العميل مطلوب'],
+      default: null,
     },
     items: {
       type: [orderItemSchema],
@@ -50,6 +50,7 @@ const orderSchema = new mongoose.Schema(
     },
     // Delivery address snapshot
     deliveryAddress: {
+      name:     { type: String, required: true },
       city:     { type: String, required: true },
       district: { type: String, default: null },
       details:  { type: String, default: null },

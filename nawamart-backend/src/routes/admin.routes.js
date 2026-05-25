@@ -90,6 +90,18 @@ router.post('/seed', asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 router.use(verifyAdmin);
 
+// GET /api/admin/me
+router.get('/me', (req, res) => {
+  const admin = req.user.toObject ? req.user.toObject() : req.user;
+  delete admin.password;
+  delete admin.__v;
+
+  return apiResponse(res, {
+    message: 'تم جلب بيانات المشرف بنجاح',
+    data: { admin },
+  });
+});
+
 // ── Platform Stats ────────────────────────────────────────────────────────────
 // GET /api/admin/stats
 router.get('/stats', getStats);

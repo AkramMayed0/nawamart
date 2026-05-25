@@ -1,112 +1,124 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Lock, Mail, ShieldCheck } from 'lucide-react'
 import { adminLogin } from '@/api/auth'
 import { useAdminStore } from '@/store/adminStore'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
-  const login    = useAdminStore(s => s.login)
+  const login = useAdminStore((state) => state.login)
 
-  const [email,    setEmail]    = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading,  setLoading]  = useState(false)
+  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSubmit(event) {
+    event.preventDefault()
+
     if (!email.trim() || !password) {
       toast.error('يرجى إدخال البريد الإلكتروني وكلمة المرور')
       return
     }
 
     setLoading(true)
+
     try {
-      const res = await adminLogin({ email: email.trim().toLowerCase(), password })
-      const { token, admin } = res.data.data
+      const response = await adminLogin({
+        email: email.trim().toLowerCase(),
+        password,
+      })
+      const { token, admin } = response.data.data
+
       login(token, admin)
-      toast.success('أهلاً بك في لوحة الإدارة 🛡️')
+      toast.success('تم تسجيل الدخول بنجاح')
       navigate('/admin/dashboard', { replace: true })
-    } catch (err) {
-      // axios interceptor normalizes errors to { status, message, ... }
-      const msg = err?.message || err?.data?.message || 'بيانات الدخول غير صحيحة'
-      toast.error(msg)
+    } catch (error) {
+      toast.error(error?.message || 'بيانات الدخول غير صحيحة')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4" dir="rtl">
-
-      {/* Glow effect */}
-      <div className="absolute w-96 h-96 bg-primary/20 rounded-full blur-3xl pointer-events-none -top-10 -right-10" />
-
-      <div className="relative w-full max-w-md">
-
-        {/* Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-2xl">
-
-          {/* Icon + Title */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
-              <span className="text-3xl">🛡️</span>
+    <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10" dir="rtl">
+      <div className="grid w-full max-w-5xl overflow-hidden rounded-lg border border-border bg-white shadow-card md:grid-cols-[1fr_420px]">
+        <section className="hidden bg-primary p-10 text-white md:flex md:flex-col md:justify-between">
+          <div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10">
+              <ShieldCheck size={24} />
             </div>
-            <h1 className="font-cairo font-extrabold text-2xl text-white">لوحة الإدارة</h1>
-            <p className="font-cairo text-sm text-white/50 mt-1">دخول مخصص للمشرفين فقط</p>
+            <h1 className="mt-8 font-cairo text-3xl font-extrabold leading-tight">
+              مركز إدارة نوا مارت
+            </h1>
+            <p className="mt-3 max-w-md font-cairo text-sm leading-7 text-white/75">
+              مساحة مخصصة لمراجعة الاشتراكات، متابعة المتاجر، وحماية تجربة التجار والعملاء.
+            </p>
+          </div>
+          <p className="font-cairo text-xs text-white/55">
+            صلاحيات المشرفين فقط
+          </p>
+        </section>
+
+        <section className="p-6 sm:p-8">
+          <div className="mb-8 md:hidden">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-lg bg-primary-50 text-primary">
+              <ShieldCheck size={22} />
+            </div>
+            <h1 className="font-cairo text-2xl font-extrabold text-text">إدارة نوا مارت</h1>
+            <p className="mt-1 font-cairo text-sm text-text-muted">دخول مخصص للمشرفين فقط</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-cairo text-sm font-semibold text-white/70">البريد الإلكتروني</label>
-              <input
-                id="admin-email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="admin@nawamart.com"
-                autoComplete="email"
-                disabled={loading}
-                className="w-full font-en px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-white/30 outline-none focus:border-primary/60 focus:bg-white/15 transition-all"
-              />
-            </div>
+          <div className="hidden md:block">
+            <h2 className="font-cairo text-2xl font-extrabold text-text">تسجيل دخول المشرف</h2>
+            <p className="mt-1 font-cairo text-sm text-text-muted">استخدم حساب الإدارة للوصول إلى لوحة التحكم.</p>
+          </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="font-cairo text-sm font-semibold text-white/70">كلمة المرور</label>
-              <input
-                id="admin-password"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                disabled={loading}
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/15 text-white placeholder:text-white/30 outline-none focus:border-primary/60 focus:bg-white/15 transition-all"
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
+            <label className="block">
+              <span className="mb-1.5 block font-cairo text-sm font-bold text-text">البريد الإلكتروني</span>
+              <span className="relative block">
+                <Mail size={17} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle" />
+                <input
+                  id="admin-email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="admin@nawamart.com"
+                  autoComplete="email"
+                  disabled={loading}
+                  className="h-11 w-full rounded-lg border border-border bg-white pr-10 pl-3 font-inter text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-primary disabled:bg-bg-soft"
+                />
+              </span>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block font-cairo text-sm font-bold text-text">كلمة المرور</span>
+              <span className="relative block">
+                <Lock size={17} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle" />
+                <input
+                  id="admin-password"
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                  disabled={loading}
+                  className="h-11 w-full rounded-lg border border-border bg-white pr-10 pl-3 font-cairo text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-primary disabled:bg-bg-soft"
+                />
+              </span>
+            </label>
 
             <button
               id="admin-login-btn"
               type="submit"
               disabled={loading}
-              className="mt-2 w-full py-3.5 rounded-xl bg-primary font-cairo font-bold text-white text-base hover:opacity-90 active:scale-[.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/30"
+              className="mt-2 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 font-cairo text-sm font-extrabold text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"/>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                  </svg>
-                  جاري الدخول…
-                </span>
-              ) : 'دخول'}
+              {loading ? 'جاري الدخول...' : 'دخول لوحة الإدارة'}
             </button>
           </form>
-
-          <p className="font-cairo text-xs text-white/25 text-center mt-6">
-            © {new Date().getFullYear()} نوامارت — مخصص للمشرفين
-          </p>
-        </div>
+        </section>
       </div>
     </div>
   )

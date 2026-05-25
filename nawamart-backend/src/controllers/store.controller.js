@@ -2,6 +2,28 @@ const Store = require('../models/Store');
 const Merchant = require('../models/Merchant');
 const { apiResponse, asyncHandler } = require('../utils/helpers');
 
+function parsePaymentAccounts(value) {
+  if (value == null) return undefined;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch (e) {
+      return undefined;
+    }
+  }
+  return value;
+}
+
+function normalizePaymentAccounts(existing = {}, incoming) {
+  const parsed = parsePaymentAccounts(incoming);
+  if (parsed === undefined) return undefined;
+  return {
+    cherry: parsed.cherry ?? existing.cherry ?? null,
+    kuraimi: parsed.kuraimi ?? existing.kuraimi ?? null,
+    oneCash: parsed.oneCash ?? existing.oneCash ?? null,
+  };
+}
+
 /**
  * POST /api/stores
  * Create a new store for the logged-in merchant
@@ -9,12 +31,12 @@ const { apiResponse, asyncHandler } = require('../utils/helpers');
 const createStore = asyncHandler(async (req, res) => {
   const { name, type, description, category, contactPhone, paymentAccounts } = req.body;
 
-  // Check if merchant already has too many stores (optional logic, let's limit to 5 for now)
+  // Each merchant owns one public shop.
   const storeCount = await Store.countDocuments({ merchant: req.user._id });
-  if (storeCount >= 5) {
+  if (storeCount >= 1) {
     return res.status(400).json({
       success: false,
-      message: 'لقد وصلت للحد الأقصى المسموح به من المتاجر',
+      message: 'لديك متجر بالفعل — يمكن لكل تاجر امتلاك متجر واحد فقط',
       data: null,
     });
   }
@@ -28,14 +50,7 @@ const createStore = asyncHandler(async (req, res) => {
   }
 
   // Parse paymentAccounts if sent as JSON string (common with multipart/form-data)
-  let parsedPaymentAccounts = paymentAccounts;
-  if (typeof paymentAccounts === 'string') {
-    try {
-      parsedPaymentAccounts = JSON.parse(paymentAccounts);
-    } catch (e) {
-      // ignore
-    }
-  }
+  const parsedPaymentAccounts = normalizePaymentAccounts({}, paymentAccounts);
 
   const store = await Store.create({
     merchant: req.user._id,
@@ -43,8 +58,8 @@ const createStore = asyncHandler(async (req, res) => {
     type: type || 'physical',
     description,
     category,
-    contactPhone,
-    paymentAccounts: parsedPaymentAccounts,
+    contactPhone: contactPhone?.trim() || null,
+    paymentAccounts: parsedPaymentAccounts ?? undefined,
     logo,
     banner,
   });
@@ -123,19 +138,12 @@ const updateStore = asyncHandler(async (req, res) => {
     if (req.files.banner) banner = req.files.banner[0].path;
   }
 
-  let parsedPaymentAccounts = paymentAccounts;
-  if (typeof paymentAccounts === 'string') {
-    try {
-      parsedPaymentAccounts = JSON.parse(paymentAccounts);
-    } catch (e) {
-      // ignore
-    }
-  }
+  const parsedPaymentAccounts = normalizePaymentAccounts(store.paymentAccounts, paymentAccounts);
 
   store.name = name || store.name;
   if (description !== undefined) store.description = description;
   if (category !== undefined) store.category = category;
-  if (contactPhone !== undefined) store.contactPhone = contactPhone;
+  if (contactPhone !== undefined) store.contactPhone = contactPhone?.trim() || null;
   if (parsedPaymentAccounts !== undefined) store.paymentAccounts = parsedPaymentAccounts;
   if (isActive !== undefined) store.isActive = isActive;
   store.logo = logo;

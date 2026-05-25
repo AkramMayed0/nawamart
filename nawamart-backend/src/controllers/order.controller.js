@@ -23,8 +23,8 @@ const createOrder = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'السلة فارغة', data: null });
   }
 
-  if (!deliveryAddress?.city || !deliveryAddress?.phone) {
-    return res.status(400).json({ success: false, message: 'عنوان التسليم ورقم الهاتف مطلوبان', data: null });
+  if (!deliveryAddress?.name || !deliveryAddress?.city || !deliveryAddress?.phone) {
+    return res.status(400).json({ success: false, message: 'اسم العميل والمدينة ورقم الهاتف مطلوبة', data: null });
   }
 
   const store = await Store.findById(storeId);
@@ -81,7 +81,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const initialStatus = paymentMethod === 'cash' ? 'pending' : 'payment_under_review';
 
   const order = await Order.create({
-    customer: req.user._id,
+    customer: req.user?._id ?? null,
     merchant: store.merchant,
     store:    store._id,
     items:    processedItems,
@@ -145,8 +145,12 @@ const getOrderById = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'الطلب غير موجود', data: null });
   }
 
+  if (!req.user) {
+    return apiResponse(res, { message: 'تم جلب الطلب بنجاح', data: order });
+  }
+
   const userId = req.user._id.toString();
-  const isCustomer = req.userRole === 'customer' && order.customer._id?.toString() === userId;
+  const isCustomer = req.userRole === 'customer' && order.customer?._id?.toString() === userId;
   const isMerchant = req.userRole === 'merchant' && order.merchant._id?.toString() === userId;
 
   if (!isCustomer && !isMerchant) {

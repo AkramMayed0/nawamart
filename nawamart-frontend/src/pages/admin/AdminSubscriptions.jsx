@@ -1,110 +1,205 @@
 import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { getAdminSubscriptions, approveSubscription, rejectSubscription } from '@/api/admin'
-import { SectionHeader, FilterPills, Table, Badge, ActionBtn, Modal } from '@/components/admin/AdminUI'
+import { Ban, Check, Eye, Receipt } from 'lucide-react'
+import {
+  approveSubscription,
+  getAdminSubscriptions,
+  rejectSubscription,
+} from '@/api/admin'
+import {
+  ActionButton,
+  DataTable,
+  FilterPills,
+  formatDate,
+  Modal,
+  PageHeader,
+  StatusBadge,
+  TableRow,
+  Toolbar,
+} from '@/components/admin/AdminUI'
 
-const SUB_STATUS = {
-  pending:  { label: 'بانتظار المراجعة', cls: 'bg-yellow-100 text-yellow-700' },
-  approved: { label: 'مفعّل',            cls: 'bg-green-100 text-green-700'   },
-  rejected: { label: 'مرفوض',           cls: 'bg-red-100 text-red-700'      },
+const SUBSCRIPTION_COLUMNS = 'minmax(180px,1.1fr) minmax(220px,1.3fr) minmax(110px,.7fr) minmax(130px,.8fr) minmax(130px,.8fr) minmax(170px,1fr)'
+
+const STATUS = {
+  pending: { label: 'بانتظار المراجعة', tone: 'warning' },
+  approved: { label: 'مفعل', tone: 'success' },
+  rejected: { label: 'مرفوض', tone: 'danger' },
 }
 
-const PLAN = { pro: 'Pro ⭐', business: 'Business 💎' }
+const PLAN_LABEL = {
+  pro: 'Pro',
+  business: 'Business',
+}
 
 export default function AdminSubscriptions() {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState('all')
-  const [rejectModal, setRejectModal] = useState(null)
+  const [rejectTarget, setRejectTarget] = useState(null)
   const [rejectReason, setRejectReason] = useState('')
 
-  const { data: subs = [], isLoading } = useQuery({
+  const { data: subscriptions = [], isLoading } = useQuery({
     queryKey: ['admin-subs', filter],
-    queryFn:  () => getAdminSubscriptions(filter).then(r => r.data.data),
+    queryFn: () => getAdminSubscriptions(filter).then((response) => response.data.data ?? []),
     staleTime: 15_000,
   })
 
-  const inv = () => queryClient.invalidateQueries({ queryKey: ['admin-subs'] })
+  function refreshSubscriptions() {
+    queryClient.invalidateQueries({ queryKey: ['admin-subs'] })
+    queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+  }
 
   const approveMut = useMutation({
-    mutationFn: (id) => approveSubscription(id),
-    onSuccess: () => { toast.success('تم تفعيل الاشتراك ✓'); inv() },
-    onError: (e) => toast.error(e?.response?.data?.message ?? 'فشل التفعيل'),
+    mutationFn: approveSubscription,
+    onSuccess: () => {
+      toast.success('تم تفعيل الاشتراك')
+      refreshSubscriptions()
+    },
+    onError: (error) => toast.error(error?.message || 'فشل تفعيل الاشتراك'),
   })
 
   const rejectMut = useMutation({
     mutationFn: ({ id, reason }) => rejectSubscription(id, reason),
-    onSuccess: () => { toast.success('تم رفض الاشتراك'); inv(); setRejectModal(null); setRejectReason('') },
-    onError: (e) => toast.error(e?.response?.data?.message ?? 'فشل الرفض'),
+    onSuccess: () => {
+      toast.success('تم رفض الاشتراك')
+      refreshSubscriptions()
+      setRejectTarget(null)
+      setRejectReason('')
+    },
+    onError: (error) => toast.error(error?.message || 'فشل رفض الاشتراك'),
   })
 
   return (
-    <div>
-      <SectionHeader title="طلبات الاشتراك">
+    <>
+      <PageHeader
+        title="طلبات الاشتراك"
+        subtitle="مراجعة إيصالات الدفع وتفعيل خطط المتاجر بطريقة واضحة وقابلة للتتبع."
+      />
+
+      <Toolbar>
         <FilterPills
           options={[
             { id: 'all', label: 'الكل' },
-            { id: 'pending', label: '⏳ معلق' },
-            { id: 'approved', label: '✅ مفعّل' },
-            { id: 'rejected', label: '❌ مرفوض' },
+            { id: 'pending', label: 'معلق' },
+            { id: 'approved', label: 'مفعل' },
+            { id: 'rejected', label: 'مرفوض' },
           ]}
           value={filter}
           onChange={setFilter}
         />
-      </SectionHeader>
+      </Toolbar>
 
-      <Table
+      <DataTable
+        columns={SUBSCRIPTION_COLUMNS}
+        headers={['التاجر', 'المتجر', 'الخطة', 'الإيصال', 'الحالة', 'الإجراءات']}
         isLoading={isLoading}
-        isEmpty={subs.length === 0}
-        emptyMsg="لا توجد طلبات اشتراك"
-        cols="grid-cols-[1fr_1.5fr_80px_100px_130px_auto]"
-        headers={['التاجر', 'المتجر', 'الخطة', 'الوصل', 'الحالة', 'الإجراءات']}
+        isEmpty={subscriptions.length === 0}
+        emptyTitle="لا توجد طلبات اشتراك"
+        emptyMessage="ستظهر طلبات الترقية الجديدة هنا بعد رفع إيصال الدفع من لوحة التاجر."
+        minWidth="960px"
       >
-        {subs.map(sub => (
-          <div key={sub._id} className="grid grid-cols-[1fr_1.5fr_80px_100px_130px_auto] gap-4 px-5 py-4 items-center hover:bg-slate-50 transition-colors">
-            <div>
-              <p className="font-cairo font-semibold text-sm text-slate-800 truncate">{sub.merchant?.name ?? '—'}</p>
-              <p className="font-en text-xs text-slate-400 truncate">{sub.merchant?.email}</p>
-            </div>
-            <div>
-              <p className="font-cairo text-sm text-slate-700 truncate">{sub.store?.name ?? '—'}</p>
-              <p className="font-en text-xs text-slate-400">/{sub.store?.slug}</p>
-            </div>
-            <span className="font-cairo font-bold text-xs px-2 py-1 rounded-lg bg-slate-900 text-white text-center">
-              {PLAN[sub.requestedPlan] ?? sub.requestedPlan}
-            </span>
-            {sub.waslUrl
-              ? <a href={sub.waslUrl} target="_blank" rel="noopener noreferrer" className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 block hover:opacity-75 transition-opacity shrink-0"><img src={sub.waslUrl} alt="وصل" className="w-full h-full object-cover" /></a>
-              : <span className="text-slate-300 text-xs font-cairo">لا يوجد</span>
-            }
-            <Badge map={SUB_STATUS} status={sub.status} />
-            <div className="flex items-center gap-2">
-              {sub.status === 'pending' && <>
-                <ActionBtn color="green" onClick={() => approveMut.mutate(sub._id)} loading={approveMut.isPending}>تفعيل</ActionBtn>
-                <ActionBtn color="red"   onClick={() => { setRejectModal(sub._id); setRejectReason('') }}>رفض</ActionBtn>
-              </>}
-              {sub.status !== 'pending' && <span className="text-slate-300 text-sm">—</span>}
-            </div>
-          </div>
-        ))}
-      </Table>
+        {subscriptions.map((subscription) => {
+          const status = STATUS[subscription.status] ?? { label: subscription.status, tone: 'neutral' }
 
-      {rejectModal && (
-        <Modal title="رفض طلب الاشتراك" onClose={() => setRejectModal(null)}>
-          <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="سبب الرفض..." rows={3}
-            className="w-full font-cairo text-sm px-3.5 py-2.5 rounded-lg border border-slate-200 outline-none focus:border-red-400 resize-none transition-colors" />
-          <div className="flex justify-end gap-2 mt-4">
-            <button onClick={() => setRejectModal(null)} className="font-cairo text-sm px-4 py-2 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50">إلغاء</button>
-            <button
-              onClick={() => rejectMut.mutate({ id: rejectModal, reason: rejectReason })}
-              disabled={!rejectReason.trim() || rejectMut.isPending}
-              className="font-cairo font-bold text-sm px-4 py-2 rounded-lg bg-red-600 text-white hover:opacity-90 disabled:opacity-50"
-            >
-              {rejectMut.isPending ? 'جاري…' : 'تأكيد الرفض'}
-            </button>
-          </div>
+          return (
+            <TableRow key={subscription._id} columns={SUBSCRIPTION_COLUMNS}>
+              <div className="min-w-0">
+                <p className="truncate font-cairo text-sm font-bold text-text">{subscription.merchant?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs text-text-subtle">{subscription.merchant?.email ?? '—'}</p>
+              </div>
+
+              <div className="min-w-0">
+                <p className="truncate font-cairo text-sm font-semibold text-text">{subscription.store?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs text-text-subtle">/{subscription.store?.slug ?? 'store'}</p>
+              </div>
+
+              <StatusBadge label={PLAN_LABEL[subscription.requestedPlan] ?? subscription.requestedPlan} tone="primary" />
+
+              <div className="flex items-center gap-2">
+                {subscription.waslUrl ? (
+                  <a
+                    href={subscription.waslUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-8 items-center justify-center gap-1.5 rounded bg-bg-soft px-3 font-cairo text-xs font-bold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
+                  >
+                    <Eye size={14} />
+                    عرض
+                  </a>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 font-cairo text-xs text-text-subtle">
+                    <Receipt size={14} />
+                    غير متوفر
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <StatusBadge label={status.label} tone={status.tone} />
+                <p className="mt-1 font-cairo text-[11px] text-text-subtle">{formatDate(subscription.createdAt)}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                {subscription.status === 'pending' ? (
+                  <>
+                    <ActionButton
+                      tone="success"
+                      icon={Check}
+                      onClick={() => approveMut.mutate(subscription._id)}
+                      loading={approveMut.isPending}
+                    >
+                      تفعيل
+                    </ActionButton>
+                    <ActionButton
+                      tone="danger"
+                      icon={Ban}
+                      onClick={() => {
+                        setRejectTarget(subscription)
+                        setRejectReason('')
+                      }}
+                    >
+                      رفض
+                    </ActionButton>
+                  </>
+                ) : (
+                  <span className="font-cairo text-xs text-text-subtle">تمت المراجعة</span>
+                )}
+              </div>
+            </TableRow>
+          )
+        })}
+      </DataTable>
+
+      {rejectTarget && (
+        <Modal
+          title="رفض طلب الاشتراك"
+          description={`سيتم حفظ سبب الرفض لطلب متجر ${rejectTarget.store?.name ?? ''}.`}
+          onClose={() => setRejectTarget(null)}
+          footer={
+            <>
+              <ActionButton tone="neutral" onClick={() => setRejectTarget(null)}>
+                إلغاء
+              </ActionButton>
+              <ActionButton
+                tone="danger"
+                onClick={() => rejectMut.mutate({ id: rejectTarget._id, reason: rejectReason.trim() })}
+                loading={rejectMut.isPending}
+                disabled={!rejectReason.trim()}
+              >
+                تأكيد الرفض
+              </ActionButton>
+            </>
+          }
+        >
+          <textarea
+            value={rejectReason}
+            onChange={(event) => setRejectReason(event.target.value)}
+            placeholder="اكتب سبب الرفض..."
+            rows={4}
+            className="w-full resize-none rounded-lg border border-border px-3.5 py-2.5 font-cairo text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-danger"
+          />
         </Modal>
       )}
-    </div>
+    </>
   )
 }
