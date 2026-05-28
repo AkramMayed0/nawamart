@@ -7,6 +7,7 @@ import {
   getAdminSubscriptions,
   rejectSubscription,
 } from '@/api/admin'
+import usePageTitle from '@/hooks/usePageTitle'
 import {
   ActionButton,
   DataTable,
@@ -33,6 +34,7 @@ const PLAN_LABEL = {
 }
 
 export default function AdminSubscriptions() {
+  usePageTitle('طلبات الاشتراك')
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState('all')
   const [rejectTarget, setRejectTarget] = useState(null)

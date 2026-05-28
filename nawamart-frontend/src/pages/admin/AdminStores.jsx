@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { Save, ToggleLeft, ToggleRight } from 'lucide-react'
+import { Clock, Save, ToggleLeft, ToggleRight } from 'lucide-react'
 import { getAdminStores, setStorePlan, toggleStoreActive } from '@/api/admin'
+import usePageTitle from '@/hooks/usePageTitle'
 import {
   ActionButton,
   ActiveBadge,
@@ -26,6 +27,7 @@ const PLAN_META = {
 }
 
 export default function AdminStores() {
+  usePageTitle('المتاجر')
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -33,6 +35,8 @@ export default function AdminStores() {
   const [planModal, setPlanModal] = useState(null)
   const [newPlan, setNewPlan] = useState('free')
   const [newDays, setNewDays] = useState(30)
+  const [suspendModal, setSuspendModal] = useState(null)
+  const [suspendDays, setSuspendDays] = useState(7)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
@@ -59,13 +63,22 @@ export default function AdminStores() {
   }
 
   const toggleMut = useMutation({
-    mutationFn: toggleStoreActive,
+    mutationFn: ({ id, days }) => toggleStoreActive(id, days),
     onSuccess: (response) => {
       toast.success(response.data.message)
       refreshStores()
+      setSuspendModal(null)
     },
     onError: (error) => toast.error(error?.message || 'فشل تحديث حالة المتجر'),
   })
+
+  function handleToggle(store) {
+    if (store.isActive) {
+      setSuspendModal(store)
+    } else {
+      toggleMut.mutate({ id: store._id })
+    }
+  }
 
   const planMut = useMutation({
     mutationFn: ({ id, plan, days }) => setStorePlan(id, plan, days),
@@ -146,7 +159,7 @@ export default function AdminStores() {
                 <ActionButton
                   tone={store.isActive ? 'danger' : 'success'}
                   icon={store.isActive ? ToggleLeft : ToggleRight}
-                  onClick={() => toggleMut.mutate(store._id)}
+                  onClick={() => handleToggle(store)}
                   loading={toggleMut.isPending}
                 >
                   {store.isActive ? 'إيقاف' : 'تفعيل'}
@@ -156,6 +169,65 @@ export default function AdminStores() {
           )
         })}
       </DataTable>
+
+      {suspendModal && (
+        <Modal
+          title="إيقاف المتجر"
+          description={`إيقاف متجر ${suspendModal.name}`}
+          onClose={() => setSuspendModal(null)}
+          footer={
+            <>
+              <ActionButton tone="neutral" onClick={() => setSuspendModal(null)}>
+                إلغاء
+              </ActionButton>
+              <ActionButton
+                tone="danger"
+                icon={Clock}
+                onClick={() => toggleMut.mutate({ id: suspendModal._id, days: suspendDays })}
+                loading={toggleMut.isPending}
+              >
+                إيقاف
+              </ActionButton>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="suspendType"
+                checked={suspendDays === 0}
+                onChange={() => setSuspendDays(0)}
+                className="w-4 h-4 text-primary"
+              />
+              <span className="font-cairo text-sm text-text">إيقاف دائم</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="suspendType"
+                checked={suspendDays > 0}
+                onChange={() => setSuspendDays(7)}
+                className="w-4 h-4 text-primary"
+              />
+              <span className="font-cairo text-sm text-text">إيقاف لمدة</span>
+            </label>
+            {suspendDays > 0 && (
+              <div className="flex items-center gap-2 mr-6">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={suspendDays}
+                  onChange={(e) => setSuspendDays(Number(e.target.value))}
+                  className="h-9 w-20 rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none focus:border-primary"
+                />
+                <span className="font-cairo text-sm text-text-muted">يوم</span>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
 
       {planModal && (
         <Modal

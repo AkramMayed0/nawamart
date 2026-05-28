@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Heart, ShoppingCart, Star } from 'lucide-react'
+import { Heart, ShoppingCart } from 'lucide-react'
 import { getProductPrice, useCartStore } from '@/store/cartStore'
 import { resolveAssetUrl } from '@/utils/assets'
 
@@ -78,13 +78,6 @@ export default function ProductCard({ product, featured = false }) {
         <Link to={productUrl} className="line-clamp-2 min-h-[42px] font-cairo text-sm font-bold leading-5 text-text hover:text-primary">
           {product.name}
         </Link>
-
-        <div className="mt-2 flex items-center gap-1 text-accent">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Star key={index} size={12} fill="currentColor" strokeWidth={0} />
-          ))}
-          <span className="mr-1 font-inter text-[11px] font-bold text-text-subtle">(4.8)</span>
-        </div>
 
         <div className="mt-auto pt-3">
           <div className="mb-2 flex items-end justify-between gap-2">

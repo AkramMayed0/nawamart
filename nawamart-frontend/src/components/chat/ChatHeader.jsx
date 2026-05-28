@@ -13,9 +13,10 @@ import { ArrowRight } from 'lucide-react'
 import clsx from 'clsx'
 
 export default function ChatHeader({ chatMeta, connected, onBack }) {
-  const orderId      = chatMeta?.orderId      ?? '—'
-  const merchantName = chatMeta?.merchantName ?? 'التاجر'
-  const customerName = chatMeta?.customerName ?? 'العميل'
+  const rawOrderId  = chatMeta?.order?._id || chatMeta?.order
+  const orderId      = rawOrderId ? String(rawOrderId).slice(-8).toUpperCase() : '—'
+  const merchantName = chatMeta?.merchant?.name ?? 'التاجر'
+  const customerName = chatMeta?.customer?.name ?? 'العميل'
 
   return (
     <header className="flex items-center gap-3 bg-white border-b border-border px-4 py-3 shrink-0">

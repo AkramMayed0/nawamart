@@ -4,7 +4,8 @@ const TYPES = [
   {
     key: 'physical',
     icon: 'truck',
-    badge: '🚚 توصيل',
+    badgeIcon: 'truck',
+    badge: 'توصيل',
     title: 'منتجات مادية',
     sub: 'ملابس، أغذية، إكسسوارات، ومنتجات تُشحن للعميل. عنوان توصيل، تأكيد وصل الدفع، ثم شحن وتتبع.',
     tags: ['ملابس', 'أغذية', 'إكسسوارات', 'منتجات يدوية'],
@@ -18,7 +19,8 @@ const TYPES = [
   {
     key: 'digital',
     icon: 'bolt',
-    badge: '⚡ تسليم فوري',
+    badgeIcon: 'bolt',
+    badge: 'تسليم فوري',
     title: 'منتجات رقمية',
     sub: 'اشتراكات، أكواد ألعاب، حسابات، تطبيقات. لا عنوان توصيل — بل قناة محادثة خاصة تفتح فور تأكيد الدفع.',
     tags: ['اشتراكات', 'أكواد ألعاب', 'حسابات', 'برامج'],
@@ -54,6 +56,7 @@ export default function LandingStoreTypes() {
           {TYPES.map(t => (
             <div
               key={t.key}
+              id={t.key === 'digital' ? 'digital' : undefined}
               className={`rounded-[20px] p-8 flex flex-col gap-5 relative overflow-hidden border
                 ${t.digital
                   ? 'bg-primary-800 text-white border-primary-800'
@@ -67,6 +70,7 @@ export default function LandingStoreTypes() {
                 </div>
                 <span className={`inline-flex items-center gap-1.5 font-cairo text-xs font-bold px-3 py-1.5 rounded-pill
                   ${t.digital ? 'bg-accent/15 text-accent' : 'bg-primary-50 text-primary'}`}>
+                  <Icon name={t.badgeIcon} size={12} />
                   {t.badge}
                 </span>
               </div>

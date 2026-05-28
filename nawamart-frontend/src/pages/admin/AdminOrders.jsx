@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getAdminOrders } from '@/api/admin'
+import usePageTitle from '@/hooks/usePageTitle'
 import {
   DataTable,
   FilterPills,
@@ -24,6 +25,7 @@ const ORDER_STATUS = {
 }
 
 export default function AdminOrders() {
+  usePageTitle('الطلبات')
   const [statusFilter, setStatusFilter] = useState('all')
 
   const { data, isLoading } = useQuery({

@@ -1,4 +1,5 @@
 import Icon from '@/components/ui/Icon'
+import { Zap, Truck } from 'lucide-react'
 import { resolveAssetUrl } from '@/utils/assets'
 
 export default function StoreHeader({ store }) {
@@ -30,7 +31,8 @@ export default function StoreHeader({ store }) {
                 ? 'bg-accent-50 text-accent-700 border-accent-200'
                 : 'bg-primary-50 text-primary border-primary-200'
             }`}>
-              {isDigital ? '⚡ رقمي' : '🚚 مادي'}
+              {isDigital ? <Zap size={14} /> : <Truck size={14} />}
+              {isDigital ? 'رقمي' : 'مادي'}
             </span>
           </div>
 

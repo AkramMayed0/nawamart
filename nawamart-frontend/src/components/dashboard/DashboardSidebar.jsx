@@ -19,7 +19,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/orders', label: 'الطلبات', icon: ShoppingBag },
   { to: '/dashboard/products', label: 'المنتجات', icon: Package },
   { to: '/dashboard/customers', label: 'العملاء', icon: Users },
-  { to: '/dashboard/chat', label: 'المحادثات', icon: MessageSquare },
+  { to: '/dashboard/chat', label: 'التسليم', icon: MessageSquare },
   { to: '/dashboard/finance', label: 'المالية', icon: Banknote },
   { to: '/dashboard/settings', label: 'الإعدادات', icon: Settings },
 ]

@@ -8,9 +8,11 @@ import {
   Users,
 } from 'lucide-react'
 import { getAdminStats } from '@/api/admin'
+import usePageTitle from '@/hooks/usePageTitle'
 import { AdminCard, formatCurrency, formatNumber, PageHeader, StatCard } from '@/components/admin/AdminUI'
 
 export default function AdminOverview() {
+  usePageTitle('نظرة عامة')
   const { data, isLoading } = useQuery({
     queryKey: ['admin-stats'],
     queryFn: () => getAdminStats().then((response) => response.data.data),

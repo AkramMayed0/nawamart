@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import { merchantRegister } from '@/api/auth'
+import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 
@@ -76,7 +77,7 @@ export default function MerchantRegister() {
 
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
-      toast.success('تم إنشاء الحساب بنجاح! 🎉')
+      toast.success('تم إنشاء الحساب بنجاح!')
       navigate('/onboarding', { replace: true })
     } catch (err) {
       const msg = err?.message || 'حدث خطأ، يرجى المحاولة مجدداً'
@@ -85,6 +86,8 @@ export default function MerchantRegister() {
       setLoading(false)
     }
   }
+
+  usePageTitle('إنشاء حساب تاجر')
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">

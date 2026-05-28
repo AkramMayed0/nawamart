@@ -18,7 +18,7 @@ function bodyArray(value) {
  * Create a new product (Merchant only)
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { storeId, name, description, price, salePrice, stock, category } = req.body;
+  const { storeId, name, description, price, salePrice, stock, category, weight, unlimitedStock, sku, brand, barcode, isFeatured } = req.body;
 
   // 1. Verify that the store belongs to the merchant
   const store = await Store.findOne({ _id: storeId, merchant: req.user._id });
@@ -34,13 +34,19 @@ const createProduct = asyncHandler(async (req, res) => {
 
   const product = await Product.create({
     store: storeId,
-    merchant: store.merchant, // store.merchant is the merchant's _id
+    merchant: store.merchant,
     name,
     description,
     price,
     salePrice: salePrice || undefined,
     stock: stock || 0,
-    category,
+    category: category || undefined,
+    weight: weight || undefined,
+    unlimitedStock: unlimitedStock === 'true' || unlimitedStock === true,
+    sku: sku || undefined,
+    brand: brand || undefined,
+    barcode: barcode || undefined,
+    isFeatured: isFeatured === 'true' || isFeatured === true,
     images,
   });
 
@@ -143,7 +149,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  const { name, description, price, salePrice, stock, category, isActive } = req.body;
+  const { name, description, price, salePrice, stock, category, isActive, weight, unlimitedStock, sku, brand, barcode, isFeatured } = req.body;
 
   const existingImages = bodyArray(req.body.existingImages || req.body['existingImages[]']);
   const newImages = uploadedImageUrls(req);
@@ -166,7 +172,13 @@ const updateProduct = asyncHandler(async (req, res) => {
     if (stock > 0 && !product.isActive) product.isActive = true;
   }
   if (category !== undefined) product.category = category;
+  if (weight !== undefined) product.weight = weight;
+  if (unlimitedStock !== undefined) product.unlimitedStock = unlimitedStock === 'true' || unlimitedStock === true;
   if (isActive !== undefined) product.isActive = isActive;
+  if (sku !== undefined) product.sku = sku || null;
+  if (brand !== undefined) product.brand = brand || null;
+  if (barcode !== undefined) product.barcode = barcode || null;
+  if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
   if (existingImages.length > 0 || newImages.length > 0) {
     product.images = images;
   }

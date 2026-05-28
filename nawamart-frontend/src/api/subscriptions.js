@@ -24,7 +24,7 @@ export const uploadSubscriptionWasl = (formData) =>
     headers: { 'Content-Type': 'multipart/form-data' },
   })
 
-// ── Plan metadata (mirrors LandingPricing TIERS) ──────────────────────────
+// ── Plan metadata ─────────────────────────────────────────────────────────
 export const PLANS = {
   free: {
     key:      'free',
@@ -33,31 +33,31 @@ export const PLANS = {
     price:    0,
     color:    'text-text-muted',
     bgColor:  'bg-bg-soft',
-    features: ['حتى 20 منتج', 'نطاق فرعي على nawa.shop', 'تأكيد الوصل اليدوي'],
+    features: ['حتى 10 منتجات', 'نطاق فرعي nawa.shop', 'تقارير مبيعات أساسية', 'توصيل يدوي (واتساب/انستقرام)', 'دعم أساسي'],
   },
   pro: {
     key:      'pro',
     name:     'Pro',
     nameAr:   'الاحترافي',
-    price:    4900,
+    price:    10000,
     color:    'text-primary',
     bgColor:  'bg-primary-50',
     badge:    'الأكثر شعبية',
-    features: ['منتجات بلا حدود', 'نطاق مخصص .com', 'قناة محادثة', 'إشعارات SMS', 'تقارير متقدمة'],
+    features: ['منتجات غير محدودة', 'نطاق مخصص .com', 'تقارير + رسوم بيانية', 'توصيل يدوي (واتساب/انستقرام/تيليجرام)', 'تحليلات متوسطة', 'دعم بريد إلكتروني'],
   },
   business: {
     key:      'business',
     name:     'Business',
     nameAr:   'الأعمال',
-    price:    12000,
+    price:    20000,
     color:    'text-accent-700',
     bgColor:  'bg-accent-50',
-    features: ['كل مميزات Pro', 'حتى 5 مستخدمين', 'API تكامل خارجي', 'دعم أولوية 24/7'],
+    features: ['منتجات غير محدودة + SKU/brand/barcode', 'نطاق مخصص .com', 'تقارير متقدمة + تقارير ضريبية', 'توصيل مدمج (داخل التطبيق) + خارجي', 'تحليلات متقدمة', 'محادثة مدمجة داخل التطبيق', 'حتى 5 مستخدمين فريق', 'دعم أولوية 24/7'],
   },
 }
 
 export const WALLETS = [
-  { id: 'cherry',  label: 'Cherry',   sub: 'محفظة إلكترونية' },
   { id: 'kuraimi', label: 'الكريمي',  sub: 'تطبيق بنك التضامن' },
   { id: 'onecash', label: 'OneCash',  sub: 'محفظة وان كاش' },
+  { id: 'jaib',    label: 'جيب',      sub: 'محفظة جيب' },
 ]

@@ -85,7 +85,7 @@ const deleteFromCloudinary = async (url) => {
       }
     }
   } catch (err) {
-    console.error('⚠️  Failed to delete local file:', err.message);
+    console.error('[Cloudinary] Failed to delete local file:', err.message);
   }
 };
 

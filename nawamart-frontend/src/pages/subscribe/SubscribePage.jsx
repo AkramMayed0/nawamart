@@ -10,16 +10,16 @@
  * This file is the page shell + plan details card.
  * Wallet, Wasl, and Submit sections will be added in following units.
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, ChevronLeft } from 'lucide-react'
+import { ArrowRight, Check, ChevronLeft, Clock, CheckCircle, Zap, Briefcase } from 'lucide-react'
 import { PLANS, uploadSubscriptionWasl, createSubscription, getMySubscription } from '@/api/subscriptions'
 import { getMyStore } from '@/api/stores'
+import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
+import usePageTitle from '@/hooks/usePageTitle'
 import WalletSelector          from '@/components/subscribe/WalletSelector'
 import SubscribeWaslUploader   from '@/components/subscribe/SubscribeWaslUploader'
-import { Clock, CheckCircle }  from 'lucide-react'
-import { useEffect }           from 'react'
 
 // ── Step indicator ─────────────────────────────────────────────────────────
 const STEPS = ['الخطة', 'طريقة الدفع', 'الوصل', 'التأكيد']
@@ -134,7 +134,7 @@ function StepNav({ step, totalSteps, onBack, onNext, nextLabel = 'التالي',
 
 // ── Already-active success screen ────────────────────────────────────────
 function SuccessScreen({ sub, onGoHome }) {
-  const planMeta = PLANS[sub?.plan] ?? PLANS.pro
+  const planMeta = PLANS[sub?.requestedPlan] ?? PLANS.free
   const expiry   = sub?.expiresAt
     ? new Date(sub.expiresAt).toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
@@ -149,7 +149,7 @@ function SuccessScreen({ sub, onGoHome }) {
         </div>
 
         <h2 className="font-extrabold text-xl text-text mb-2">
-          اشتراكك نشط بالفعل 🎉
+          اشتراكك نشط بالفعل
         </h2>
         <p className="text-sm text-text-muted leading-relaxed mb-6">
           أنت مشترك في خطة{' '}
@@ -242,15 +242,80 @@ function PendingScreen({ plan, onGoHome }) {
   )
 }
 
+// ── Plan picker card ──────────────────────────────────────────────────────
+const PLAN_ICONS = { pro: Zap, business: Briefcase }
+const PLAN_COLORS = {
+  pro:      { bg: 'bg-primary-50',   iconCls: 'text-primary',    border: 'border-primary-200' },
+  business: { bg: 'bg-accent-50',    iconCls: 'text-accent-700', border: 'border-accent-200' },
+}
+
+function PlanPicker({ plans, selected, onSelect }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {Object.values(plans).filter(p => p.price > 0).map(p => {
+        const isSel = selected === p.key
+        const Icon = PLAN_ICONS[p.key]
+        const colors = PLAN_COLORS[p.key] || PLAN_COLORS.pro
+        return (
+          <button key={p.key} type="button" onClick={() => onSelect(p.key)}
+            className={`text-right bg-white border-2 rounded-2xl p-6 transition-all hover:shadow-md
+              ${isSel ? 'border-accent shadow-sm' : 'border-border hover:border-accent/40'}`}
+          >
+            {/* Logo icon */}
+            <div className={`w-12 h-12 rounded-2xl ${colors.bg} border ${colors.border} flex items-center justify-center mb-4`}>
+              {Icon && <Icon size={24} className={colors.iconCls} />}
+            </div>
+
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-cairo font-extrabold text-xl text-text">{p.name}</h3>
+              {p.badge && (
+                <span className="bg-accent text-white font-cairo text-[11px] font-bold px-2.5 py-0.5 rounded-full">
+                  {p.badge}
+                </span>
+              )}
+            </div>
+            <p className="font-cairo text-sm text-text-muted mb-4">{p.nameAr}</p>
+            <div className="mb-4">
+              <span className="font-inter font-extrabold text-3xl text-text dk-num">
+                {p.price.toLocaleString('en-US')}
+              </span>
+              <span className="font-cairo text-sm text-text-muted mr-1">ر.ي / شهر</span>
+            </div>
+            <div className="flex flex-col gap-2 pt-3 border-t border-border">
+              {p.features.map((f, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm font-cairo text-text">
+                  <span className="w-4 h-4 rounded-full bg-success-100 flex items-center justify-center shrink-0">
+                    <Check size={10} strokeWidth={3} className="text-success-dark" />
+                  </span>
+                  {f}
+                </div>
+              ))}
+            </div>
+            {isSel && (
+              <div className="mt-4 w-full bg-accent text-white font-cairo font-bold text-sm py-2 rounded-xl text-center">
+                تم الاختيار ✓
+              </div>
+            )}
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
 // ── Page shell ────────────────────────────────────────────────────────────
 export default function SubscribePage() {
+  usePageTitle('الاشتراك')
   const [params]  = useSearchParams()
   const navigate  = useNavigate()
-  const planKey   = params.get('plan') ?? 'pro'
+  const store     = useAuthStore(s => s.store)
+  const currentPlan = store?.plan || 'free'
+  const defaultPlan = currentPlan !== 'free' ? currentPlan : 'pro'
+  const [planKey, setPlanKey] = useState(params.get('plan') || defaultPlan)
   const plan      = PLANS[planKey] ?? PLANS.pro
 
   const [step,        setStep]        = useState(0)
-  const [wallet,      setWallet]      = useState('cherry')
+  const [wallet,      setWallet]      = useState('kuraimi')
   const [waslFile,    setWaslFile]    = useState(null)
   const [waslPreview, setWaslPreview] = useState(null)
   const [submitting,  setSubmitting]  = useState(false)
@@ -376,8 +441,8 @@ export default function SubscribePage() {
         {/* Steps bar */}
         <StepsBar current={step} />
 
-        {/* Step 0 — plan details */}
-        {step === 0 && <PlanCard plan={plan} />}
+        {/* Step 0 — plan picker */}
+        {step === 0 && <PlanPicker plans={PLANS} selected={planKey} onSelect={setPlanKey} />}
 
         {/* Step 1 — wallet selector */}
         {step === 1 && (

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Copy, ExternalLink, Eye, Package, Plus, Settings, Store, Tag } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { getProductsByStore } from '@/api/products'
+import usePageTitle from '@/hooks/usePageTitle'
 import { resolveAssetUrl } from '@/utils/assets'
 
 function StatBox({ icon: Icon, label, value, tone = 'primary' }) {
@@ -51,6 +52,7 @@ function MiniProduct({ product }) {
 }
 
 export default function ShopPage() {
+  usePageTitle('متجري العام')
   const store = useAuthStore((state) => state.store)
   const shopPath = store?.slug ? `/store/${store.slug}` : ''
   const shopUrl = store?.slug ? `${window.location.origin}${shopPath}` : ''

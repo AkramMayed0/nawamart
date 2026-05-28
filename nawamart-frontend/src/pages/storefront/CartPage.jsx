@@ -3,6 +3,7 @@ import { ArrowLeft, Minus, Plus, ShieldCheck, ShoppingBag, Trash2 } from 'lucide
 import { getProductPrice, useCartStore } from '@/store/cartStore'
 import { useQuery } from '@tanstack/react-query'
 import { getStoreBySlug } from '@/api/stores'
+import usePageTitle from '@/hooks/usePageTitle'
 import { resolveAssetUrl } from '@/utils/assets'
 
 function formatPrice(value) {
@@ -14,6 +15,7 @@ function cartKey(item) {
 }
 
 export default function CartPage() {
+  usePageTitle('سلة التسوق')
   const { slug } = useParams()
   const items = useCartStore((state) => state.items)
   const updateQuantity = useCartStore((state) => state.updateQuantity)
@@ -28,8 +30,8 @@ export default function CartPage() {
 
   const isDigital = store?.type === 'digital'
   const subtotal = items.reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0)
-  const shipping = isDigital || subtotal === 0 ? 0 : 1500
-  const total = subtotal + shipping
+  // Shipping is calculated at checkout based on selected city
+  const total = subtotal
 
   if (items.length === 0) {
     return (
@@ -183,8 +185,8 @@ export default function CartPage() {
             </div>
             <div className="flex justify-between font-cairo text-sm text-text-muted">
               <span>{isDigital ? 'التسليم' : 'الشحن المتوقع'}</span>
-              <span className={isDigital ? 'font-bold text-success-dark' : 'font-inter font-bold text-text'}>
-                {isDigital ? 'مجانا' : `${formatPrice(shipping)} ر.ي`}
+              <span className={isDigital ? 'font-bold text-success-dark' : 'font-cairo font-bold text-text'}>
+                {isDigital ? 'مجانا' : 'حسب المحافظة'}
               </span>
             </div>
             <div className="flex justify-between pt-2 font-cairo text-base font-extrabold text-text">

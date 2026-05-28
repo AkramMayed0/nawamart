@@ -2,11 +2,14 @@
  * DashboardHome — /dashboard
  * Built in units: 9a (shell), 9b (stats), 9c (subscription), 9d (orders)
  */
-import { useState, useEffect } from 'react'
+import usePageTitle            from '@/hooks/usePageTitle'
 import { useAuthStore }        from '@/store/authStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
+import { useQuery }            from '@tanstack/react-query'
 import { getMerchantOrders }   from '@/api/orders'
-import { ShoppingBag, Clock, Banknote, MessageSquare } from 'lucide-react'
+import { ShoppingBag, Clock, Banknote, MessageSquare, Zap, Truck } from 'lucide-react'
 import SubscriptionWidget      from '@/components/dashboard/SubscriptionWidget'
+import { useEffect }           from 'react'
 import { useNavigate }         from 'react-router-dom'
 
 // ── Arabic weekday + date ─────────────────────────────────────────────────
@@ -157,16 +160,21 @@ export default function DashboardHome() {
   const user  = useAuthStore(s => s.user)
   const storeRaw = useAuthStore(s => s.store)
   const store    = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
+  const navigate = useNavigate()
+  const prefs = usePreferencesStore()
 
-  const [orders,  setOrders]  = useState([])
-  const [loading, setLoading] = useState(true)
-
+  // Redirect based on default view preference
   useEffect(() => {
-    getMerchantOrders()
-      .then(res => setOrders(res.data.data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    if (prefs.defaultView !== 'overview') {
+      navigate(`/dashboard/${prefs.defaultView}`, { replace: true })
+    }
   }, [])
+
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ['merchant-orders'],
+    queryFn:  () => getMerchantOrders().then(res => res.data.data ?? []),
+    staleTime: 30_000,
+  })
 
   const isDigital = store?.type === 'digital'
   const stats     = deriveStats(orders)
@@ -202,6 +210,8 @@ export default function DashboardHome() {
     },
   ]
 
+  usePageTitle('لوحة التحكم')
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 font-cairo" dir="rtl">
 
@@ -210,7 +220,7 @@ export default function DashboardHome() {
         <div>
           <p className="text-sm text-text-muted mb-1">{todayLabel()}</p>
           <h1 className="font-extrabold text-2xl text-text leading-tight">
-            مرحباً، {user?.name ?? 'التاجر'} 👋
+            مرحباً، {user?.name ?? 'التاجر'}
           </h1>
           {store?.name && (
             <p className="text-sm text-text-muted mt-0.5">{store.name}</p>
@@ -222,7 +232,8 @@ export default function DashboardHome() {
               ? 'bg-accent-50 text-accent-700 border-accent-100'
               : 'bg-primary-50 text-primary border-primary-100'
           }`}>
-            {isDigital ? '⚡ متجر رقمي' : '🚚 متجر مادي'}
+            {isDigital ? <Zap size={14} /> : <Truck size={14} />}
+            {isDigital ? 'متجر رقمي' : 'متجر مادي'}
           </span>
         )}
       </div>
@@ -238,10 +249,10 @@ export default function DashboardHome() {
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
 
         {/* Subscription widget */}
-        <SubscriptionWidget />
+        {prefs.showSubscriptionSummary && <SubscriptionWidget />}
 
         {/* Recent orders */}
-        <RecentOrders orders={orders} loading={loading} />
+        {prefs.showRecentOrders && <RecentOrders orders={orders} loading={loading} />}
 
       </div>
 

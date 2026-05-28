@@ -2,35 +2,46 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MessageSquare, ShieldCheck, Upload, X } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MessageSquare, ShieldCheck, Upload, X, MessageCircle, Send, Instagram, Phone } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { createOrder, uploadWaslFile } from '@/api/orders'
 import { getProductPrice, useCartStore } from '@/store/cartStore'
+import usePageTitle from '@/hooks/usePageTitle'
 import { resolveAssetUrl } from '@/utils/assets'
 import WalletBadge from '@/components/storefront/WalletBadge'
 
 const WALLETS = [
-  { id: 'cherry', label: 'Cherry', sub: 'محفظة إلكترونية' },
-  { id: 'kuraimi', label: 'الكريمي', sub: 'تحويل بنكي أو محفظة' },
-  { id: 'oneCash', label: 'OneCash', sub: 'محفظة إلكترونية' },
+  { id: 'kuraimi', label: 'الكريمي',  sub: 'تحويل بنكي أو محفظة' },
+  { id: 'oneCash', label: 'OneCash',  sub: 'محفظة إلكترونية' },
+  { id: 'jaib',    label: 'جيب',      sub: 'محفظة جيب' },
 ]
 
 const CITIES = ['صنعاء', 'عدن', 'تعز', 'إب', 'الحديدة', 'المكلا', 'حضرموت', 'مأرب', 'ذمار', 'البيضاء', 'عمران', 'ريمة', 'الضالع', 'لحج', 'أبين', 'شبوة', 'الجوف', 'صعدة']
+
+const CONTACT_METHODS = [
+  { id: 'whatsapp', label: 'واتساب', icon: MessageCircle },
+  { id: 'telegram', label: 'تيليجرام', icon: Send },
+  { id: 'instagram', label: 'انستقرام', icon: Instagram },
+  { id: 'phone', label: 'اتصال هاتفي', icon: Phone },
+]
 
 function formatPrice(value) {
   return (value ?? 0).toLocaleString('en-US')
 }
 
 export default function CheckoutPage() {
+  usePageTitle('إتمام الطلب')
   const { slug } = useParams()
   const navigate = useNavigate()
   const items = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
 
-  const [wallet, setWallet] = useState('cherry')
+  const [wallet, setWallet] = useState('kuraimi')
   const [waslFile, setWaslFile] = useState(null)
   const [waslPreview, setWaslPreview] = useState(null)
   const [form, setForm] = useState({ name: '', phone: '', city: 'صنعاء', address: '' })
+  const [contactMethod, setContactMethod] = useState('whatsapp')
+  const [contactHandle, setContactHandle] = useState('')
   const [loading, setLoading] = useState(false)
 
   const { data: store } = useQuery({
@@ -44,7 +55,12 @@ export default function CheckoutPage() {
     () => items.reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0),
     [items]
   )
-  const shipping = isDigital || subtotal === 0 ? 0 : 1500
+  // Calculate shipping based on store's per-city fees
+  const shipping = useMemo(() => {
+    if (isDigital || subtotal === 0) return 0
+    const cityFee = store?.shippingFees?.find((sf) => sf.city === form.city)
+    return cityFee?.fee ?? 0
+  }, [isDigital, subtotal, store?.shippingFees, form.city])
   const total = subtotal + shipping
 
   const canSubmit = Boolean(
@@ -85,9 +101,11 @@ export default function CheckoutPage() {
           name: form.name.trim(),
           phone: form.phone.trim(),
           city: form.city,
-          details: isDigital ? 'تسليم رقمي عبر المحادثة' : form.address.trim(),
+          details: isDigital ? 'تسليم رقمي عبر ' + CONTACT_METHODS.find(m => m.id === contactMethod)?.label : form.address.trim(),
         },
-        notes: isDigital ? 'طلب رقمي، يرجى فتح المحادثة بعد تأكيد الدفع.' : null,
+        contactMethod: isDigital ? contactMethod : undefined,
+        contactHandle: isDigital && contactHandle.trim() ? contactHandle.trim() : undefined,
+        notes: isDigital ? 'طلب رقمي' : null,
       }
 
       const res = await createOrder(payload)
@@ -153,7 +171,7 @@ export default function CheckoutPage() {
             setWaslFile={setWaslFile}
             setWaslPreview={setWaslPreview}
           />
-          <ContactForm form={form} setField={setField} isDigital={isDigital} />
+          <ContactForm form={form} setField={setField} isDigital={isDigital} contactMethod={contactMethod} setContactMethod={setContactMethod} contactHandle={contactHandle} setContactHandle={setContactHandle} />
           {isDigital && <DigitalNote />}
         </div>
 
@@ -300,12 +318,12 @@ function WaslUploader({ waslFile, waslPreview, setWaslFile, setWaslPreview }) {
   )
 }
 
-function ContactForm({ form, setField, isDigital }) {
+function ContactForm({ form, setField, isDigital, contactMethod, setContactMethod, contactHandle, setContactHandle }) {
   return (
     <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
       <h2 className="font-cairo text-lg font-extrabold text-text">بيانات العميل</h2>
       <p className="mt-1 font-cairo text-sm text-text-muted">
-        {isDigital ? 'هذه البيانات تساعد التاجر على فتح المحادثة وتسليم المنتج.' : 'هذه البيانات مطلوبة لتأكيد الطلب والتوصيل.'}
+        {isDigital ? 'اختر طريقة التواصل المفضلة ليتم تسليم المنتج الرقمي.' : 'هذه البيانات مطلوبة لتأكيد الطلب والتوصيل.'}
       </p>
 
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -329,6 +347,58 @@ function ContactForm({ form, setField, isDigital }) {
           required={!isDigital}
         />
       </div>
+
+      {isDigital && (
+        <div className="mt-5 border-t border-border pt-5">
+          <h3 className="font-cairo text-base font-extrabold text-text mb-1">طريقة التسليم المفضلة</h3>
+          <p className="font-cairo text-sm text-text-muted mb-4">سيتم تسليم المنتج الرقمي عبر:</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {CONTACT_METHODS.map(m => {
+              const active = contactMethod === m.id
+              const Icon = m.icon
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setContactMethod(m.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-colors ${
+                    active
+                      ? 'border-primary bg-primary-50 text-primary'
+                      : 'border-border bg-white text-text-muted hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="font-cairo text-xs font-semibold">{m.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {contactMethod === 'instagram' && (
+            <div className="mt-3">
+              <Field
+                label="اسم المستخدم في انستقرام"
+                value={contactHandle}
+                onChange={(value) => setContactHandle(value)}
+                placeholder="مثال: @user_name"
+                dir="ltr"
+              />
+            </div>
+          )}
+          {contactMethod === 'telegram' && (
+            <div className="mt-3">
+              <Field
+                label="اسم المستخدم في تيليجرام"
+                value={contactHandle}
+                onChange={(value) => setContactHandle(value)}
+                placeholder="مثال: @username"
+                dir="ltr"
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -409,7 +479,7 @@ function OrderSummary({ items, isDigital, subtotal, shipping, total, canSubmit, 
         <div className="flex justify-between font-cairo text-sm text-text-muted">
           <span>{isDigital ? 'التسليم' : 'الشحن'}</span>
           <span className={isDigital ? 'font-bold text-success-dark' : 'font-inter font-bold text-text'}>
-            {isDigital ? 'مجانا' : `${formatPrice(shipping)} ر.ي`}
+            {isDigital ? 'مجانا' : shipping > 0 ? `${formatPrice(shipping)} ر.ي` : 'مجاني'}
           </span>
         </div>
         <div className="flex justify-between pt-2 font-cairo text-base font-extrabold text-text">

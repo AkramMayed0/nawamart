@@ -8,20 +8,25 @@ import {
   shipOrder,
   deliverOrder,
 } from '@/api/orders'
+import { resolveAssetUrl } from '@/utils/assets'
+import usePageTitle from '@/hooks/usePageTitle'
 import Icon from '@/components/ui/Icon'
+import { Zap, Truck, MessageCircle, Send, Instagram, Phone as PhoneIcon, Crown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/store/authStore'
 
 const PAGE_SIZE = 10
 
 const FILTERS = [
   { id: 'all',       label: 'الكل' },
-  { id: 'pending',   label: 'بانتظار الوصل' },
+  { id: 'pending',   label: 'بانتظار المراجعة' },
   { id: 'confirmed', label: 'مؤكد' },
   { id: 'shipped',   label: 'تم الشحن' },
   { id: 'rejected',  label: 'مرفوض' },
 ]
 
 export default function OrdersPage() {
+  usePageTitle('الطلبات')
   const [filter,    setFilter]    = useState('all')
   const [page,      setPage]      = useState(1)
   const [waslModal, setWaslModal] = useState(null)   // image URL
@@ -30,6 +35,8 @@ export default function OrdersPage() {
 
   const queryClient = useQueryClient()
   const navigate    = useNavigate()
+  const store       = useAuthStore(s => s.store)
+  const plan        = store?.plan || 'free'
 
   // ── Fetch orders ──────────────────────────────────────────────
   const { data, isLoading } = useQuery({
@@ -85,6 +92,7 @@ export default function OrdersPage() {
                 orders={orders}
                 filter={filter}
                 page={page}
+                plan={plan}
                 onViewWasl={setWaslModal}
                 onReject={id => { setRejectModal({ orderId: id }); setRejectReason('') }}
                 navigate={navigate}
@@ -111,6 +119,7 @@ export default function OrdersPage() {
       {!isLoading && (() => {
         const filtered = filter === 'all' ? orders
           : filter === 'shipped' ? orders.filter(o => o.status === 'shipped' || o.status === 'chat-open')
+          : filter === 'pending' ? orders.filter(o => o.status === 'pending' || o.status === 'payment_under_review')
           : orders.filter(o => o.status === filter)
         const total = filtered.length
         if (total <= PAGE_SIZE) return null
@@ -167,10 +176,10 @@ function WaslModal({ url, onClose }) {
             <Icon name="x" size={18} />
           </button>
         </div>
-        <img src={url} alt="وصل الدفع" className="w-full object-contain max-h-[70vh]" />
+        <img src={resolveAssetUrl(url)} alt="وصل الدفع" className="w-full object-contain max-h-[70vh]" />
         <div className="px-4 py-3 border-t border-border flex justify-end">
           <a
-            href={url}
+            href={resolveAssetUrl(url)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 font-cairo text-sm font-semibold text-primary hover:underline"
@@ -185,37 +194,40 @@ function WaslModal({ url, onClose }) {
 }
 
 /* ── Order rows ─────────────────────────────────────────────── */
-function OrderRows({ orders, filter, page, onViewWasl, onReject, navigate, queryClient }) {
+function OrderRows({ orders, filter, page, plan, onViewWasl, onReject, navigate, queryClient }) {
   const filtered = filter === 'all'
     ? orders
     : filter === 'shipped'
       ? orders.filter(o => o.status === 'shipped' || o.status === 'chat-open')
-      : orders.filter(o => o.status === filter)
+      : filter === 'pending'
+        ? orders.filter(o => o.status === 'pending' || o.status === 'payment_under_review')
+        : orders.filter(o => o.status === filter)
 
   const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   if (filtered.length === 0) return <EmptyState filter={filter} />
 
   return (
-    <div className="flex flex-col divide-y divide-border">
-      {paged.map(order => (
-        <OrderRow
-          key={order._id}
-          order={order}
-          onViewWasl={onViewWasl}
-          onReject={onReject}
-          navigate={navigate}
-          queryClient={queryClient}
-        />
-      ))}
-    </div>
-  )
+      <div className="flex flex-col gap-4">
+        {paged.map(order => (
+          <OrderRow
+            key={order._id}
+            order={order}
+            plan={plan}
+            onViewWasl={onViewWasl}
+            onReject={onReject}
+            navigate={navigate}
+            queryClient={queryClient}
+          />
+        ))}
+      </div>
+    )
 }
 
-function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
+function OrderRow({ order, plan, onViewWasl, onReject, navigate, queryClient }) {
   const total     = order.items?.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0) ?? 0
   const shortId   = String(order._id).slice(-8).toUpperCase()
-  const customer  = order.deliveryAddress?.name ?? order.customerId?.name ?? 'عميل'
+  const customer  = order.deliveryAddress?.name ?? order.customer?.name ?? 'عميل'
 
   return (
     <div className="grid grid-cols-[1.2fr_1.5fr_1fr_72px_1fr_auto] gap-3 px-4 py-3.5 items-center hover:bg-bg/50 transition-colors">
@@ -226,8 +238,9 @@ function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
       {/* Customer */}
       <div className="min-w-0">
         <p className="font-cairo font-semibold text-sm text-text truncate">{customer}</p>
-        <p className="font-cairo text-xs text-text-muted mt-0.5">
-          {order.storeType === 'digital' ? '⚡ رقمي' : `🚚 ${order.deliveryAddress?.city ?? ''}`}
+        <p className="font-cairo text-xs text-text-muted mt-0.5 inline-flex items-center gap-1">
+          {order.store?.type === 'digital' ? <Zap size={12} /> : <Truck size={12} />}
+          {order.store?.type === 'digital' ? 'رقمي' : `${order.deliveryAddress?.city ?? 'مادي'}`}
         </p>
       </div>
 
@@ -239,12 +252,12 @@ function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
 
       {/* وصل thumbnail */}
       <button
-        onClick={() => order.waslUrl && onViewWasl(order.waslUrl)}
+        onClick={() => order.paymentWasl && onViewWasl(order.paymentWasl)}
         className="w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-soft flex items-center justify-center hover:opacity-80 transition-opacity"
         title="عرض الوصل"
       >
-        {order.waslUrl ? (
-          <img src={order.waslUrl} alt="وصل" className="w-full h-full object-cover" />
+        {order.paymentWasl ? (
+          <img src={resolveAssetUrl(order.paymentWasl)} alt="وصل" className="w-full h-full object-cover" />
         ) : (
           <Icon name="image" size={16} className="text-border-strong" />
         )}
@@ -256,6 +269,7 @@ function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
       {/* Actions */}
       <ActionButtons
         order={order}
+        plan={plan}
         onReject={onReject}
         navigate={navigate}
         queryClient={queryClient}
@@ -264,10 +278,26 @@ function OrderRow({ order, onViewWasl, onReject, navigate, queryClient }) {
   )
 }
 
+const CONTACT_META = {
+  whatsapp:  { label: 'واتساب',  icon: MessageCircle, cls: 'bg-green-100 text-green-600 hover:bg-green-200',      url: (h, p) => `https://wa.me/${(h || p).replace(/[^0-9]/g, '')}` },
+  telegram:  { label: 'تيليجرام', icon: Send,         cls: 'bg-sky-100 text-blue-500 hover:bg-sky-200',          url: (h) => `https://t.me/${(h || '').replace('@', '')}` },
+  instagram: { label: 'انستقرام', icon: Instagram,    cls: 'bg-pink-100 text-pink-600 hover:bg-pink-200',        url: (h) => `https://www.instagram.com/direct/t/${(h || '').replace('@', '')}` },
+  phone:     { label: 'اتصال',    icon: PhoneIcon,    cls: 'bg-primary-50 text-primary hover:bg-primary-100',     url: (h) => `tel:${h}` },
+}
+
+function filterContactMeta(plan) {
+  const keys = plan === 'free' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
+  return Object.fromEntries(keys.map(k => [k, CONTACT_META[k]]))
+}
+
 /* ── Action buttons ──────────────────────────────────────────── */
-function ActionButtons({ order, onReject, navigate, queryClient }) {
-  const { _id: id, status, storeType } = order
-  const isDigital = storeType === 'digital'
+function ActionButtons({ order, plan = 'free', onReject, navigate, queryClient }) {
+  const { _id: id, status, store } = order
+  const isDigital = store?.type === 'digital'
+  const canReview = status === 'pending' || status === 'payment_under_review'
+  const cmMap = filterContactMeta(plan)
+  const cm = cmMap[order.contactMethod] || cmMap.whatsapp
+  const handle = order.contactHandle || order.deliveryAddress?.phone || ''
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['merchant-orders'] })
 
@@ -280,7 +310,7 @@ function ActionButtons({ order, onReject, navigate, queryClient }) {
   return (
     <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
       {/* Pending → Confirm */}
-      {status === 'pending' && (
+      {canReview && (
         <button
           onClick={() => confirmMut.mutate()}
           disabled={confirmMut.isPending}
@@ -294,7 +324,7 @@ function ActionButtons({ order, onReject, navigate, queryClient }) {
       )}
 
       {/* Pending → Reject */}
-      {status === 'pending' && (
+      {canReview && (
         <button
           onClick={() => onReject(id)}
           className="inline-flex items-center gap-1 font-cairo font-semibold text-xs px-2.5 py-1.5 rounded-lg bg-danger-100 text-danger hover:bg-red-200 transition-colors"
@@ -314,15 +344,32 @@ function ActionButtons({ order, onReject, navigate, queryClient }) {
         <DeliverButton orderId={id} queryClient={queryClient} />
       )}
 
-      {/* Digital confirmed / chat-open → Open Chat */}
-      {isDigital && (status === 'confirmed' || status === 'chat-open') && (
-        <button
-          onClick={() => navigate('/dashboard/chat')}
-          className="inline-flex items-center gap-1 font-cairo font-semibold text-xs px-2.5 py-1.5 rounded-lg bg-accent-50 text-accent-700 hover:bg-accent-100 transition-colors"
-        >
-          <Icon name="msgs" size={13} />
-          محادثة
-        </button>
+      {/* Digital confirmed → تسليم (chat) + external contact */}
+      {isDigital && status === 'confirmed' && (
+        plan === 'business' && order.chatId ? (
+          <button
+            onClick={() => navigate(`/dashboard/chat/${order.chatId}`)}
+            className="inline-flex items-center gap-1 font-cairo font-semibold text-xs px-2.5 py-1.5 rounded-lg bg-accent-50 text-accent-700 hover:bg-accent-100 transition-colors"
+          >
+            <Icon name="msgs" size={13} />
+            تسليم
+          </button>
+        ) : plan === 'pro' ? (
+          <span className="inline-flex items-center gap-1 font-cairo text-xs px-2.5 py-1.5 rounded-lg bg-bg border border-border text-text-muted">
+            <cm.icon size={13} />
+            {handle || '—'}
+          </span>
+        ) : (
+          <a
+            href={cm.url(handle, order.deliveryAddress?.phone || '')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-1 font-cairo font-semibold text-xs px-2.5 py-1.5 rounded-lg transition-colors ${cm.cls}`}
+          >
+            <cm.icon size={13} />
+            {cm.label}
+          </a>
+        )
       )}
     </div>
   )
@@ -417,7 +464,7 @@ function RejectModal({ orderId, reason, setReason, onClose, queryClient }) {
 /* ── Empty state ─────────────────────────────────────────────── */
 const EMPTY_LABELS = {
   all:       'لا توجد طلبات بعد',
-  pending:   'لا توجد طلبات بانتظار الوصل',
+  pending:   'لا توجد طلبات بانتظار المراجعة',
   confirmed: 'لا توجد طلبات مؤكدة',
   shipped:   'لا توجد طلبات مشحونة',
   rejected:  'لا توجد طلبات مرفوضة',
@@ -437,13 +484,14 @@ function EmptyState({ filter }) {
 
 /* ── Status badge ────────────────────────────────────────────── */
 const STATUS = {
-  pending:             { label: 'بانتظار الوصل',  cls: 'bg-warning-100 text-yellow-700' },
-  confirmed:           { label: 'مؤكد',            cls: 'bg-success-100 text-success' },
-  shipped:             { label: 'تم الشحن',        cls: 'bg-info-100 text-info' },
-  delivered:           { label: 'تم التسليم',      cls: 'bg-green-100 text-success' },
-  rejected:            { label: 'مرفوض',           cls: 'bg-danger-100 text-danger' },
-  'chat-open':         { label: 'محادثة مفتوحة',   cls: 'bg-info-100 text-info' },
-  'digital-delivered': { label: 'تم التسليم',      cls: 'bg-green-100 text-success' },
+  pending:             { label: 'بانتظار الوصل',      cls: 'bg-warning-100 text-yellow-700' },
+  payment_under_review:{ label: 'الوصل قيد المراجعة',  cls: 'bg-warning-100 text-yellow-700' },
+  confirmed:           { label: 'مؤكد',                cls: 'bg-success-100 text-success' },
+  shipped:             { label: 'تم الشحن',            cls: 'bg-info-100 text-info' },
+  delivered:           { label: 'تم التسليم',          cls: 'bg-green-100 text-success' },
+  rejected:            { label: 'مرفوض',               cls: 'bg-danger-100 text-danger' },
+  'chat-open':         { label: 'محادثة مفتوحة',       cls: 'bg-info-100 text-info' },
+  'digital-delivered': { label: 'تم التسليم',          cls: 'bg-green-100 text-success' },
 }
 
 function OrderStatusBadge({ status }) {
@@ -461,6 +509,7 @@ function FilterBar({ orders, filter, setFilter }) {
   function count(id) {
     if (id === 'all') return orders.length
     if (id === 'shipped') return orders.filter(o => o.status === 'shipped' || o.status === 'chat-open').length
+    if (id === 'pending') return orders.filter(o => o.status === 'pending' || o.status === 'payment_under_review').length
     return orders.filter(o => o.status === id).length
   }
 
@@ -535,9 +584,8 @@ function Pagination({ page, total, pageSize, onChange }) {
           onClick={() => onChange(page + 1)}
           disabled={page === totalPages}
           className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-text-muted hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          style={{ transform: 'scaleX(-1)' }}
         >
-          <Icon name="chevron" size={16} />
+          <Icon name="chevron" size={16} className="icon-flip" />
         </button>
       </div>
     </div>

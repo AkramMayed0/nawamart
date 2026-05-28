@@ -73,6 +73,29 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    // SKU (stock keeping unit)
+    sku: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    // Brand name
+    brand: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    // Barcode (UPC / EAN)
+    barcode: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    // Whether product is featured / highlighted
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

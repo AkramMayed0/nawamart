@@ -8,15 +8,15 @@
  *   setWallet  fn
  *   amount     number  — subscription price in YER
  */
-import { CreditCard } from 'lucide-react'
 import clsx from 'clsx'
 import { WALLETS } from '@/api/subscriptions'
+import WalletBadge from '@/components/storefront/WalletBadge'
 
 // Static NawaMart payment accounts (replace with real data from API)
 const ACCOUNTS = {
-  cherry:  { number: '771 423 890', name: 'نوا مارت' },
   kuraimi: { number: '771 423 890', name: 'نوا مارت' },
   onecash: { number: '771 423 890', name: 'نوا مارت' },
+  jaib:    { number: '771 423 890', name: 'نوا مارت' },
 }
 
 export default function WalletSelector({ wallet, setWallet, amount }) {
@@ -45,16 +45,11 @@ export default function WalletSelector({ wallet, setWallet, amount }) {
               className={clsx(
                 'flex flex-col gap-2 p-3.5 rounded-xl border text-right transition-all',
                 active
-                  ? 'bg-primary-50 border-primary shadow-[0_0_0_3px_rgba(27,63,114,0.12)]'
+                  ? 'bg-primary-50 border-primary shadow-[0_0_0_3px_rgba(220,38,38,0.12)]'
                   : 'bg-white border-border hover:border-primary/40'
               )}
             >
-              <div className={clsx(
-                'w-9 h-9 rounded-lg flex items-center justify-center transition-colors',
-                active ? 'bg-primary text-white' : 'bg-bg-soft text-text-muted'
-              )}>
-                <CreditCard size={16} />
-              </div>
+              <WalletBadge wallet={w.id} compact />
               <span className={clsx(
                 'font-cairo font-bold text-sm leading-tight',
                 active ? 'text-primary' : 'text-text'

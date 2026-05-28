@@ -2,26 +2,33 @@ const Store = require('../models/Store');
 const Merchant = require('../models/Merchant');
 const { apiResponse, asyncHandler } = require('../utils/helpers');
 
-function parsePaymentAccounts(value) {
+function parseJSON(value) {
   if (value == null) return undefined;
   if (typeof value === 'string') {
-    try {
-      return JSON.parse(value);
-    } catch (e) {
-      return undefined;
-    }
+    try { return JSON.parse(value); } catch (e) { return undefined; }
   }
   return value;
 }
 
 function normalizePaymentAccounts(existing = {}, incoming) {
-  const parsed = parsePaymentAccounts(incoming);
+  const parsed = parseJSON(incoming);
   if (parsed === undefined) return undefined;
   return {
-    cherry: parsed.cherry ?? existing.cherry ?? null,
     kuraimi: parsed.kuraimi ?? existing.kuraimi ?? null,
     oneCash: parsed.oneCash ?? existing.oneCash ?? null,
+    jaib: parsed.jaib ?? existing.jaib ?? null,
   };
+}
+
+function normalizeShippingFees(incoming) {
+  const parsed = parseJSON(incoming);
+  if (!Array.isArray(parsed)) return undefined;
+  return parsed
+    .filter((item) => item && item.city && typeof item.city === 'string' && item.city.trim())
+    .map((item) => ({
+      city: item.city.trim(),
+      fee: Math.max(0, Number(item.fee) || 0),
+    }));
 }
 
 /**
@@ -29,7 +36,7 @@ function normalizePaymentAccounts(existing = {}, incoming) {
  * Create a new store for the logged-in merchant
  */
 const createStore = asyncHandler(async (req, res) => {
-  const { name, type, description, category, contactPhone, paymentAccounts } = req.body;
+  const { name, type, description, category, contactPhone, paymentAccounts, shippingFees } = req.body;
 
   // Each merchant owns one public shop.
   const storeCount = await Store.countDocuments({ merchant: req.user._id });
@@ -51,6 +58,7 @@ const createStore = asyncHandler(async (req, res) => {
 
   // Parse paymentAccounts if sent as JSON string (common with multipart/form-data)
   const parsedPaymentAccounts = normalizePaymentAccounts({}, paymentAccounts);
+  const parsedShippingFees = normalizeShippingFees(shippingFees);
 
   const store = await Store.create({
     merchant: req.user._id,
@@ -60,6 +68,7 @@ const createStore = asyncHandler(async (req, res) => {
     category,
     contactPhone: contactPhone?.trim() || null,
     paymentAccounts: parsedPaymentAccounts ?? undefined,
+    shippingFees: parsedShippingFees ?? [],
     logo,
     banner,
   });
@@ -128,7 +137,7 @@ const updateStore = asyncHandler(async (req, res) => {
     });
   }
 
-  const { name, description, category, contactPhone, paymentAccounts, isActive } = req.body;
+  const { name, description, category, contactPhone, paymentAccounts, isActive, shippingFees } = req.body;
 
   let logo = store.logo;
   let banner = store.banner;
@@ -146,6 +155,14 @@ const updateStore = asyncHandler(async (req, res) => {
   if (contactPhone !== undefined) store.contactPhone = contactPhone?.trim() || null;
   if (parsedPaymentAccounts !== undefined) store.paymentAccounts = parsedPaymentAccounts;
   if (isActive !== undefined) store.isActive = isActive;
+
+  // Update shipping fees (only for physical stores)
+  if (shippingFees !== undefined && store.type === 'physical') {
+    const parsedShipping = normalizeShippingFees(shippingFees);
+    if (parsedShipping !== undefined) {
+      store.shippingFees = parsedShipping;
+    }
+  }
   store.logo = logo;
   store.banner = banner;
 

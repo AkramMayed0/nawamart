@@ -48,6 +48,12 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: [0, 'المبلغ الإجمالي لا يمكن أن يكون سالباً'],
     },
+    // Shipping fee snapshot (set at order creation, 0 for digital stores)
+    shippingFee: {
+      type: Number,
+      default: 0,
+      min: [0, 'رسوم الشحن لا يمكن أن تكون سالبة'],
+    },
     // Delivery address snapshot
     deliveryAddress: {
       name:     { type: String, required: true },
@@ -55,6 +61,17 @@ const orderSchema = new mongoose.Schema(
       district: { type: String, default: null },
       details:  { type: String, default: null },
       phone:    { type: String, required: true },
+    },
+    // Preferred contact method for digital delivery
+    contactMethod: {
+      type: String,
+      enum: ['whatsapp', 'telegram', 'instagram', 'phone'],
+      default: 'whatsapp',
+    },
+    contactHandle: {
+      type: String,
+      trim: true,
+      default: null,
     },
     // Order lifecycle status
     // payment_under_review = paid via transfer, awaiting merchant confirmation
@@ -70,7 +87,7 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: {
       type: String,
       enum: {
-        values: ['cherry', 'kuraimi', 'oneCash', 'cash'],
+        values: ['kuraimi', 'oneCash', 'jaib', 'cash'],
         message: 'طريقة الدفع غير صالحة',
       },
       required: [true, 'طريقة الدفع مطلوبة'],
@@ -94,6 +111,12 @@ const orderSchema = new mongoose.Schema(
     rejectionReason: {
       type: String,
       trim: true,
+      default: null,
+    },
+    // Link to the chat created for this order (digital delivery)
+    chatId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Chat',
       default: null,
     },
     // Timestamps for each status transition

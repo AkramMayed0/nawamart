@@ -1,9 +1,11 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { Star, Tag, Barcode, Weight, Building2, Hash } from 'lucide-react'
 import { getProductById } from '@/api/products'
 import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
+import usePageTitle from '@/hooks/usePageTitle'
 import NotFound from '@/components/ui/NotFound'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import ImageGallery from '@/components/storefront/ImageGallery'
@@ -28,6 +30,7 @@ export default function ProductDetailPage() {
     queryFn: () => getProductById(productId).then(r => r.data.data),
     retry: false,
   })
+  usePageTitle(product?.name)
 
   // ── Loading ──────────────────────────────────────────────────────────
   if (isLoading) return (
@@ -42,12 +45,12 @@ export default function ProductDetailPage() {
     <NotFound message="المنتج غير موجود" sub="ربما تم حذف هذا المنتج أو الرابط خاطئ." />
   )
 
-  const outOfStock = product.stock === 0
+  const outOfStock = !product.unlimitedStock && product.stock === 0
   const isDigital  = store?.type === 'digital' || product.type === 'digital'
 
   function handleAddToCart() {
     addItem({ ...product, storeSlug: slug })
-    toast.success('أُضيف إلى السلة 🛒')
+    toast.success('أُضيف إلى السلة')
   }
 
   return (
@@ -86,7 +89,7 @@ export default function ProductDetailPage() {
                 : 'bg-success-100 text-success-dark'
             }`}>
               <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {outOfStock ? 'نفد المخزون' : `متوفر · ${product.stock} قطعة`}
+              {outOfStock ? 'نفد المخزون' : product.unlimitedStock ? 'متوفر' : `متوفر · ${product.stock} قطعة`}
             </span>
           </div>
 
@@ -97,6 +100,63 @@ export default function ProductDetailPage() {
               <p className="font-cairo text-sm text-text-muted leading-relaxed">
                 {product.description}
               </p>
+            </div>
+          )}
+
+          {/* Product details grid */}
+          {(product.sku || product.brand || product.barcode || product.weight || product.category || product.isFeatured) && (
+            <div className="grid grid-cols-2 gap-2">
+              {product.sku && (
+                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Hash size={14} className="text-text-subtle shrink-0" />
+                  <div>
+                    <p className="font-cairo text-[11px] text-text-subtle">SKU</p>
+                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.sku}</p>
+                  </div>
+                </div>
+              )}
+              {product.brand && (
+                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Building2 size={14} className="text-text-subtle shrink-0" />
+                  <div>
+                    <p className="font-cairo text-[11px] text-text-subtle">العلامة التجارية</p>
+                    <p className="font-cairo text-sm font-semibold text-text">{product.brand}</p>
+                  </div>
+                </div>
+              )}
+              {product.barcode && (
+                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Barcode size={14} className="text-text-subtle shrink-0" />
+                  <div>
+                    <p className="font-cairo text-[11px] text-text-subtle">الباركود</p>
+                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.barcode}</p>
+                  </div>
+                </div>
+              )}
+              {product.weight && (
+                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Weight size={14} className="text-text-subtle shrink-0" />
+                  <div>
+                    <p className="font-cairo text-[11px] text-text-subtle">الوزن</p>
+                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.weight} غرام</p>
+                  </div>
+                </div>
+              )}
+              {product.category && (
+                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
+                  <Tag size={14} className="text-text-subtle shrink-0" />
+                  <div>
+                    <p className="font-cairo text-[11px] text-text-subtle">التصنيف</p>
+                    <p className="font-cairo text-sm font-semibold text-text">{product.category}</p>
+                  </div>
+                </div>
+              )}
+              {product.isFeatured && (
+                <div className="flex items-center gap-2 rounded-lg bg-accent-50 px-3 py-2">
+                  <Star size={14} className="text-accent-700 shrink-0" />
+                  <span className="font-cairo text-sm font-bold text-accent-700">منتج مميز</span>
+                </div>
+              )}
             </div>
           )}
 

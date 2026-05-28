@@ -1,6 +1,7 @@
 const Order   = require('../models/Order');
 const Product = require('../models/Product');
 const Store   = require('../models/Store');
+const Chat    = require('../models/Chat');
 const {
   apiResponse,
   asyncHandler,
@@ -13,7 +14,7 @@ const {
 // Create a new order (Customer only)
 // ─────────────────────────────────────────────────────────────────────────────
 const createOrder = asyncHandler(async (req, res) => {
-  const { storeId, items, deliveryAddress, contactPhone, paymentMethod, paymentWasl, notes } = req.body;
+  const { storeId, items, deliveryAddress, contactPhone, paymentMethod, paymentWasl, notes, contactMethod, contactHandle } = req.body;
 
   if (!storeId) {
     return res.status(400).json({ success: false, message: 'معرّف المتجر مطلوب', data: null });
@@ -30,6 +31,15 @@ const createOrder = asyncHandler(async (req, res) => {
   const store = await Store.findById(storeId);
   if (!store || !store.isActive) {
     return res.status(404).json({ success: false, message: 'المتجر غير متاح', data: null });
+  }
+
+  // Calculate shipping fee for physical stores based on delivery city
+  let shippingFee = 0;
+  if (store.type === 'physical' && deliveryAddress?.city) {
+    const cityFee = store.shippingFees?.find(
+      (sf) => sf.city === deliveryAddress.city
+    );
+    shippingFee = cityFee?.fee ?? 0;
   }
 
   let totalAmount = 0;
@@ -77,6 +87,9 @@ const createOrder = asyncHandler(async (req, res) => {
     }
   }
 
+  // Add shipping fee to total
+  totalAmount += shippingFee;
+
   // Cash orders → pending; transfer orders → payment_under_review
   const initialStatus = paymentMethod === 'cash' ? 'pending' : 'payment_under_review';
 
@@ -86,11 +99,14 @@ const createOrder = asyncHandler(async (req, res) => {
     store:    store._id,
     items:    processedItems,
     totalAmount,
+    shippingFee,
     deliveryAddress,
     paymentMethod,
     paymentWasl: paymentWasl ?? null,
     notes:       notes ?? null,
     status:      initialStatus,
+    contactMethod: contactMethod || deliveryAddress?.contactMethod || 'whatsapp',
+    contactHandle: contactHandle || deliveryAddress?.phone || null,
   });
 
   return apiResponse(res, {
@@ -115,7 +131,7 @@ const getMerchantOrders = asyncHandler(async (req, res) => {
   const [orders, total] = await Promise.all([
     Order.find(query)
       .populate('customer', 'name phone')
-      .populate('store', 'name')
+      .populate('store', 'name type')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -138,7 +154,7 @@ const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
     .populate('customer', 'name phone')
     .populate('merchant', 'name')
-    .populate('store', 'name logo contactPhone')
+    .populate('store', 'name logo contactPhone type slug')
     .populate('items.product', 'name images');
 
   if (!order) {
@@ -181,6 +197,23 @@ const confirmOrder = asyncHandler(async (req, res) => {
 
   order.status      = 'confirmed';
   order.confirmedAt = new Date();
+
+  // Auto-create chat for digital orders (Business plan only + customer must have an account)
+  const store = await Store.findById(order.store);
+  if (store?.type === 'digital' && store?.plan === 'business' && order.customer && !order.chatId) {
+    let existingChat = await Chat.findOne({ order: order._id });
+    if (!existingChat) {
+      existingChat = await Chat.create({
+        store:    order.store,
+        merchant: order.merchant,
+        customer: order.customer,
+        order:    order._id,
+        messages: [],
+      });
+    }
+    order.chatId = existingChat._id;
+  }
+
   await order.save();
 
   return apiResponse(res, { message: 'تم تأكيد الطلب', data: order });

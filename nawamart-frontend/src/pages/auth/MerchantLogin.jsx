@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
 import { merchantLogin } from '@/api/auth'
+import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 
@@ -57,7 +58,7 @@ export default function MerchantLogin() {
 
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
-      toast.success('أهلاً بعودتك! 👋')
+      toast.success('أهلاً بعودتك!')
       navigate('/dashboard', { replace: true })
     } catch (err) {
       const msg = err?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
@@ -66,6 +67,8 @@ export default function MerchantLogin() {
       setLoading(false)
     }
   }
+
+  usePageTitle('تسجيل دخول')
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">

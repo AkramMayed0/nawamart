@@ -24,28 +24,28 @@ const io = new Server(httpServer, {
 app.set('io', io);
 
 io.on('connection', (socket) => {
-  console.log(`🔌 Socket connected: ${socket.id}`);
+  console.log(`[Socket] connected: ${socket.id}`);
 
   // Join a chat room (support both join_chat and frontend's joinRoom)
   socket.on('joinRoom', (chatId) => {
     socket.join(chatId);
-    console.log(`💬 Socket ${socket.id} joined chat: ${chatId}`);
+    console.log(`[Chat] Socket ${socket.id} joined chat: ${chatId}`);
   });
 
   socket.on('join_chat', (chatId) => {
     socket.join(chatId);
-    console.log(`💬 Socket ${socket.id} joined chat (legacy): ${chatId}`);
+    console.log(`[Chat] Socket ${socket.id} joined chat (legacy): ${chatId}`);
   });
 
   // Leave a chat room (support both leaveRoom and leave_chat)
   socket.on('leaveRoom', (chatId) => {
     socket.leave(chatId);
-    console.log(`💬 Socket ${socket.id} left chat: ${chatId}`);
+    console.log(`[Chat] Socket ${socket.id} left chat: ${chatId}`);
   });
 
   socket.on('leave_chat', (chatId) => {
     socket.leave(chatId);
-    console.log(`💬 Socket ${socket.id} left chat (legacy): ${chatId}`);
+    console.log(`[Chat] Socket ${socket.id} left chat (legacy): ${chatId}`);
   });
 
   // Client-to-Client socket sendMessage bypass (just in case they emit directly)
@@ -56,7 +56,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`🔌 Socket disconnected: ${socket.id}`);
+    console.log(`[Socket] disconnected: ${socket.id}`);
   });
 });
 
@@ -66,19 +66,19 @@ const start = async () => {
 
   httpServer.listen(PORT, () => {
     console.log('');
-    console.log('🚀 NawaMart API is running!');
-    console.log(`📡 Server  : http://localhost:${PORT}`);
-    console.log(`🌍 Env     : ${process.env.NODE_ENV || 'development'}`);
-    console.log(`❤️  Health  : http://localhost:${PORT}/api/health`);
+    console.log('[Startup] NawaMart API is running!');
+    console.log(`[Server]  : http://localhost:${PORT}`);
+    console.log(`[Env]     : ${process.env.NODE_ENV || 'development'}`);
+    console.log(`[Health]  : http://localhost:${PORT}/api/health`);
     console.log('');
   });
 };
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 const shutdown = (signal) => {
-  console.log(`\n⚠️  ${signal} received — shutting down gracefully...`);
+  console.log(`\n[Shutdown] ${signal} received — shutting down gracefully...`);
   httpServer.close(() => {
-    console.log('✅ HTTP server closed');
+    console.log('[Server] HTTP server closed');
     process.exit(0);
   });
 };
@@ -88,7 +88,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Unhandled rejection safety net
 process.on('unhandledRejection', (reason) => {
-  console.error('❌ Unhandled Rejection:', reason);
+  console.error('[Error] Unhandled Rejection:', reason);
   shutdown('unhandledRejection');
 });
 

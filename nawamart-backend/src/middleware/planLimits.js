@@ -4,7 +4,7 @@ const Order = require('../models/Order');
 
 // ─── Plan Limits ─────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  free:     { maxProducts: 5,  maxOrdersPerMonth: 30 },
+  free:     { maxProducts: 10, maxOrdersPerMonth: 30 },
   pro:      { maxProducts: 50, maxOrdersPerMonth: 300 },
   business: { maxProducts: Infinity, maxOrdersPerMonth: Infinity },
 };

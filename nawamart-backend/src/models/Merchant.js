@@ -45,6 +45,11 @@ const merchantSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Timed suspension — null means permanent if isActive=false
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
     profileImage: {
       type: String,
       default: null,

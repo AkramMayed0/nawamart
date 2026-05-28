@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { ToggleLeft, ToggleRight } from 'lucide-react'
+import { ToggleLeft, ToggleRight, Clock } from 'lucide-react'
 import { getAdminMerchants, toggleMerchantActive } from '@/api/admin'
+import usePageTitle from '@/hooks/usePageTitle'
 import {
   ActionButton,
   ActiveBadge,
   DataTable,
+  Modal,
   PageHeader,
   SearchInput,
   TableRow,
@@ -16,9 +18,12 @@ import {
 const MERCHANT_COLUMNS = 'minmax(180px,1fr) minmax(220px,1.2fr) minmax(150px,.8fr) minmax(120px,.6fr) minmax(120px,.6fr)'
 
 export default function AdminMerchants() {
+  usePageTitle('التجار')
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const [suspendModal, setSuspendModal] = useState(null)
+  const [suspendDays, setSuspendDays] = useState(7)
 
   useEffect(() => {
     const timer = window.setTimeout(() => setDebouncedSearch(search.trim()), 350)
@@ -35,14 +40,23 @@ export default function AdminMerchants() {
   const total = data?.pagination?.total ?? merchants.length
 
   const toggleMut = useMutation({
-    mutationFn: toggleMerchantActive,
+    mutationFn: ({ id, days }) => toggleMerchantActive(id, days),
     onSuccess: (response) => {
       toast.success(response.data.message)
       queryClient.invalidateQueries({ queryKey: ['admin-merchants'] })
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] })
+      setSuspendModal(null)
     },
     onError: (error) => toast.error(error?.message || 'فشل تحديث حالة التاجر'),
   })
+
+  function handleToggle(merchant) {
+    if (merchant.isActive) {
+      setSuspendModal(merchant)
+    } else {
+      toggleMut.mutate({ id: merchant._id })
+    }
+  }
 
   return (
     <>
@@ -80,7 +94,7 @@ export default function AdminMerchants() {
             <ActionButton
               tone={merchant.isActive ? 'danger' : 'success'}
               icon={merchant.isActive ? ToggleLeft : ToggleRight}
-              onClick={() => toggleMut.mutate(merchant._id)}
+              onClick={() => handleToggle(merchant)}
               loading={toggleMut.isPending}
             >
               {merchant.isActive ? 'تعليق' : 'تفعيل'}
@@ -88,6 +102,65 @@ export default function AdminMerchants() {
           </TableRow>
         ))}
       </DataTable>
+
+      {suspendModal && (
+        <Modal
+          title="تعليق حساب التاجر"
+          description={`تعليق حساب ${suspendModal.name}`}
+          onClose={() => setSuspendModal(null)}
+          footer={
+            <>
+              <ActionButton tone="neutral" onClick={() => setSuspendModal(null)}>
+                إلغاء
+              </ActionButton>
+              <ActionButton
+                tone="danger"
+                icon={Clock}
+                onClick={() => toggleMut.mutate({ id: suspendModal._id, days: suspendDays })}
+                loading={toggleMut.isPending}
+              >
+                تعليق
+              </ActionButton>
+            </>
+          }
+        >
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="suspendType"
+                checked={suspendDays === 0}
+                onChange={() => setSuspendDays(0)}
+                className="w-4 h-4 text-primary"
+              />
+              <span className="font-cairo text-sm text-text">تعليق دائم</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="suspendType"
+                checked={suspendDays > 0}
+                onChange={() => setSuspendDays(7)}
+                className="w-4 h-4 text-primary"
+              />
+              <span className="font-cairo text-sm text-text">تعليق لمدة</span>
+            </label>
+            {suspendDays > 0 && (
+              <div className="flex items-center gap-2 mr-6">
+                <input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={suspendDays}
+                  onChange={(e) => setSuspendDays(Number(e.target.value))}
+                  className="h-9 w-20 rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none focus:border-primary"
+                />
+                <span className="font-cairo text-sm text-text-muted">يوم</span>
+              </div>
+            )}
+          </div>
+        </Modal>
+      )}
     </>
   )
 }

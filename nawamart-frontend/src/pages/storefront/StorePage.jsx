@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle2, Clock, Package, Search, ShieldCheck, ShoppingBag, Sparkles, Truck } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock, Package, Search, ShieldCheck, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { getProductsByStore } from '@/api/products'
+import usePageTitle from '@/hooks/usePageTitle'
 import ProductCard from '@/components/storefront/ProductCard'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import NotFound from '@/components/ui/NotFound'
@@ -43,6 +44,7 @@ export default function StorePage() {
     staleTime: 1000 * 60 * 5,
     retry: false,
   })
+  usePageTitle(store?.name)
 
   const {
     data: products = [],
@@ -73,10 +75,19 @@ export default function StorePage() {
 
   if (storeError) {
     return (
-      <NotFound
-        message="المتجر غير موجود"
-        sub="تحقق من رابط المتجر أو تواصل مع صاحبه."
-      />
+      <div className="min-h-[60vh] flex items-center justify-center px-4" dir="rtl">
+        <div className="max-w-md w-full text-center">
+          <div className="w-20 h-20 rounded-2xl bg-danger-100 flex items-center justify-center mx-auto mb-5">
+            <Store size={36} className="text-danger" />
+          </div>
+          <h2 className="font-cairo font-extrabold text-2xl text-text mb-2">المتجر غير متاح حالياً</h2>
+          <p className="font-cairo text-sm text-text-muted leading-relaxed mb-6">
+            هذا المتجر غير متاح للعرض حاليًا. قد يكون ميقاتًا مؤقتًا أو تم إغلاقه من قبل الإدارة.
+            <br />
+            يرجى المحاولة لاحقًا أو التواصل مع صاحب المتجر.
+          </p>
+        </div>
+      </div>
     )
   }
 

@@ -32,7 +32,7 @@ const getMyChats = asyncHandler(async (req, res) => {
     Chat.find(query)
       .populate('customer', 'name')
       .populate('merchant', 'name')
-      .populate('store', 'name logo')
+      .populate('store', 'name logo type')
       .sort({ lastMessageAt: -1 })
       .skip(skip)
       .limit(limit),

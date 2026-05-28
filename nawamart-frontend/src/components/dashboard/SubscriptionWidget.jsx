@@ -5,8 +5,8 @@
  * Fetches subscription from API on mount.
  * Self-contained — drop it anywhere in the dashboard.
  */
-import { useState, useEffect } from 'react'
 import { useNavigate }         from 'react-router-dom'
+import { useQuery }            from '@tanstack/react-query'
 import { Crown, AlertCircle, Clock, RefreshCw } from 'lucide-react'
 import clsx                    from 'clsx'
 import PlanBadge               from '@/components/ui/PlanBadge'
@@ -27,15 +27,17 @@ function formatDate(isoDate) {
 
 export default function SubscriptionWidget() {
   const navigate = useNavigate()
-  const [sub,     setSub]     = useState(null)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    getMySubscription()
-      .then(res => setSub(res.data.data ?? null))
-      .catch(() => setSub(null))
-      .finally(() => setLoading(false))
-  }, [])
+  const { data: sub, isLoading: loading } = useQuery({
+    queryKey: ['my-subscription'],
+    queryFn:  () => getMySubscription().then(res => {
+      const data = res.data.data
+      if (Array.isArray(data)) return data.find(s => s.status === 'approved') ?? null
+      return data ?? null
+    }),
+    staleTime: 30_000,
+    retry: false,
+  })
 
   // ── Loading skeleton ──
   if (loading) {
@@ -52,7 +54,7 @@ export default function SubscriptionWidget() {
     )
   }
 
-  const plan      = sub?.plan ?? 'free'
+  const plan      = sub?.requestedPlan ?? 'free'
   const status    = sub?.status ?? 'active'    // free plan is always "active"
   const planMeta  = PLANS[plan] ?? PLANS.free
   const days      = daysUntil(sub?.expiresAt)

@@ -183,6 +183,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="chat" element={<ChatListPage />} />
+        <Route path="chat/order/:orderId" element={<ChatPage />} />
         <Route path="chat/:chatId" element={<ChatPage />} />
         <Route path="finance" element={<FinancePage />} />
         <Route path="settings" element={<SettingsPage />} />

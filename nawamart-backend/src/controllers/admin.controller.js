@@ -105,7 +105,7 @@ const getMerchantById = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/admin/merchants/:id/toggle-active
-// Activate or suspend a merchant account
+// Activate or suspend a merchant account (supports timed suspension)
 // ─────────────────────────────────────────────────────────────────────────────
 const toggleMerchantActive = asyncHandler(async (req, res) => {
   const merchant = await Merchant.findById(req.params.id);
@@ -113,14 +113,29 @@ const toggleMerchantActive = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, data: null, message: 'التاجر غير موجود' });
   }
 
-  merchant.isActive = !merchant.isActive;
+  const { days } = req.body;
+
+  if (merchant.isActive) {
+    // Suspend
+    merchant.isActive = false;
+    merchant.suspendedUntil = days && days > 0
+      ? new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      : null;
+  } else {
+    // Activate
+    merchant.isActive = true;
+    merchant.suspendedUntil = null;
+  }
+
   await merchant.save();
 
   return apiResponse(res, {
     message: merchant.isActive
       ? 'تم تفعيل حساب التاجر'
-      : 'تم تعليق حساب التاجر',
-    data: { _id: merchant._id, isActive: merchant.isActive },
+      : days && days > 0
+        ? `تم تعليق حساب التاجر لمدة ${days} يوم`
+        : 'تم تعليق حساب التاجر',
+    data: { _id: merchant._id, isActive: merchant.isActive, suspendedUntil: merchant.suspendedUntil },
   });
 });
 
@@ -160,7 +175,7 @@ const getStores = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/admin/stores/:id/toggle-active
-// Activate or deactivate a store
+// Activate or deactivate a store (supports timed suspension)
 // ─────────────────────────────────────────────────────────────────────────────
 const toggleStoreActive = asyncHandler(async (req, res) => {
   const store = await Store.findById(req.params.id);
@@ -168,12 +183,27 @@ const toggleStoreActive = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, data: null, message: 'المتجر غير موجود' });
   }
 
-  store.isActive = !store.isActive;
+  const { days } = req.body;
+
+  if (store.isActive) {
+    store.isActive = false;
+    store.suspendedUntil = days && days > 0
+      ? new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      : null;
+  } else {
+    store.isActive = true;
+    store.suspendedUntil = null;
+  }
+
   await store.save();
 
   return apiResponse(res, {
-    message: store.isActive ? 'تم تفعيل المتجر' : 'تم إيقاف المتجر',
-    data: { _id: store._id, isActive: store.isActive },
+    message: store.isActive
+      ? 'تم تفعيل المتجر'
+      : days && days > 0
+        ? `تم إيقاف المتجر لمدة ${days} يوم`
+        : 'تم إيقاف المتجر',
+    data: { _id: store._id, isActive: store.isActive, suspendedUntil: store.suspendedUntil },
   });
 });
 
@@ -277,7 +307,7 @@ const getCustomers = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PATCH /api/admin/customers/:id/toggle-active
-// Activate or suspend a customer account
+// Activate or suspend a customer account (supports timed suspension)
 // ─────────────────────────────────────────────────────────────────────────────
 const toggleCustomerActive = asyncHandler(async (req, res) => {
   const customer = await Customer.findById(req.params.id);
@@ -285,12 +315,27 @@ const toggleCustomerActive = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, data: null, message: 'العميل غير موجود' });
   }
 
-  customer.isActive = !customer.isActive;
+  const { days } = req.body;
+
+  if (customer.isActive) {
+    customer.isActive = false;
+    customer.suspendedUntil = days && days > 0
+      ? new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+      : null;
+  } else {
+    customer.isActive = true;
+    customer.suspendedUntil = null;
+  }
+
   await customer.save();
 
   return apiResponse(res, {
-    message: customer.isActive ? 'تم تفعيل حساب العميل' : 'تم تعليق حساب العميل',
-    data: { _id: customer._id, isActive: customer.isActive },
+    message: customer.isActive
+      ? 'تم تفعيل حساب العميل'
+      : days && days > 0
+        ? `تم تعليق حساب العميل لمدة ${days} يوم`
+        : 'تم تعليق حساب العميل',
+    data: { _id: customer._id, isActive: customer.isActive, suspendedUntil: customer.suspendedUntil },
   });
 });
 

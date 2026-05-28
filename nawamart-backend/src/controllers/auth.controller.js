@@ -105,11 +105,20 @@ const merchantLogin = async (req, res, next) => {
     }
 
     if (!merchant.isActive) {
-      return res.status(403).json({
-        success: false,
-        data: null,
-        message: 'تم تعليق حسابك — يرجى التواصل مع الدعم',
-      });
+      if (merchant.suspendedUntil && new Date(merchant.suspendedUntil) <= new Date()) {
+        merchant.isActive = true;
+        merchant.suspendedUntil = null;
+        await merchant.save();
+      } else {
+        const remaining = merchant.suspendedUntil
+          ? ` حتى ${new Date(merchant.suspendedUntil).toLocaleDateString('ar-YE')}`
+          : ' — يرجى التواصل مع الدعم';
+        return res.status(403).json({
+          success: false,
+          data: null,
+          message: `تم تعليق حسابك${remaining}`,
+        });
+      }
     }
 
     const isMatch = await merchant.comparePassword(password);
@@ -196,11 +205,20 @@ const customerLogin = async (req, res, next) => {
     }
 
     if (!customer.isActive) {
-      return res.status(403).json({
-        success: false,
-        data: null,
-        message: 'تم تعليق حسابك — يرجى التواصل مع الدعم',
-      });
+      if (customer.suspendedUntil && new Date(customer.suspendedUntil) <= new Date()) {
+        customer.isActive = true;
+        customer.suspendedUntil = null;
+        await customer.save();
+      } else {
+        const remaining = customer.suspendedUntil
+          ? ` حتى ${new Date(customer.suspendedUntil).toLocaleDateString('ar-YE')}`
+          : ' — يرجى التواصل مع الدعم';
+        return res.status(403).json({
+          success: false,
+          data: null,
+          message: `تم تعليق حسابك${remaining}`,
+        });
+      }
     }
 
     const isMatch = await customer.comparePassword(password);

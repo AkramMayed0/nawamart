@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import { Lock, Mail, ShieldCheck } from 'lucide-react'
 import { adminLogin } from '@/api/auth'
 import { useAdminStore } from '@/store/adminStore'
+import usePageTitle from '@/hooks/usePageTitle'
 
 export default function AdminLogin() {
   const navigate = useNavigate()
@@ -39,6 +40,8 @@ export default function AdminLogin() {
       setLoading(false)
     }
   }
+
+  usePageTitle('دخول المشرف')
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4 py-10" dir="rtl">

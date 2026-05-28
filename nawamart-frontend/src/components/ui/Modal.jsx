@@ -31,14 +31,15 @@ export default function Modal({ open, onClose, title, children, size = 'md', cla
 
       {/* Panel */}
       <div className={clsx(
-        'relative w-full bg-white rounded-xl shadow-lg z-10',
+        'relative w-full bg-white rounded-xl shadow-lg z-10 flex flex-col',
         'animate-[fadeIn_180ms_ease]',
+        'max-h-[85vh]',
         sizes[size],
         className,
       )}>
-        {/* Header */}
+        {/* Header (sticky) */}
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
             <h2 className="text-lg font-bold text-text font-cairo">{title}</h2>
             <button
               onClick={onClose}
@@ -49,8 +50,8 @@ export default function Modal({ open, onClose, title, children, size = 'md', cla
           </div>
         )}
 
-        {/* Body */}
-        <div className="px-6 py-5">{children}</div>
+        {/* Body (scrollable) */}
+        <div className="px-6 py-5 overflow-y-auto">{children}</div>
       </div>
     </div>
   )
