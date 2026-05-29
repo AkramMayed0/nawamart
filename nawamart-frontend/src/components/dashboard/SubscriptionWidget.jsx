@@ -5,11 +5,14 @@
  * Fetches subscription from API on mount.
  * Self-contained — drop it anywhere in the dashboard.
  */
+import { useEffect, useRef }  from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { useQuery }            from '@tanstack/react-query'
 import { Crown, AlertCircle, Clock, RefreshCw } from 'lucide-react'
 import clsx                    from 'clsx'
+import toast                   from 'react-hot-toast'
 import PlanBadge               from '@/components/ui/PlanBadge'
+import { useAuthStore }        from '@/store/authStore'
 import { getMySubscription, PLANS } from '@/api/subscriptions'
 
 function daysUntil(isoDate) {
@@ -26,13 +29,15 @@ function formatDate(isoDate) {
 }
 
 export default function SubscriptionWidget() {
-  const navigate = useNavigate()
+  const navigate   = useNavigate()
+  const storeData  = useAuthStore(s => s.store)
+  const currentPlan = storeData?.plan || 'free'
 
   const { data: sub, isLoading: loading } = useQuery({
     queryKey: ['my-subscription'],
     queryFn:  () => getMySubscription().then(res => {
       const data = res.data.data
-      if (Array.isArray(data)) return data.find(s => s.status === 'approved') ?? null
+      if (Array.isArray(data)) return data.find(s => ['approved', 'pending'].includes(s.status)) ?? null
       return data ?? null
     }),
     staleTime: 30_000,
@@ -54,15 +59,24 @@ export default function SubscriptionWidget() {
     )
   }
 
-  const plan      = sub?.requestedPlan ?? 'free'
-  const status    = sub?.status ?? 'active'    // free plan is always "active"
-  const planMeta  = PLANS[plan] ?? PLANS.free
-  const days      = daysUntil(sub?.expiresAt)
-  const expLabel  = formatDate(sub?.expiresAt)
+  const status     = sub?.status ?? 'active'
+  const plan       = status === 'pending' ? (sub?.requestedPlan ?? currentPlan) : currentPlan
+  const planMeta   = PLANS[plan] ?? PLANS.free
+  const expiryDate = sub?.expiresAt || storeData?.planExpiresAt || null
+  const days       = daysUntil(expiryDate)
+  const expLabel   = formatDate(expiryDate)
   const isFree    = plan === 'free'
   const isExpired = status === 'expired'
   const isPending = status === 'pending'
   const expiringSoon = days !== null && days <= 7 && days > 0 && !isExpired
+  const expiringUrgent = days !== null && days <= 5 && days > 0 && !isExpired
+
+  const notifiedUrgent = useRef(false)
+  useEffect(() => {
+    if (notifiedUrgent.current || !expiringUrgent) return
+    toast(`اشتراكك ينتهي خلال ${days} أيام — جدّد قبل الانتهاء`, { duration: 5000 })
+    notifiedUrgent.current = true
+  }, [expiringUrgent, days])
 
   return (
     <div className={clsx(

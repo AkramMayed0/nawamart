@@ -133,10 +133,10 @@ function StepNav({ step, totalSteps, onBack, onNext, nextLabel = 'التالي',
 }
 
 // ── Already-active success screen ────────────────────────────────────────
-function SuccessScreen({ sub, onGoHome }) {
-  const planMeta = PLANS[sub?.requestedPlan] ?? PLANS.free
-  const expiry   = sub?.expiresAt
-    ? new Date(sub.expiresAt).toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
+function SuccessScreen({ plan: planKey, expiry: expiryIso, onGoHome }) {
+  const planMeta = PLANS[planKey] ?? PLANS.free
+  const expiry   = expiryIso
+    ? new Date(expiryIso).toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
 
   return (
@@ -319,13 +319,18 @@ export default function SubscribePage() {
   const [waslFile,    setWaslFile]    = useState(null)
   const [waslPreview, setWaslPreview] = useState(null)
   const [submitting,  setSubmitting]  = useState(false)
-  const [activeSub,   setActiveSub]   = useState(null)   // existing active subscription
   const [storeId,     setStoreId]     = useState(null)   // merchant's store _id
   const [storeError,  setStoreError]  = useState(null)   // no store yet
+  const [pendingSub,  setPendingSub]  = useState(null)   // pending subscription request
 
-  // On mount: fetch merchant's store + check for existing active subscription
+  // Determine if store has an active plan (from Zustand, source of truth)
+  const storePlan       = store?.plan || 'free'
+  const storeExpiresAt  = store?.planExpiresAt
+  const isPlanExpired   = storeExpiresAt && new Date(storeExpiresAt) <= new Date()
+  const isPlanActive    = storePlan !== 'free' && !isPlanExpired
+
+  // On mount: fetch merchant's store + check for pending subscription
   useEffect(() => {
-    // 1. Get merchant's store to retrieve storeId (backend returns an ARRAY)
     getMyStore()
       .then(res => {
         const stores = res.data.data
@@ -337,17 +342,14 @@ export default function SubscribePage() {
         setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
       })
 
-    // 2. Check if merchant already has an active subscription
     getMySubscription()
       .then(res => {
-        // Backend returns an ARRAY of subscriptions
         const subs = res.data.data
-        const activeSub = Array.isArray(subs)
-          ? subs.find(s => s.status === 'approved')
-          : (subs?.status === 'approved' ? subs : null)
-        if (activeSub) setActiveSub(activeSub)
+        const subsArr = Array.isArray(subs) ? subs : [subs].filter(Boolean)
+        const pending = subsArr.find(s => s.status === 'pending')
+        if (pending) setPendingSub(pending)
       })
-      .catch(() => {})   // 404 = no subscription yet, that's fine
+      .catch(() => {})
   }, [])
   const TOTAL = STEPS.length  // 4 steps: 0 → plan, 1 → wallet, 2 → wasl, 3 → confirm
 
@@ -383,9 +385,14 @@ export default function SubscribePage() {
     }
   }
 
-  // ── Already active subscription guard ──
-  if (activeSub) {
-    return <SuccessScreen sub={activeSub} onGoHome={() => navigate('/dashboard')} />
+  // ── Already active plan guard (based on store.plan, not subscription doc) ──
+  if (isPlanActive) {
+    return <SuccessScreen plan={storePlan} expiry={storeExpiresAt} onGoHome={() => navigate('/dashboard')} />
+  }
+
+  // ── Pending subscription guard ──
+  if (pendingSub) {
+    return <PendingScreen plan={PLANS[pendingSub.requestedPlan] ?? PLANS.pro} onGoHome={() => navigate('/dashboard')} />
   }
 
   // ── No store yet guard ──
