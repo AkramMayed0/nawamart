@@ -11,7 +11,7 @@ import {
 import { resolveAssetUrl } from '@/utils/assets'
 import usePageTitle from '@/hooks/usePageTitle'
 import Icon from '@/components/ui/Icon'
-import { Zap, Truck, MessageCircle, Send, Instagram, Phone as PhoneIcon, Crown } from 'lucide-react'
+import { Zap, Truck, MapPin, MessageCircle, Send, Instagram, Phone as PhoneIcon, Crown } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 
@@ -241,6 +241,17 @@ function OrderRow({ order, plan, onViewWasl, onReject, navigate, queryClient }) 
         <p className="font-cairo text-xs text-text-muted mt-0.5 inline-flex items-center gap-1">
           {order.store?.type === 'digital' ? <Zap size={12} /> : <Truck size={12} />}
           {order.store?.type === 'digital' ? 'رقمي' : `${order.deliveryAddress?.city ?? 'مادي'}`}
+          {order.deliveryAddress?.location?.lat && order.deliveryAddress?.location?.lng && (
+            <a
+              href={`https://www.google.com/maps?q=${order.deliveryAddress.location.lat},${order.deliveryAddress.location.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-0.5 mr-1 text-primary hover:underline"
+              title="عرض الموقع على الخريطة"
+            >
+              <MapPin size={12} />
+            </a>
+          )}
         </p>
       </div>
 

@@ -7,7 +7,7 @@ import { useAuthStore }        from '@/store/authStore'
 import { usePreferencesStore } from '@/store/preferencesStore'
 import { useQuery }            from '@tanstack/react-query'
 import { getMerchantOrders }   from '@/api/orders'
-import { ShoppingBag, Clock, Banknote, MessageSquare, Zap, Truck } from 'lucide-react'
+import { ShoppingBag, Clock, Banknote, MessageSquare, Zap, Truck, BarChart3 } from 'lucide-react'
 import SubscriptionWidget      from '@/components/dashboard/SubscriptionWidget'
 import { useEffect }           from 'react'
 import { useNavigate }         from 'react-router-dom'
@@ -245,8 +245,22 @@ export default function DashboardHome() {
         ))}
       </div>
 
-      {/* ── Bottom grid: subscription widget + recent orders ── */}
+      {/* ── Bottom grid: reports, subscription, orders ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
+
+        {/* Reports card */}
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/reports')}
+          className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow text-right w-full"
+        >
+          <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">
+            <BarChart3 size={18} />
+          </div>
+          <p className="font-cairo font-extrabold text-lg text-text">التقارير</p>
+          <p className="font-cairo text-xs text-text-muted">تقارير المشتريات والمبيعات مع إمكانية التصدير إلى PDF.</p>
+          <span className="font-cairo text-xs font-bold text-primary mt-1">عرض التقارير ←</span>
+        </button>
 
         {/* Subscription widget */}
         {prefs.showSubscriptionSummary && <SubscriptionWidget />}

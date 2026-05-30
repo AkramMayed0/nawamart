@@ -54,6 +54,15 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ['email', 'google'],
+      default: 'email',
+    },
     // Reference to stores owned by this merchant
     stores: [
       {

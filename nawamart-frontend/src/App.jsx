@@ -11,6 +11,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
+import CustomerRegister from '@/pages/auth/CustomerRegister'
 import OnboardingPage from '@/pages/OnboardingPage'
 import SubscribePage from '@/pages/subscribe/SubscribePage'
 
@@ -32,7 +33,9 @@ import CustomersPage from '@/pages/dashboard/CustomersPage'
 import ChatListPage from '@/pages/dashboard/ChatListPage'
 import ChatPage from '@/pages/dashboard/ChatPage'
 import FinancePage from '@/pages/dashboard/FinancePage'
+import ReportsPage from '@/pages/dashboard/ReportsPage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
+import ProfilePage from '@/pages/dashboard/ProfilePage'
 
 import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
 import StorePage from '@/pages/storefront/StorePage'
@@ -173,6 +176,7 @@ export default function App() {
       <Route path="/merchant/login" element={<GuestRoute><MerchantLogin /></GuestRoute>} />
       <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
       <Route path="/customer/login" element={<GuestRoute><CustomerLogin /></GuestRoute>} />
+      <Route path="/customer/register" element={<GuestRoute><CustomerRegister /></GuestRoute>} />
       <Route path="/onboarding" element={<PrivateRoute role="merchant"><OnboardingPage /></PrivateRoute>} />
       <Route path="/subscribe" element={<PrivateRoute role="merchant"><SubscribePage /></PrivateRoute>} />
 
@@ -186,6 +190,8 @@ export default function App() {
         <Route path="chat/order/:orderId" element={<ChatPage />} />
         <Route path="chat/:chatId" element={<ChatPage />} />
         <Route path="finance" element={<FinancePage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

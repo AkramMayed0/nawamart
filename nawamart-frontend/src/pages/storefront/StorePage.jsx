@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, CheckCircle2, Clock, Package, Search, ShieldCheck, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { getProductsByStore } from '@/api/products'
+import { usePreferencesStore } from '@/store/preferencesStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import ProductCard from '@/components/storefront/ProductCard'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
@@ -70,6 +71,7 @@ export default function StorePage() {
     })
   }, [products, query, category])
 
+  const { showFeaturedProducts } = usePreferencesStore()
   const featuredProducts = filteredProducts.slice(0, 4)
   const isDigital = store?.type === 'digital'
 
@@ -196,7 +198,7 @@ export default function StorePage() {
           </div>
         </div>
 
-        {featuredProducts.length > 0 && (
+        {showFeaturedProducts && featuredProducts.length > 0 && (
           <div className="mb-8 rounded-xl border border-border bg-white p-4">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-cairo text-base font-extrabold text-text">منتجات مميزة</h3>

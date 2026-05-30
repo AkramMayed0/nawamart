@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   Banknote,
+  BarChart3,
   Eye,
   LayoutDashboard,
   LogOut,
@@ -9,6 +10,7 @@ import {
   Settings,
   ShoppingBag,
   Store,
+  User,
   Users,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -21,6 +23,8 @@ const NAV_ITEMS = [
   { to: '/dashboard/customers', label: 'العملاء', icon: Users },
   { to: '/dashboard/chat', label: 'التسليم', icon: MessageSquare },
   { to: '/dashboard/finance', label: 'المالية', icon: Banknote },
+  { to: '/dashboard/reports', label: 'التقارير', icon: BarChart3 },
+  { to: '/dashboard/profile', label: 'الملف الشخصي', icon: User },
   { to: '/dashboard/settings', label: 'الإعدادات', icon: Settings },
 ]
 

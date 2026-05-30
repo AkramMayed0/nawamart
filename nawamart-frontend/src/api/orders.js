@@ -1,7 +1,7 @@
 import api from './axios'
 
 export const createOrder     = (data) => api.post('/orders', data)
-export const getMerchantOrders = () => api.get('/orders/merchant')
+export const getMerchantOrders = (params = {}) => api.get('/orders/merchant', { params })
 export const getOrderById    = (id) => api.get(`/orders/${id}`)
 export const confirmOrder    = (id) => api.put(`/orders/${id}/confirm`)
 export const rejectOrder     = (id, reason) => api.put(`/orders/${id}/reject`, { reason })

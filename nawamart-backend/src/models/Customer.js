@@ -55,6 +55,15 @@ const customerSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ['email', 'google'],
+      default: 'email',
+    },
   },
   {
     timestamps: true,

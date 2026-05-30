@@ -66,6 +66,10 @@ const uploadStore = {
   fields: (fields) => [multer({ storage: createStorage('stores'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).fields(fields), mapToUrl('stores')],
 };
 
+const uploadAvatar = {
+  single: (field) => [multer({ storage: createStorage('avatars'), limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('avatars')],
+};
+
 const uploadChatFile = {
   single: (field) => [multer({ storage: createStorage('chat'), limits: { fileSize: 10 * 1024 * 1024 }, fileFilter }).single(field), mapToUrl('chat')],
 };
@@ -94,6 +98,7 @@ module.exports = {
   uploadProduct,
   uploadWasl,
   uploadStore,
+  uploadAvatar,
   uploadChatFile,
   deleteFromCloudinary,
 };

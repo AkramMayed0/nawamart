@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MessageSquare, ShieldCheck, Upload, X, MessageCircle, Send, Instagram, Phone } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MapPin, MessageSquare, ShieldCheck, Upload, X, MessageCircle, Send, Instagram, Phone, Navigation } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { createOrder, uploadWaslFile } from '@/api/orders'
 import { getProductPrice, useCartStore } from '@/store/cartStore'
+import { useAuthStore } from '@/store/authStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import { resolveAssetUrl } from '@/utils/assets'
 import WalletBadge from '@/components/storefront/WalletBadge'
@@ -33,8 +34,37 @@ export default function CheckoutPage() {
   usePageTitle('إتمام الطلب')
   const { slug } = useParams()
   const navigate = useNavigate()
+  const token = useAuthStore((state) => state.token)
+  const user = useAuthStore((state) => state.user)
   const items = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
+
+  // Require customer authentication to checkout
+  if (!token || user?.role !== 'customer') {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-20 text-center" dir="rtl">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-border bg-white text-primary shadow-sm">
+          <CreditCard size={34} />
+        </div>
+        <h1 className="mt-5 font-cairo text-2xl font-extrabold text-text">تسجيل الدخول مطلوب</h1>
+        <p className="mx-auto mt-2 max-w-md font-cairo text-sm leading-7 text-text-muted">
+          يجب تسجيل الدخول كعميل أولاً لتتمكن من إتمام الطلب.
+        </p>
+        <Link
+          to={`/customer/login?redirect=${encodeURIComponent(`/store/${slug}/checkout`)}`}
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 font-cairo text-sm font-extrabold text-white transition-colors hover:bg-primary-700"
+        >
+          تسجيل الدخول
+        </Link>
+        <Link
+          to={`/store/${slug}`}
+          className="mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-white px-5 font-cairo text-sm font-extrabold text-text-muted transition-colors hover:border-primary hover:text-primary mr-3"
+        >
+          العودة للتسوق
+        </Link>
+      </section>
+    )
+  }
 
   const [wallet, setWallet] = useState('kuraimi')
   const [waslFile, setWaslFile] = useState(null)
@@ -43,6 +73,28 @@ export default function CheckoutPage() {
   const [contactMethod, setContactMethod] = useState('whatsapp')
   const [contactHandle, setContactHandle] = useState('')
   const [loading, setLoading] = useState(false)
+  const [location, setLocation] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(false)
+
+  function getLocation() {
+    if (!navigator.geolocation) {
+      toast.error('ميزة تحديد الموقع غير مدعومة في متصفحك')
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocationLoading(false)
+        toast.success('تم تحديد موقعك بنجاح')
+      },
+      () => {
+        setLocationLoading(false)
+        toast.error('تعذر تحديد الموقع. تأكد من تفعيل خدمة الموقع في جهازك.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
 
   const { data: store } = useQuery({
     queryKey: ['store', slug],
@@ -62,6 +114,8 @@ export default function CheckoutPage() {
     return cityFee?.fee ?? 0
   }, [isDigital, subtotal, store?.shippingFees, form.city])
   const total = subtotal + shipping
+
+  const isBusiness = store?.plan === 'business'
 
   const canSubmit = Boolean(
     store?._id &&
@@ -102,6 +156,7 @@ export default function CheckoutPage() {
           phone: form.phone.trim(),
           city: form.city,
           details: isDigital ? 'تسليم رقمي عبر ' + CONTACT_METHODS.find(m => m.id === contactMethod)?.label : form.address.trim(),
+          location: isDigital ? undefined : location,
         },
         contactMethod: isDigital ? contactMethod : undefined,
         contactHandle: isDigital && contactHandle.trim() ? contactHandle.trim() : undefined,
@@ -171,7 +226,7 @@ export default function CheckoutPage() {
             setWaslFile={setWaslFile}
             setWaslPreview={setWaslPreview}
           />
-          <ContactForm form={form} setField={setField} isDigital={isDigital} contactMethod={contactMethod} setContactMethod={setContactMethod} contactHandle={contactHandle} setContactHandle={setContactHandle} />
+          <ContactForm form={form} setField={setField} isDigital={isDigital} isBusiness={isBusiness} location={location} locationLoading={locationLoading} getLocation={getLocation} contactMethod={contactMethod} setContactMethod={setContactMethod} contactHandle={contactHandle} setContactHandle={setContactHandle} />
           {isDigital && <DigitalNote />}
         </div>
 
@@ -318,7 +373,7 @@ function WaslUploader({ waslFile, waslPreview, setWaslFile, setWaslPreview }) {
   )
 }
 
-function ContactForm({ form, setField, isDigital, contactMethod, setContactMethod, contactHandle, setContactHandle }) {
+function ContactForm({ form, setField, isDigital, isBusiness, location, locationLoading, getLocation, contactMethod, setContactMethod, contactHandle, setContactHandle }) {
   return (
     <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
       <h2 className="font-cairo text-lg font-extrabold text-text">بيانات العميل</h2>
@@ -347,6 +402,53 @@ function ContactForm({ form, setField, isDigital, contactMethod, setContactMetho
           required={!isDigital}
         />
       </div>
+
+      {!isDigital && isBusiness && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-cairo text-sm font-extrabold text-text">الموقع على الخريطة</span>
+            {location && (
+              <span className="font-cairo text-xs text-success flex items-center gap-1">
+                <MapPin size={12} /> تم التحديد
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={getLocation}
+            disabled={locationLoading}
+            className={`w-full flex items-center justify-center gap-2 h-11 rounded-lg border-2 font-cairo text-sm font-bold transition-colors ${
+              location
+                ? 'border-success bg-success-50 text-success'
+                : 'border-dashed border-border-strong bg-bg text-text-muted hover:border-primary hover:text-primary'
+            } disabled:opacity-50`}
+          >
+            {locationLoading ? (
+              <>جاري تحديد الموقع...</>
+            ) : location ? (
+              <>
+                <MapPin size={16} />
+                {location.lat.toFixed(4)}, {location.lng.toFixed(4)} — تغيير الموقع
+              </>
+            ) : (
+              <>
+                <Navigation size={16} />
+                تحديد موقعي الحالي
+              </>
+            )}
+          </button>
+          {location && (
+            <a
+              href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1 font-cairo text-xs text-primary hover:underline"
+            >
+              <MapPin size={12} /> عرض على خرائط Google
+            </a>
+          )}
+        </div>
+      )}
 
       {isDigital && (
         <div className="mt-5 border-t border-border pt-5">

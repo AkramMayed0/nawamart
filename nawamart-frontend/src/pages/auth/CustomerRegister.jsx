@@ -1,14 +1,13 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
-import { merchantRegister, merchantLoginGoogle } from '@/api/auth'
+import { customerRegister, customerLoginGoogle } from '@/api/auth'
 import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import GoogleSignInButton from '@/components/ui/GoogleSignInButton'
 
-// ── Validation helpers ──────────────────────────────────────────────────
 function validate(fields) {
   const errors = {}
 
@@ -35,54 +34,48 @@ function validate(fields) {
   } else if (fields.password.length < 6) {
     errors.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
   }
+
   return errors
 }
 
-// ── Component ───────────────────────────────────────────────────────────
-export default function MerchantRegister() {
+export default function CustomerRegister() {
   const navigate = useNavigate()
-  const login    = useAuthStore(s => s.login)
+  const [searchParams] = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/'
+  const login = useAuthStore((s) => s.login)
 
-  const [fields, setFields] = useState({
-    name:     '',
-    email:    '',
-    phone:    '',
-    password: '',
-  })
-  const [errors,  setErrors]  = useState({})
+  const [fields, setFields] = useState({ name: '', email: '', phone: '', password: '' })
+  const [errors, setErrors] = useState({})
   const [loading, setLoading] = useState(false)
 
+  usePageTitle('إنشاء حساب عميل')
+
   function set(key, value) {
-    setFields(prev => ({ ...prev, [key]: value }))
-    // Clear the error for this field as user types
-    if (errors[key]) setErrors(prev => ({ ...prev, [key]: '' }))
+    setFields((prev) => ({ ...prev, [key]: value }))
+    if (errors[key]) setErrors((prev) => ({ ...prev, [key]: '' }))
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
-
     const errs = validate(fields)
     if (Object.keys(errs).length > 0) {
       setErrors(errs)
       return
     }
-
     setLoading(true)
     try {
-      const res = await merchantRegister({
-        name:     fields.name.trim(),
-        email:    fields.email.trim().toLowerCase(),
-        phone:    fields.phone.trim(),
+      const res = await customerRegister({
+        name: fields.name.trim(),
+        email: fields.email.trim().toLowerCase(),
+        phone: fields.phone.trim(),
         password: fields.password,
       })
-
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
       toast.success('تم إنشاء الحساب بنجاح!')
-      navigate('/onboarding', { replace: true })
+      navigate(redirect, { replace: true })
     } catch (err) {
-      const msg = err?.message || 'حدث خطأ، يرجى المحاولة مجدداً'
-      toast.error(msg)
+      toast.error(err?.message || 'حدث خطأ، يرجى المحاولة مجدداً')
     } finally {
       setLoading(false)
     }
@@ -91,11 +84,11 @@ export default function MerchantRegister() {
   async function handleGoogleSuccess(credentialResponse) {
     setLoading(true)
     try {
-      const res = await merchantLoginGoogle({ credential: credentialResponse.credential })
+      const res = await customerLoginGoogle({ credential: credentialResponse.credential })
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
       toast.success('تم إنشاء الحساب بنجاح!')
-      navigate('/onboarding', { replace: true })
+      navigate(redirect, { replace: true })
     } catch (err) {
       toast.error(err?.response?.data?.message || 'فشل التسجيل بحساب Google')
     } finally {
@@ -103,28 +96,23 @@ export default function MerchantRegister() {
     }
   }
 
-  usePageTitle('إنشاء حساب تاجر')
-
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">
-
-      {/* ── Brand panel (hidden on mobile) ── */}
       <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary p-10">
         <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert" />
-
         <div>
           <h2 className="font-cairo font-extrabold text-3xl text-white leading-snug mb-4">
-            ابدأ البيع اليوم
+            أنشئ حسابك
             <br />
-            <span className="text-accent">مجاناً تماماً</span>
+            <span className="text-accent">وابدأ التسوق</span>
           </h2>
           <ul className="space-y-3">
             {[
-              'متجرك جاهز في أقل من دقيقتين',
-              'استقبل طلباتك وتتبّعها لحظةً بلحظة',
+              'تسوق من جميع متاجر نوامارت',
+              'تتبع طلباتك لحظة بلحظة',
               'دفع آمن عبر محافظك الإلكترونية',
-              'لا عمولات على الخطة المجانية',
-            ].map(item => (
+              'تواصل مباشر مع التاجر',
+            ].map((item) => (
               <li key={item} className="flex items-center gap-3 text-white/85 font-cairo text-[15px]">
                 <span className="w-5 h-5 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
                   <svg className="w-3 h-3 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -136,24 +124,20 @@ export default function MerchantRegister() {
             ))}
           </ul>
         </div>
-
         <p className="font-cairo text-xs text-white/40">
           © {new Date().getFullYear()} نوامارت — منصة التجارة الإلكترونية اليمنية
         </p>
       </div>
 
-      {/* ── Form panel ── */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
-
-          {/* Logo — mobile only */}
           <img src="/logo.png" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
           <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
-            إنشاء حساب تاجر
+            إنشاء حساب عميل
           </h1>
           <p className="font-cairo text-sm text-text-muted mb-7">
-            أنشئ حسابك وابدأ البيع اليوم — مجاناً
+            أنشئ حسابك لتتمكن من الطلب من متاجر نوامارت
           </p>
 
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
@@ -162,7 +146,7 @@ export default function MerchantRegister() {
               placeholder="محمد أحمد"
               autoComplete="name"
               value={fields.name}
-              onChange={e => set('name', e.target.value)}
+              onChange={(e) => set('name', e.target.value)}
               error={errors.name}
               disabled={loading}
             />
@@ -174,7 +158,7 @@ export default function MerchantRegister() {
               autoComplete="email"
               inputClassName="font-en"
               value={fields.email}
-              onChange={e => set('email', e.target.value)}
+              onChange={(e) => set('email', e.target.value)}
               error={errors.email}
               disabled={loading}
             />
@@ -187,7 +171,7 @@ export default function MerchantRegister() {
               inputClassName="font-en"
               dir="ltr"
               value={fields.phone}
-              onChange={e => set('phone', e.target.value)}
+              onChange={(e) => set('phone', e.target.value)}
               error={errors.phone}
               disabled={loading}
             />
@@ -198,21 +182,20 @@ export default function MerchantRegister() {
               placeholder="٦ أحرف على الأقل"
               autoComplete="new-password"
               value={fields.password}
-              onChange={e => set('password', e.target.value)}
+              onChange={(e) => set('password', e.target.value)}
               error={errors.password}
               disabled={loading}
             />
 
-
             <Button
               type="submit"
-              variant="accent"
+              variant="primary"
               size="lg"
               className="w-full justify-center mt-1"
               loading={loading}
               disabled={loading}
             >
-              {loading ? 'جاري إنشاء الحساب…' : 'ابدأ مجاناً'}
+              {loading ? 'جاري إنشاء الحساب…' : 'إنشاء الحساب'}
             </Button>
           </form>
 
@@ -236,7 +219,7 @@ export default function MerchantRegister() {
 
           <p className="font-cairo text-sm text-center text-text-muted mt-6">
             لديك حساب؟{' '}
-            <Link to="/merchant/login" className="text-primary font-semibold hover:underline">
+            <Link to={`/customer/login?redirect=${encodeURIComponent(redirect)}`} className="text-primary font-semibold hover:underline">
               سجّل دخولك
             </Link>
           </p>

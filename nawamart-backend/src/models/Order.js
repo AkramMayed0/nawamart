@@ -61,6 +61,10 @@ const orderSchema = new mongoose.Schema(
       district: { type: String, default: null },
       details:  { type: String, default: null },
       phone:    { type: String, required: true },
+      location: {
+        lat: { type: Number, default: null },
+        lng: { type: Number, default: null },
+      },
     },
     // Preferred contact method for digital delivery
     contactMethod: {

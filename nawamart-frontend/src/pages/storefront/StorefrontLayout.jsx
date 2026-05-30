@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, Outlet, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { Menu, Search, ShieldCheck, ShoppingBag, Store, X } from 'lucide-react'
+import { LogOut, Menu, Search, ShieldCheck, ShoppingBag, Store, User, X } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
+import { useAuthStore } from '@/store/authStore'
 import { resolveAssetUrl } from '@/utils/assets'
 
 function StoreMark({ store, compact = false }) {
@@ -31,7 +32,17 @@ function StoreMark({ store, compact = false }) {
 export default function StorefrontLayout() {
   const { slug } = useParams()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const itemCount = useCartStore((state) => state.itemCount)
+  const token = useAuthStore((state) => state.token)
+  const user = useAuthStore((state) => state.user)
+  const logout = useAuthStore((state) => state.logout)
+  const isCustomer = token && user?.role === 'customer'
+
+  function handleLogout() {
+    logout()
+    setUserMenuOpen(false)
+  }
 
   const { data: store } = useQuery({
     queryKey: ['store', slug],
@@ -106,6 +117,50 @@ export default function StorefrontLayout() {
               </span>
             )}
           </Link>
+
+          {/* ── User / Auth ── */}
+          <div className="relative">
+            {isCustomer ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-border text-text-muted transition-colors hover:bg-bg hover:text-text"
+                  aria-label="قائمة المستخدم"
+                >
+                  <User size={18} />
+                </button>
+                {userMenuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
+                    <div className="absolute left-0 top-full z-20 mt-2 w-56 rounded-xl border border-border bg-white p-2 shadow-lg">
+                      <div className="border-b border-border px-3 py-2.5">
+                        <p className="truncate font-cairo text-sm font-bold text-text">{user?.name}</p>
+                        <p className="truncate font-cairo text-xs text-text-muted">{user?.email}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 font-cairo text-sm font-semibold text-danger transition-colors hover:bg-danger-100"
+                      >
+                        <LogOut size={16} />
+                        تسجيل الخروج
+                      </button>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  to={`/customer/login?redirect=${encodeURIComponent(`/store/${slug}`)}`}
+                  className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-extrabold text-text transition-colors hover:bg-bg"
+                >
+                  تسجيل الدخول
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
 
         {mobileOpen && (

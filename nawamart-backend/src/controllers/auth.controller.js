@@ -1,4 +1,6 @@
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
 const Merchant = require('../models/Merchant');
 const Customer = require('../models/Customer');
 const Store = require('../models/Store');
@@ -265,10 +267,226 @@ const getMe = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/auth/me
+ * Update the authenticated user's profile (name, phone, profileImage, password)
+ */
+const updateMe = async (req, res, next) => {
+  try {
+    const { name, phone, currentPassword, newPassword } = req.body;
+    const user = req.user;
+    const Model = req.userRole === 'merchant' ? Merchant : Customer;
+
+    // If changing password, verify current password first
+    if (currentPassword || newPassword) {
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'كلمة المرور الحالية والجديدة مطلوبتان لتغيير كلمة المرور',
+        });
+      }
+
+      const userWithPassword = await Model.findById(user._id).select('+password');
+      const isMatch = await userWithPassword.comparePassword(currentPassword);
+      if (!isMatch) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'كلمة المرور الحالية غير صحيحة',
+        });
+      }
+
+      user.password = newPassword;
+    }
+
+    if (name !== undefined) user.name = name.trim();
+    if (phone !== undefined) user.phone = phone.trim();
+
+    // Handle profile image upload
+    if (req.file) {
+      user.profileImage = req.file.path;
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'تم تحديث الملف الشخصي بنجاح',
+      data: {
+        user: {
+          ...(user.toSafeJSON ? user.toSafeJSON() : user.toObject()),
+          role: req.userRole,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verify a Google credential (ID token or access token) and return user payload
+ */
+async function verifyGoogleCredential(credential) {
+  // Try ID token verification first
+  try {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    return ticket.getPayload();
+  } catch (idTokenErr) {
+    // Fallback: treat as access token
+    try {
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+      const tokenInfo = await client.getTokenInfo(credential);
+      return {
+        sub: tokenInfo.sub,
+        email: tokenInfo.email,
+        name: tokenInfo.email ? tokenInfo.email.split('@')[0] : 'مستخدم Google',
+        picture: null,
+      };
+    } catch (accessTokenErr) {
+      throw new Error('رمز Google غير صالح');
+    }
+  }
+}
+
+/**
+ * POST /api/auth/customer/google
+ * Login/register with Google OAuth ID token
+ */
+const customerGoogleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: 'رمز Google مطلوب',
+      });
+    }
+
+    let payload;
+    try {
+      payload = await verifyGoogleCredential(credential);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        data: null,
+        message: err.message || 'رمز Google غير صالح',
+      });
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Find existing customer by googleId or email
+    let customer = await Customer.findOne({
+      $or: [{ googleId }, { email: email.toLowerCase().trim() }],
+    });
+
+    if (customer) {
+      // Link googleId if not already linked
+      if (!customer.googleId) {
+        customer.googleId = googleId;
+        customer.authProvider = 'google';
+        if (!customer.profileImage && picture) {
+          customer.profileImage = picture;
+        }
+        await customer.save();
+      }
+    } else {
+      // Create new customer
+      customer = await Customer.create({
+        name: name || 'مستخدم Google',
+        email: email.toLowerCase().trim(),
+        phone: '0000000000', // placeholder — customer can update later
+        password: crypto.randomBytes(16).toString('hex'),
+        googleId,
+        authProvider: 'google',
+        profileImage: picture || null,
+      });
+    }
+
+    return sendAuthResponse(res, 200, customer, 'customer', 'تم تسجيل الدخول بحساب Google بنجاح');
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/auth/merchant/google
+ * Login/register with Google OAuth ID token for merchants
+ */
+const merchantGoogleLogin = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: 'رمز Google مطلوب',
+      });
+    }
+
+    let payload;
+    try {
+      payload = await verifyGoogleCredential(credential);
+    } catch (err) {
+      return res.status(401).json({
+        success: false,
+        data: null,
+        message: err.message || 'رمز Google غير صالح',
+      });
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Find existing merchant by googleId or email
+    let merchant = await Merchant.findOne({
+      $or: [{ googleId }, { email: email.toLowerCase().trim() }],
+    });
+
+    if (merchant) {
+      // Link googleId if not already linked
+      if (!merchant.googleId) {
+        merchant.googleId = googleId;
+        merchant.authProvider = 'google';
+        if (!merchant.profileImage && picture) {
+          merchant.profileImage = picture;
+        }
+        await merchant.save();
+      }
+    } else {
+      // Create new merchant
+      merchant = await Merchant.create({
+        name: name || 'تاجر Google',
+        email: email.toLowerCase().trim(),
+        phone: '0000000000',
+        password: crypto.randomBytes(16).toString('hex'),
+        googleId,
+        authProvider: 'google',
+        profileImage: picture || null,
+      });
+    }
+
+    return sendAuthResponse(res, 200, merchant, 'merchant', 'تم تسجيل الدخول بحساب Google بنجاح');
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   merchantRegister,
   merchantLogin,
+  merchantGoogleLogin,
   customerRegister,
   customerLogin,
+  customerGoogleLogin,
   getMe,
+  updateMe,
 };

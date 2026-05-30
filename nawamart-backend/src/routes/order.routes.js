@@ -12,8 +12,8 @@ const {
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
 const { enforceOrderLimit } = require('../middleware/planLimits');
 
-// Public storefront checkout and public order confirmation/tracking.
-router.post('/', enforceOrderLimit, createOrder);
+// Customer checkout — requires authentication
+router.post('/', verifyToken, requireRole('customer'), enforceOrderLimit, createOrder);
 
 router.get('/merchant', verifyToken, requireRole('merchant'), getMerchantOrders);
 router.put('/:id/confirm', verifyToken, requireRole('merchant'), confirmOrder);

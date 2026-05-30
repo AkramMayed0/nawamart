@@ -94,7 +94,7 @@ const createOrder = asyncHandler(async (req, res) => {
   const initialStatus = paymentMethod === 'cash' ? 'pending' : 'payment_under_review';
 
   const order = await Order.create({
-    customer: req.user?._id ?? null,
+      customer: req.user._id,
     merchant: store.merchant,
     store:    store._id,
     items:    processedItems,
@@ -122,11 +122,16 @@ const createOrder = asyncHandler(async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const getMerchantOrders = asyncHandler(async (req, res) => {
   const { limit, skip, page } = getPaginationParams(req);
-  const { status, storeId } = req.query;
+  const { status, storeId, date_from, date_to } = req.query;
 
   const query = { merchant: req.user._id };
   if (status)  query.status = status;
   if (storeId) query.store  = storeId;
+  if (date_from || date_to) {
+    query.createdAt = {};
+    if (date_from) query.createdAt.$gte = new Date(date_from);
+    if (date_to)   query.createdAt.$lte = new Date(date_to);
+  }
 
   const [orders, total] = await Promise.all([
     Order.find(query)
