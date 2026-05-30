@@ -43,17 +43,15 @@ api.interceptors.response.use(
 
     const status = error.response.status
     const message = error.response?.data?.message || 'حدث خطأ غير متوقع'
-    const isAdminRoute = window.location.pathname.startsWith('/admin')
 
     if (status === 401) {
-      if (isAdminRoute && window.location.pathname !== '/admin/login') {
+      const isAdminRoute = window.location.pathname.startsWith('/admin')
+      if (isAdminRoute) {
         useAdminStore.getState().logout()
         toast.error('انتهت جلسة المشرف، يرجى تسجيل الدخول مجددا')
-        window.location.href = '/admin/login'
-      } else if (!isAdminRoute) {
+      } else {
         useAuthStore.getState().logout()
         toast.error('انتهت الجلسة، يرجى تسجيل الدخول مجددا')
-        window.location.href = '/merchant/login'
       }
     } else if (status === 403) {
       toast.error('ليس لديك صلاحية للقيام بهذا الإجراء')

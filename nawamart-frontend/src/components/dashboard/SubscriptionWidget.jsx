@@ -33,6 +33,8 @@ export default function SubscriptionWidget() {
   const storeData  = useAuthStore(s => s.store)
   const currentPlan = storeData?.plan || 'free'
 
+  const notifiedUrgent = useRef(false)
+
   const { data: sub, isLoading: loading } = useQuery({
     queryKey: ['my-subscription'],
     queryFn:  () => getMySubscription().then(res => {
@@ -43,6 +45,18 @@ export default function SubscriptionWidget() {
     staleTime: 30_000,
     retry: false,
   })
+
+  const status     = sub?.status ?? 'active'
+  const plan       = status === 'pending' ? (sub?.requestedPlan ?? currentPlan) : currentPlan
+  const expiryDate = sub?.expiresAt || storeData?.planExpiresAt || null
+  const days       = daysUntil(expiryDate)
+  const expiringUrgent = days !== null && days <= 5 && days > 0 && status !== 'expired'
+
+  useEffect(() => {
+    if (notifiedUrgent.current || !expiringUrgent) return
+    toast(`اشتراكك ينتهي خلال ${days} أيام — جدّد قبل الانتهاء`, { duration: 5000 })
+    notifiedUrgent.current = true
+  }, [expiringUrgent, days])
 
   // ── Loading skeleton ──
   if (loading) {
@@ -59,24 +73,12 @@ export default function SubscriptionWidget() {
     )
   }
 
-  const status     = sub?.status ?? 'active'
-  const plan       = status === 'pending' ? (sub?.requestedPlan ?? currentPlan) : currentPlan
   const planMeta   = PLANS[plan] ?? PLANS.free
-  const expiryDate = sub?.expiresAt || storeData?.planExpiresAt || null
-  const days       = daysUntil(expiryDate)
   const expLabel   = formatDate(expiryDate)
   const isFree    = plan === 'free'
   const isExpired = status === 'expired'
   const isPending = status === 'pending'
   const expiringSoon = days !== null && days <= 7 && days > 0 && !isExpired
-  const expiringUrgent = days !== null && days <= 5 && days > 0 && !isExpired
-
-  const notifiedUrgent = useRef(false)
-  useEffect(() => {
-    if (notifiedUrgent.current || !expiringUrgent) return
-    toast(`اشتراكك ينتهي خلال ${days} أيام — جدّد قبل الانتهاء`, { duration: 5000 })
-    notifiedUrgent.current = true
-  }, [expiringUrgent, days])
 
   return (
     <div className={clsx(
