@@ -12,8 +12,8 @@
  */
 import { useState, useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { ArrowRight, Check, ChevronLeft, Clock, CheckCircle, Zap, Briefcase } from 'lucide-react'
-import { PLANS, uploadSubscriptionWasl, createSubscription, getMySubscription } from '@/api/subscriptions'
+import { ArrowRight, Check, ChevronLeft, Clock, CheckCircle, XCircle, Zap, Briefcase, Sparkles } from 'lucide-react'
+import { PLANS, uploadSubscriptionWasl, createSubscription, getMySubscription, getSubscriptionProration } from '@/api/subscriptions'
 import { getMyStore } from '@/api/stores'
 import { useAuthStore } from '@/store/authStore'
 import toast from 'react-hot-toast'
@@ -134,7 +134,7 @@ function StepNav({ step, totalSteps, onBack, onNext, nextLabel = 'التالي',
 
 // ── Already-active success screen ────────────────────────────────────────
 function SuccessScreen({ plan: planKey, expiry: expiryIso, onGoHome }) {
-  const planMeta = PLANS[planKey] ?? PLANS.free
+  const planMeta = PLANS[planKey] ?? PLANS.starter
   const expiry   = expiryIso
     ? new Date(expiryIso).toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
@@ -242,20 +242,59 @@ function PendingScreen({ plan, onGoHome }) {
   )
 }
 
-// ── Plan picker card ──────────────────────────────────────────────────────
-const PLAN_ICONS = { pro: Zap, business: Briefcase }
-const PLAN_COLORS = {
-  pro:      { bg: 'bg-primary-50',   iconCls: 'text-primary',    border: 'border-primary-200' },
-  business: { bg: 'bg-accent-50',    iconCls: 'text-accent-700', border: 'border-accent-200' },
+// ── Billing toggle ────────────────────────────────────────────────────────
+function BillingToggle({ billing, onChange, plan }) {
+  return (
+    <div className="flex items-center justify-center mb-8">
+      <div className="relative bg-bg-soft rounded-2xl p-1 flex gap-1 shadow-inner">
+        <button
+          type="button"
+          onClick={() => onChange('monthly')}
+          className={`relative font-cairo font-bold text-sm px-8 py-2.5 rounded-xl transition-all ${
+            billing === 'monthly'
+              ? 'bg-white text-text shadow-sm'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          شهري
+        </button>
+        <button
+          type="button"
+          onClick={() => onChange('yearly')}
+          className={`relative font-cairo font-bold text-sm px-8 py-2.5 rounded-xl transition-all ${
+            billing === 'yearly'
+              ? 'bg-white text-accent-700 shadow-sm'
+              : 'text-text-muted hover:text-text'
+          }`}
+        >
+          سنوي
+          <span className="absolute -top-2.5 -right-2 bg-accent text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 whitespace-nowrap">
+            <Sparkles size={8} /> وفر 17%
+          </span>
+        </button>
+      </div>
+    </div>
+  )
 }
 
-function PlanPicker({ plans, selected, onSelect }) {
+// ── Plan picker card ──────────────────────────────────────────────────────
+const PLAN_ICONS = { starter: Sparkles, pro: Zap, business: Briefcase }
+const PLAN_COLORS = {
+  starter:  { bg: 'bg-bg-soft',      iconCls: 'text-text-muted', border: 'border-border' },
+  pro:      { bg: 'bg-primary-50',   iconCls: 'text-primary',    border: 'border-primary-200' },
+  business: { bg: 'bg-amber-50',    iconCls: 'text-amber-700', border: 'border-amber-200' },
+}
+
+function PlanPicker({ plans, selected, onSelect, billing }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {Object.values(plans).filter(p => p.price > 0).map(p => {
         const isSel = selected === p.key
         const Icon = PLAN_ICONS[p.key]
         const colors = PLAN_COLORS[p.key] || PLAN_COLORS.pro
+        const monthlyAfterDiscount = Math.round((p.yearlyPrice ?? p.price * 12) / 12)
+        const displayPrice = billing === 'yearly' ? monthlyAfterDiscount : p.price
+        const priceLabel = 'ر.ي / شهر'
         return (
           <button key={p.key} type="button" onClick={() => onSelect(p.key)}
             className={`text-right bg-white border-2 rounded-2xl p-6 transition-all hover:shadow-md
@@ -277,9 +316,14 @@ function PlanPicker({ plans, selected, onSelect }) {
             <p className="font-cairo text-sm text-text-muted mb-4">{p.nameAr}</p>
             <div className="mb-4">
               <span className="font-inter font-extrabold text-3xl text-text dk-num">
-                {p.price.toLocaleString('en-US')}
+                {displayPrice.toLocaleString('en-US')}
               </span>
-              <span className="font-cairo text-sm text-text-muted mr-1">ر.ي / شهر</span>
+              <span className="font-cairo text-sm text-text-muted mr-1">{priceLabel}</span>
+              {billing === 'yearly' && (
+                <span className="block text-[11px] text-accent font-semibold mt-0.5">
+                  وفر 17% — بدلاً من {p.price.toLocaleString('en-US')} ر.ي / شهر
+                </span>
+              )}
             </div>
             <div className="flex flex-col gap-2 pt-3 border-t border-border">
               {p.features.map((f, i) => (
@@ -291,11 +335,7 @@ function PlanPicker({ plans, selected, onSelect }) {
                 </div>
               ))}
             </div>
-            {isSel && (
-              <div className="mt-4 w-full bg-accent text-white font-cairo font-bold text-sm py-2 rounded-xl text-center">
-                تم الاختيار ✓
-              </div>
-            )}
+
           </button>
         )
       })}
@@ -308,11 +348,7 @@ export default function SubscribePage() {
   usePageTitle('الاشتراك')
   const [params]  = useSearchParams()
   const navigate  = useNavigate()
-  const store     = useAuthStore(s => s.store)
-  const currentPlan = store?.plan || 'free'
-  const defaultPlan = currentPlan !== 'free' ? currentPlan : 'pro'
-  const [planKey, setPlanKey] = useState(params.get('plan') || defaultPlan)
-  const plan      = PLANS[planKey] ?? PLANS.pro
+  const store         = useAuthStore(s => s.store)
 
   const [step,        setStep]        = useState(0)
   const [wallet,      setWallet]      = useState('kuraimi')
@@ -321,13 +357,56 @@ export default function SubscribePage() {
   const [submitting,  setSubmitting]  = useState(false)
   const [storeId,     setStoreId]     = useState(null)   // merchant's store _id
   const [storeError,  setStoreError]  = useState(null)   // no store yet
-  const [pendingSub,  setPendingSub]  = useState(null)   // pending subscription request
+  const [pendingSub,   setPendingSub]   = useState(null)   // pending subscription request
+  const [rejectedSub,   setRejectedSub]   = useState(null)   // rejected subscription
+  const [approvedSub,   setApprovedSub]   = useState(null)   // last approved subscription
+  const [freshStore,    setFreshStore]    = useState(null)   // API-fetched store data
+  const [proration,     setProration]     = useState(null)   // { upgradeCost, remainingValue, walletCredit, ... }
+  const [prorationLoad, setProrationLoad] = useState(false)
 
-  // Determine if store has an active plan (from Zustand, source of truth)
-  const storePlan       = store?.plan || 'free'
-  const storeExpiresAt  = store?.planExpiresAt
+  // Use API-fetched store data (not stale Zustand) for plan checks
+  const activeStore     = freshStore || store
+  const currentPlan     = activeStore?.plan || 'starter'
+  const [billing, setBilling] = useState('monthly')
+
+  // ── Plan hierarchy for upgrade targeting ──
+  const PLAN_HIERARCHY = { starter: 1, pro: 2, business: 3 }
+  const currentRank    = PLAN_HIERARCHY[currentPlan] ?? 1
+  // Free Trial = starter plan with planExpiresAt but no approved subscription yet
+  const allowedPlans   = activeStore?.plan === 'starter' && !approvedSub && activeStore?.planExpiresAt
+    ? PLANS
+    : Object.fromEntries(
+        Object.entries(PLANS).filter(([, p]) => PLAN_HIERARCHY[p.key] > currentRank)
+      )
+  const atHighestPlan  = Object.keys(allowedPlans).length === 0
+  const defaultPlan    = params.get('plan') && PLAN_HIERARCHY[params.get('plan')] > currentRank
+    ? params.get('plan')
+    : Object.keys(allowedPlans)[0] ?? currentPlan
+
+  const [planKey, setPlanKey] = useState(defaultPlan)
+  const plan            = PLANS[planKey] ?? PLANS.starter
+  const currentPrice    = billing === 'yearly' ? (plan.yearlyPrice ?? plan.price * 12) : plan.price
+  const displayPrice    = proration?.upgradeCost ?? currentPrice
+  const hasCredit       = proration && proration.remainingValue > 0
+  const hasWalletCredit = proration && proration.walletCredit > 0
+  const storePlan       = activeStore?.plan || 'starter'
+  const storeExpiresAt  = activeStore?.planExpiresAt
+  const daysRemaining   = storeExpiresAt ? Math.ceil((new Date(storeExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null
   const isPlanExpired   = storeExpiresAt && new Date(storeExpiresAt) <= new Date()
-  const isPlanActive    = storePlan !== 'free' && !isPlanExpired
+  const isPlanActive    = !!storeExpiresAt ? !isPlanExpired : storePlan !== 'starter'
+  const expiringSoon    = daysRemaining !== null && daysRemaining <= 7 && daysRemaining > 0
+  // Free trial = starter plan with planExpiresAt but no approved subscription yet
+  const onFreeTrial     = storePlan === 'starter' && !approvedSub && storeExpiresAt
+
+  // ── Fetch proration when plan or billing changes ──
+  useEffect(() => {
+    if (!storeId) return
+    setProrationLoad(true)
+    getSubscriptionProration(planKey, billing)
+      .then(res => setProration(res.data.data))
+      .catch(() => setProration(null))
+      .finally(() => setProrationLoad(false))
+  }, [planKey, billing, storeId])
 
   // On mount: fetch merchant's store + check for pending subscription
   useEffect(() => {
@@ -335,8 +414,12 @@ export default function SubscribePage() {
       .then(res => {
         const stores = res.data.data
         const store = Array.isArray(stores) ? stores[0] : stores
-        if (store?._id) setStoreId(store._id)
-        else setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
+        if (store?._id) {
+          setStoreId(store._id)
+          setFreshStore(store)
+        } else {
+          setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
+        }
       })
       .catch(() => {
         setStoreError('لم يتم العثور على متجر. يرجى إنشاء متجرك أولاً من لوحة التحكم.')
@@ -348,6 +431,10 @@ export default function SubscribePage() {
         const subsArr = Array.isArray(subs) ? subs : [subs].filter(Boolean)
         const pending = subsArr.find(s => s.status === 'pending')
         if (pending) setPendingSub(pending)
+        const rejected = subsArr.find(s => s.status === 'rejected')
+        if (rejected) setRejectedSub(rejected)
+        const approved = subsArr.find(s => s.status === 'approved')
+        if (approved) setApprovedSub(approved)
       })
       .catch(() => {})
   }, [])
@@ -373,8 +460,8 @@ export default function SubscribePage() {
       const uploadRes = await uploadSubscriptionWasl(fd)
       const waslUrl   = uploadRes.data.data?.url ?? uploadRes.data.url
 
-      // 2. Create subscription — backend expects: { storeId, requestedPlan, waslUrl }
-      await createSubscription({ storeId, requestedPlan: planKey, waslUrl })
+      // 2. Create subscription — backend expects: { storeId, requestedPlan, waslUrl, billing }
+      await createSubscription({ storeId, requestedPlan: planKey, waslUrl, billing })
 
       // 3. Advance to pending-review screen
       setStep(TOTAL)
@@ -385,8 +472,10 @@ export default function SubscribePage() {
     }
   }
 
-  // ── Already active plan guard (based on store.plan, not subscription doc) ──
-  if (isPlanActive) {
+  // ── Highest plan guard ──
+  // If the user is on Business (top plan), show the "already active" screen
+  // since there are no valid upgrade targets.
+  if (freshStore && atHighestPlan && isPlanActive) {
     return <SuccessScreen plan={storePlan} expiry={storeExpiresAt} onGoHome={() => navigate('/dashboard')} />
   }
 
@@ -445,19 +534,84 @@ export default function SubscribePage() {
       {/* ── Body ── */}
       <main className="max-w-2xl mx-auto px-4 py-8">
 
+        {storePlan === 'starter' && isPlanExpired && (
+          <div className="flex items-start gap-2 bg-danger-100 rounded-xl px-4 py-3 mb-6 text-xs font-cairo text-danger">
+            <Clock size={13} className="shrink-0 mt-0.5" />
+            <span>انتهت الفترة التجريبية — اختر خطة للاستمرار في استخدام متجرك</span>
+          </div>
+        )}
+
+        {rejectedSub && !pendingSub && !isPlanActive &&
+          (!approvedSub || new Date(rejectedSub.createdAt) > new Date(approvedSub.createdAt)) && (
+          <div className="flex flex-col gap-1.5 bg-danger-100 rounded-2xl px-4 py-3 mb-6 text-xs font-cairo text-danger">
+            <div className="flex items-start gap-2">
+              <XCircle size={14} className="shrink-0 mt-0.5" />
+              <span className="font-bold">تم رفض طلب الاشتراك السابق</span>
+            </div>
+            {rejectedSub.reviewNote && (
+              <p className="mr-6 text-danger/80">السبب: {rejectedSub.reviewNote}</p>
+            )}
+            <p className="mr-6 text-danger/80">يرجى إرسال طلب جديد بعد التأكد من صحة الإيصال</p>
+          </div>
+        )}
+
         {/* Steps bar */}
         <StepsBar current={step} />
 
         {/* Step 0 — plan picker */}
-        {step === 0 && <PlanPicker plans={PLANS} selected={planKey} onSelect={setPlanKey} />}
+        {step === 0 && (
+          <>
+            {atHighestPlan ? (
+              <div className="bg-white border border-border rounded-2xl p-8 text-center">
+                <div className="w-16 h-16 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={28} className="text-success" />
+                </div>
+                <h3 className="font-cairo font-extrabold text-xl text-text mb-2">
+                  أنت مشترك في أعلى خطة متاحة
+                </h3>
+                <p className="font-cairo text-sm text-text-muted leading-relaxed">
+                  أنت حالياً في خطة {PLANS[storePlan]?.name}. لا توجد خطط أعلى للترقية إليها.
+                </p>
+              </div>
+            ) : (
+              <>
+                <BillingToggle billing={billing} onChange={setBilling} plan={plan} />
+                <PlanPicker plans={allowedPlans} selected={planKey} onSelect={setPlanKey} billing={billing} />
+              </>
+            )}
+          </>
+        )}
 
         {/* Step 1 — wallet selector */}
         {step === 1 && (
-          <WalletSelector
-            wallet={wallet}
-            setWallet={setWallet}
-            amount={plan.price}
-          />
+          <>
+            {hasCredit && (
+              <div className="flex items-start gap-2 bg-success-50 rounded-xl px-4 py-3 mb-4 text-xs font-cairo text-success-dark">
+                <CheckCircle size={13} className="shrink-0 mt-0.5" />
+                <span>
+                  تم خصم{' '}
+                  <strong>{proration.remainingValue.toLocaleString('en-US')} ر.ي</strong>{' '}
+                  كرصيد متبقي من خطتك الحالية. المبلغ المطلوب:{' '}
+                  <strong>{displayPrice.toLocaleString('en-US')} ر.ي</strong>
+                </span>
+              </div>
+            )}
+            {proration?.walletCredit > 0 && (
+              <div className="flex items-start gap-2 bg-success-50 rounded-xl px-4 py-3 mb-4 text-xs font-cairo text-success-dark">
+                <CheckCircle size={13} className="shrink-0 mt-0.5" />
+                <span>
+                  تم إضافة{' '}
+                  <strong>{proration.walletCredit.toLocaleString('en-US')} ر.ي</strong>{' '}
+                  كرصيد في محفظتك لاستخدامه لاحقاً.
+                </span>
+              </div>
+            )}
+            <WalletSelector
+              wallet={wallet}
+              setWallet={setWallet}
+              amount={displayPrice}
+            />
+          </>
         )}
 
         {/* Step 2 — wasl uploader */}
@@ -482,8 +636,28 @@ export default function SubscribePage() {
               <div className="flex justify-between">
                 <span className="text-text-muted">المبلغ</span>
                 <span className="font-inter font-bold text-primary dk-num">
-                  {plan.price.toLocaleString('en-US')} ر.ي / شهر
+                  {displayPrice.toLocaleString('en-US')} ر.ي
                 </span>
+              </div>
+              {hasCredit && (
+                <div className="flex justify-between text-success-dark">
+                  <span className="text-text-muted">رصيد الخطة السابقة</span>
+                  <span className="font-inter font-bold dk-num">
+                    -{proration.remainingValue.toLocaleString('en-US')} ر.ي
+                  </span>
+                </div>
+              )}
+              {hasWalletCredit && (
+                <div className="flex justify-between text-success-dark">
+                  <span className="text-text-muted">رصيد المحفظة</span>
+                  <span className="font-inter font-bold dk-num">
+                    -{proration.walletCredit.toLocaleString('en-US')} ر.ي
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between">
+                <span className="text-text-muted">مدة الفوترة</span>
+                <span className="font-semibold text-text">{billing === 'yearly' ? 'سنوي' : 'شهري'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">طريقة الدفع</span>

@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   requestSubscription,
   getMySubscriptions,
+  getProration,
   getAllSubscriptions,
   approveSubscription,
   rejectSubscription,
@@ -16,6 +17,9 @@ router.post('/request', verifyToken, requireRole('merchant'), requestSubscriptio
 
 // GET /api/subscriptions/my
 router.get('/my', verifyToken, requireRole('merchant'), getMySubscriptions);
+
+// GET /api/subscriptions/prorate (estimate proration for target plan)
+router.get('/prorate', verifyToken, requireRole('merchant'), getProration);
 
 // ─── Admin Routes ─────────────────────────────────────────────────────────────
 // GET /api/subscriptions (admin: list all)

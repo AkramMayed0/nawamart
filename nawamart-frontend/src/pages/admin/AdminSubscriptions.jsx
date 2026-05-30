@@ -29,6 +29,7 @@ const STATUS = {
 }
 
 const PLAN_LABEL = {
+  starter: 'مبتدئ',
   pro: 'Pro',
   business: 'Business',
 }
@@ -115,7 +116,39 @@ export default function AdminSubscriptions() {
                 <p className="truncate font-inter text-xs text-text-subtle">/{subscription.store?.slug ?? 'store'}</p>
               </div>
 
-              <StatusBadge label={PLAN_LABEL[subscription.requestedPlan] ?? subscription.requestedPlan} tone="primary" />
+              <div className="flex flex-col gap-1">
+                <StatusBadge label={PLAN_LABEL[subscription.requestedPlan] ?? subscription.requestedPlan} tone="primary" />
+                {subscription.type === 'UPGRADE' && subscription.previousPlan && (
+                  <span className="font-cairo text-[10px] text-text-subtle">
+                    ترقية من {PLAN_LABEL[subscription.previousPlan] ?? subscription.previousPlan}
+                  </span>
+                )}
+                {subscription.type === 'NEW_SUBSCRIPTION' && (
+                  <span className="font-cairo text-[10px] text-primary font-semibold">
+                    اشتراك جديد
+                  </span>
+                )}
+                {subscription.billing && (
+                  <span className="font-cairo text-[10px] font-bold text-text-subtle">
+                    {subscription.billing === 'yearly' ? 'سنوي' : 'شهري'}
+                  </span>
+                )}
+                {subscription.creditApplied > 0 && (
+                  <span className="font-cairo text-[10px] text-success-dark">
+                    خصم {subscription.creditApplied.toLocaleString('en-US')} ر.ي
+                  </span>
+                )}
+                {subscription.walletCreditGenerated > 0 && (
+                  <span className="font-cairo text-[10px] text-success-dark">
+                    +{subscription.walletCreditGenerated.toLocaleString('en-US')} ر.ي للمحفظة
+                  </span>
+                )}
+                {subscription.amountDue > 0 && (
+                  <span className="font-cairo text-[10px] font-bold text-primary">
+                    المطلوب: {subscription.amountDue.toLocaleString('en-US')} ر.ي
+                  </span>
+                )}
+              </div>
 
               <div className="flex items-center gap-2">
                 {subscription.waslUrl ? (
@@ -138,7 +171,22 @@ export default function AdminSubscriptions() {
 
               <div>
                 <StatusBadge label={status.label} tone={status.tone} />
-                <p className="mt-1 font-cairo text-[11px] text-text-subtle">{formatDate(subscription.createdAt)}</p>
+                {subscription.status === 'approved' && subscription.expiresAt ? (
+                  <>
+                    <p className="mt-1 font-cairo text-[11px] text-text-subtle">
+                      ينتهي {formatDate(subscription.expiresAt)}
+                    </p>
+                    <p className="font-cairo text-[11px] font-bold text-text">
+                      {Math.ceil((new Date(subscription.expiresAt).getTime() - Date.now()) / (1000*60*60*24))} يوم متبقي
+                    </p>
+                  </>
+                ) : subscription.status === 'pending' ? (
+                  <p className="mt-1 font-cairo text-[11px] text-text-subtle">
+                    منذ {formatDate(subscription.createdAt)}
+                  </p>
+                ) : (
+                  <p className="mt-1 font-cairo text-[11px] text-text-subtle">{formatDate(subscription.createdAt)}</p>
+                )}
               </div>
 
               <div className="flex flex-wrap items-center gap-2">

@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "node test-proration.js",
+    "test:integration": "node test-subscription-limits.js"
   },
   "keywords": [
     "nawamart",

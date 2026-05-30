@@ -5,9 +5,9 @@ import Button from '@/components/ui/Button'
 
 const TIERS = [
   {
-    key: 'free',
-    name: 'Free', num: '0', unit: 'ر.ي / شهر',
-    sub: 'ابدأ بدون تكلفة، جرّب متجرك مجاناً.',
+    key: 'starter',
+    name: 'Starter', num: '2,500', unit: 'ر.ي / شهر',
+    sub: 'انطلق بمتجر احترافي بأقل تكلفة شهرية.',
     features: [
       ['المنتجات',   'حتى 10 منتجات'],
       ['النطاق',     'نطاق فرعي nawa.shop'],
@@ -19,11 +19,11 @@ const TIERS = [
       ['الفريق',     '—'],
       ['الدعم',      'دعم أساسي'],
     ],
-    cta: 'ابدأ مجاناً', ctaVariant: 'secondary', featured: false, paid: false,
+    cta: 'اشترك الآن', ctaVariant: 'secondary', featured: false, paid: true,
   },
   {
     key: 'pro',
-    name: 'Pro', num: '10,000', unit: 'ر.ي / شهر',
+    name: 'Pro', num: '8,000', unit: 'ر.ي / شهر',
     sub: 'للتجار النشطين — تحليلات متوسطة وتوصيل عبر منصات متعددة.',
     features: [
       ['المنتجات',   'غير محدود'],
@@ -40,7 +40,7 @@ const TIERS = [
   },
   {
     key: 'business',
-    name: 'Business', num: '20,000', unit: 'ر.ي / شهر',
+    name: 'Business', num: '13,000', unit: 'ر.ي / شهر',
     sub: 'للمتاجر المتوسعة — محادثة مدمجة وتحليلات متقدمة.',
     features: [
       ['المنتجات',   'غير محدود + SKU / brand / barcode'],
@@ -63,7 +63,6 @@ export default function LandingPricing() {
 
   function handleCta(tier) {
     if (!tier.paid) {
-      // Free plan → go to register (or dashboard if logged in)
       navigate(token ? '/dashboard' : '/merchant/register')
       return
     }

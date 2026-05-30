@@ -18,7 +18,7 @@ const METHOD_META_FULL = {
 }
 
 function filterMethodMeta(plan) {
-  const keys = plan === 'free' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
+  const keys = plan === 'starter' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
   return Object.fromEntries(keys.map(k => [k, METHOD_META_FULL[k]]))
 }
 
@@ -67,7 +67,7 @@ function ConfirmBanner({ onConfirm, confirmed }) {
   )
 }
 
-function ContactInfoPanel({ order, storeType, plan = 'free' }) {
+function ContactInfoPanel({ order, storeType, plan = 'starter' }) {
   const [open, setOpen] = useState(true)
   if (!order) return null
 
@@ -170,7 +170,7 @@ function OrderInfoBanner({ order }) {
 }
 
 /* ── Order-only view (no chat, just contact info) ───────────── */
-function OrderDeliveryView({ order, goBack, hasMergedChat, plan = 'free' }) {
+function OrderDeliveryView({ order, goBack, hasMergedChat, plan = 'starter' }) {
   const isDigital = order.store?.type === 'digital'
   const customerName = order.deliveryAddress?.name || 'عميل'
   const shortId = String(order._id).slice(-8).toUpperCase()

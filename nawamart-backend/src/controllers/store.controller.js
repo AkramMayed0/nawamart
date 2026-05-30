@@ -71,6 +71,7 @@ const createStore = asyncHandler(async (req, res) => {
     shippingFees: parsedShippingFees ?? [],
     logo,
     banner,
+    planExpiresAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
   });
 
   // Update merchant's stores array

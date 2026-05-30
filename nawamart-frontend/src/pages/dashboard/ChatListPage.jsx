@@ -15,7 +15,7 @@ const CONTACT_META_FULL = {
 }
 
 function contactMeta(plan) {
-  const keys = plan === 'free' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
+  const keys = plan === 'starter' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
   return Object.fromEntries(keys.map(k => [k, CONTACT_META_FULL[k]]))
 }
 
@@ -44,7 +44,7 @@ function SkeletonRow() {
   )
 }
 
-function ChatRow({ item, plan = 'free', onClick }) {
+function ChatRow({ item, plan = 'starter', onClick }) {
   const hasChat = item._type === 'chat'
   const order = item.order || item
   const customerName = item.customer?.name || order.deliveryAddress?.name || 'عميل'
@@ -128,17 +128,17 @@ function ChatRow({ item, plan = 'free', onClick }) {
 }
 
 const PLAN_META = {
-  free:     { label: 'المجانية', cls: 'bg-bg-soft text-text-muted', },
+  starter:  { label: 'المجانية', cls: 'bg-bg-soft text-text-muted', },
   pro:      { label: 'الاحترافية', cls: 'bg-primary-50 text-primary', },
-  business: { label: 'الأعمال', cls: 'bg-accent-50 text-accent-700', },
+  business: { label: 'الأعمال', cls: 'bg-amber-50 text-amber-700', },
 }
 
 export default function ChatListPage() {
   usePageTitle('التسليم')
   const navigate  = useNavigate()
   const store     = useAuthStore(s => s.store)
-  const plan      = store?.plan || 'free'
-  const planMeta  = PLAN_META[plan] || PLAN_META.free
+  const plan      = store?.plan || 'starter'
+  const planMeta  = PLAN_META[plan] || PLAN_META.starter
   const [items,   setItems]   = useState([])
   const [loading, setLoading] = useState(true)
   const [query,   setQuery]   = useState('')

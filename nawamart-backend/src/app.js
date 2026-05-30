@@ -36,7 +36,7 @@ app.use(
 // ─── Rate Limiting ─────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: 600,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -48,7 +48,7 @@ const globalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20, // Stricter for auth routes
+  max: 60, // Stricter for auth routes
   standardHeaders: true,
   legacyHeaders: false,
   message: {

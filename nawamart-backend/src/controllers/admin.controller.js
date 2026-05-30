@@ -3,7 +3,9 @@ const Customer     = require('../models/Customer');
 const Store        = require('../models/Store');
 const Order        = require('../models/Order');
 const Subscription = require('../models/Subscription');
+const SubscriptionEvent = require('../models/SubscriptionEvent');
 const Product      = require('../models/Product');
+const BillingService = require('../services/BillingService');
 const { asyncHandler, apiResponse, getPaginationParams, paginateResponse } = require('../utils/helpers');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -214,7 +216,7 @@ const toggleStoreActive = asyncHandler(async (req, res) => {
 const setStorePlan = asyncHandler(async (req, res) => {
   const { plan, days } = req.body;
 
-  if (!['free', 'pro', 'business'].includes(plan)) {
+  if (!['starter', 'pro', 'business'].includes(plan)) {
     return res.status(400).json({ success: false, data: null, message: 'الخطة غير صالحة' });
   }
 
@@ -223,16 +225,57 @@ const setStorePlan = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, data: null, message: 'المتجر غير موجود' });
   }
 
+  // Determine Free Trial status for upgrade validation
+  const lastApprovedSub = await Subscription.findOne({
+    store: store._id,
+    status: 'approved',
+    expiresAt: { $ne: null },
+  }).sort({ approvedAt: -1 });
+  const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
+
+  // Block downgrades on admin set-plan too (but not for Free Trial)
+  try {
+    BillingService.validateUpgrade(store.plan, plan, isFreeTrial);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+
+  const previousPlan = store.plan;
+  const previousExpiresAt = store.planExpiresAt;
+
   store.plan = plan;
-  if (plan !== 'free' && days) {
+  if (days) {
     const expires = new Date();
     expires.setDate(expires.getDate() + Number(days));
     store.planExpiresAt = expires;
-  } else if (plan === 'free') {
-    store.planExpiresAt = null;
   }
 
   await store.save();
+
+  // Sync the approved subscription's expiresAt so the merchant dashboard shows the correct date
+  if (days) {
+    await Subscription.findOneAndUpdate(
+      { store: store._id, status: 'approved' },
+      { expiresAt: store.planExpiresAt }
+    );
+  }
+
+  // Audit event for admin plan change
+  await SubscriptionEvent.create({
+    merchant: store.merchant,
+    store: store._id,
+    eventType: 'admin_changed',
+    previousPlan,
+    newPlan: plan,
+    previousExpiresAt,
+    newExpiresAt: store.planExpiresAt,
+    description: `تغيير يدوي من الإدارة: ${previousPlan} ← ${plan}${days ? ` لمدة ${Number(days)} يوم` : ''}`,
+    performedBy: req.user._id,
+  });
 
   return apiResponse(res, {
     message: `تم تحديث خطة المتجر إلى ${plan}`,

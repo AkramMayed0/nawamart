@@ -36,7 +36,7 @@ export default function OrdersPage() {
   const queryClient = useQueryClient()
   const navigate    = useNavigate()
   const store       = useAuthStore(s => s.store)
-  const plan        = store?.plan || 'free'
+  const plan = store?.plan || 'starter'
 
   // ── Fetch orders ──────────────────────────────────────────────
   const { data, isLoading } = useQuery({
@@ -297,12 +297,12 @@ const CONTACT_META = {
 }
 
 function filterContactMeta(plan) {
-  const keys = plan === 'free' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
+  const keys = plan === 'starter' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
   return Object.fromEntries(keys.map(k => [k, CONTACT_META[k]]))
 }
 
 /* ── Action buttons ──────────────────────────────────────────── */
-function ActionButtons({ order, plan = 'free', onReject, navigate, queryClient }) {
+function ActionButtons({ order, plan = 'starter', onReject, navigate, queryClient }) {
   const { _id: id, status, store } = order
   const isDigital = store?.type === 'digital'
   const canReview = status === 'pending' || status === 'payment_under_review'

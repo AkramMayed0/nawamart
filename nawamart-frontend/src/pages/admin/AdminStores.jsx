@@ -21,7 +21,7 @@ import {
 const STORE_COLUMNS = 'minmax(220px,1.3fr) minmax(160px,1fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(120px,.7fr) minmax(190px,1fr)'
 
 const PLAN_META = {
-  free: { label: 'مجاني', tone: 'neutral' },
+  starter: { label: 'مبتدئ', tone: 'neutral' },
   pro: { label: 'Pro', tone: 'primary' },
   business: { label: 'Business', tone: 'accent' },
 }
@@ -33,7 +33,7 @@ export default function AdminStores() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('all')
   const [planModal, setPlanModal] = useState(null)
-  const [newPlan, setNewPlan] = useState('free')
+  const [newPlan, setNewPlan] = useState('starter')
   const [newDays, setNewDays] = useState(30)
   const [suspendModal, setSuspendModal] = useState(null)
   const [suspendDays, setSuspendDays] = useState(7)
@@ -92,7 +92,7 @@ export default function AdminStores() {
 
   function openPlanModal(store) {
     setPlanModal(store)
-    setNewPlan(store.plan ?? 'free')
+    setNewPlan(store.plan ?? 'starter')
     setNewDays(30)
   }
 
@@ -109,7 +109,7 @@ export default function AdminStores() {
           <FilterPills
             options={[
               { id: 'all', label: 'كل الخطط' },
-              { id: 'free', label: 'مجاني' },
+              { id: 'starter', label: 'مبتدئ' },
               { id: 'pro', label: 'Pro' },
               { id: 'business', label: 'Business' },
             ]}
@@ -132,7 +132,7 @@ export default function AdminStores() {
         minWidth="980px"
       >
         {stores.map((store) => {
-          const plan = PLAN_META[store.plan] ?? PLAN_META.free
+          const plan = PLAN_META[store.plan] ?? PLAN_META.starter
 
           return (
             <TableRow key={store._id} columns={STORE_COLUMNS}>
@@ -243,7 +243,7 @@ export default function AdminStores() {
                 icon={Save}
                 onClick={() => planMut.mutate({ id: planModal._id, plan: newPlan, days: newDays })}
                 loading={planMut.isPending}
-                disabled={newPlan !== 'free' && (!newDays || newDays < 1)}
+                disabled={!newDays || newDays < 1}
               >
                 حفظ
               </ActionButton>
@@ -258,25 +258,23 @@ export default function AdminStores() {
                 onChange={(event) => setNewPlan(event.target.value)}
                 className="h-10 w-full rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none transition-colors focus:border-primary"
               >
-                <option value="free">مجاني</option>
+                <option value="starter">مبتدئ</option>
                 <option value="pro">Pro</option>
                 <option value="business">Business</option>
               </select>
             </label>
 
-            {newPlan !== 'free' && (
-              <label className="block">
-                <span className="mb-1.5 block font-cairo text-sm font-bold text-text">المدة بالأيام</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={newDays}
-                  onChange={(event) => setNewDays(Number(event.target.value))}
-                  className="h-10 w-full rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none transition-colors focus:border-primary"
-                />
-              </label>
-            )}
+            <label className="block">
+              <span className="mb-1.5 block font-cairo text-sm font-bold text-text">المدة بالأيام</span>
+              <input
+                type="number"
+                min={1}
+                max={365}
+                value={newDays}
+                onChange={(event) => setNewDays(Number(event.target.value))}
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none transition-colors focus:border-primary"
+              />
+            </label>
           </div>
         </Modal>
       )}

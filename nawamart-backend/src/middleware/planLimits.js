@@ -4,18 +4,23 @@ const Order = require('../models/Order');
 
 // ─── Plan Limits ─────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  free:     { maxProducts: 10, maxOrdersPerMonth: 30 },
+  starter:  { maxProducts: 10, maxOrdersPerMonth: 30 },
   pro:      { maxProducts: 50, maxOrdersPerMonth: 300 },
   business: { maxProducts: Infinity, maxOrdersPerMonth: Infinity },
+  expired:  { maxProducts: 0, maxOrdersPerMonth: 0 },
 };
 
 /**
  * Returns the effective plan of a store.
- * If planExpiresAt has passed, treat the store as 'free'.
+ * - Starter with expired planExpiresAt → trial ended, fully blocked ('expired')
+ * - Pro/Business with expired planExpiresAt → downgraded to 'starter'
  */
 const getEffectivePlan = (store) => {
-  if (store.plan === 'free') return 'free';
-  if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'free';
+  if (store.plan === 'starter') {
+    if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'expired';
+    return 'starter';
+  }
+  if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'starter';
   return store.plan;
 };
 

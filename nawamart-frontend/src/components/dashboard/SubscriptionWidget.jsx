@@ -8,12 +8,13 @@
 import { useEffect, useRef }  from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { useQuery }            from '@tanstack/react-query'
-import { Crown, AlertCircle, Clock, RefreshCw } from 'lucide-react'
+import { Crown, AlertCircle, Clock, RefreshCw, XCircle } from 'lucide-react'
 import clsx                    from 'clsx'
 import toast                   from 'react-hot-toast'
 import PlanBadge               from '@/components/ui/PlanBadge'
 import { useAuthStore }        from '@/store/authStore'
 import { getMySubscription, PLANS } from '@/api/subscriptions'
+import { getMyStore }          from '@/api/stores'
 
 function daysUntil(isoDate) {
   if (!isoDate) return null
@@ -31,32 +32,43 @@ function formatDate(isoDate) {
 export default function SubscriptionWidget() {
   const navigate   = useNavigate()
   const storeData  = useAuthStore(s => s.store)
-  const currentPlan = storeData?.plan || 'free'
+  const currentPlan = storeData?.plan || 'starter'
 
-  const notifiedUrgent = useRef(false)
-
-  const { data: sub, isLoading: loading } = useQuery({
-    queryKey: ['my-subscription'],
+  const { data: subs, isLoading: subsLoading } = useQuery({
+    queryKey: ['my-subscription', storeData?._id],
     queryFn:  () => getMySubscription().then(res => {
       const data = res.data.data
-      if (Array.isArray(data)) return data.find(s => ['approved', 'pending'].includes(s.status)) ?? null
-      return data ?? null
+      return Array.isArray(data) ? data : (data ? [data] : [])
     }),
     staleTime: 30_000,
     retry: false,
   })
 
-  const status     = sub?.status ?? 'active'
-  const plan       = status === 'pending' ? (sub?.requestedPlan ?? currentPlan) : currentPlan
-  const expiryDate = sub?.expiresAt || storeData?.planExpiresAt || null
-  const days       = daysUntil(expiryDate)
-  const expiringUrgent = days !== null && days <= 5 && days > 0 && status !== 'expired'
+  const sub = subs?.find(s => ['approved', 'pending'].includes(s.status)) ?? null
+  const rejectedSub = subs?.find(s => s.status === 'rejected') ?? null
 
+  const { data: freshStore, isLoading: storeLoading } = useQuery({
+    queryKey: ['my-store-fresh', storeData?._id],
+    queryFn:  () => getMyStore().then(res => {
+      const stores = res.data.data
+      return Array.isArray(stores) ? stores[0] ?? null : stores ?? null
+    }),
+    staleTime: 30_000,
+    retry: false,
+  })
+
+  const loading = subsLoading || storeLoading
+
+  // ── Toast notification for expiring soon (≤5 days) ──
+  const notifiedUrgent = useRef(false)
   useEffect(() => {
-    if (notifiedUrgent.current || !expiringUrgent) return
-    toast(`اشتراكك ينتهي خلال ${days} أيام — جدّد قبل الانتهاء`, { duration: 5000 })
+    if (notifiedUrgent.current) return
+    const expDate = freshStore?.planExpiresAt || sub?.expiresAt || storeData?.planExpiresAt || null
+    const d = daysUntil(expDate)
+    if (d === null || d > 5 || d <= 0) return
+    toast(`اشتراكك ينتهي خلال ${d} أيام — جدّد قبل الانتهاء`, { duration: 5000 })
     notifiedUrgent.current = true
-  }, [expiringUrgent, days])
+  }, [sub, storeData, freshStore])
 
   // ── Loading skeleton ──
   if (loading) {
@@ -73,12 +85,20 @@ export default function SubscriptionWidget() {
     )
   }
 
-  const planMeta   = PLANS[plan] ?? PLANS.free
+  const status     = sub?.status ?? 'active'
+  const plan       = status === 'pending' ? (sub?.requestedPlan ?? currentPlan) : currentPlan
+  const planMeta   = PLANS[plan] ?? PLANS.starter
+  const expiryDate = freshStore?.planExpiresAt || sub?.expiresAt || storeData?.planExpiresAt || null
+  const days       = daysUntil(expiryDate)
   const expLabel   = formatDate(expiryDate)
-  const isFree    = plan === 'free'
-  const isExpired = status === 'expired'
-  const isPending = status === 'pending'
-  const expiringSoon = days !== null && days <= 7 && days > 0 && !isExpired
+  const isStarter      = plan === 'starter'
+  const hasApprovedSub = subs?.some(s => s.status === 'approved') ?? false
+  const isTrialExpired  = isStarter && expiryDate && days !== null && days <= 0
+  const isOnTrial       = isStarter && !hasApprovedSub && days !== null && days > 0
+  const isExpired       = isTrialExpired
+  const isPending       = status === 'pending'
+  const isRejected      = !!rejectedSub && (!sub || new Date(rejectedSub.createdAt) > new Date(sub.createdAt))
+  const expiringSoon    = days !== null && days <= 7 && days > 0 && !isExpired
 
   return (
     <div className={clsx(
@@ -94,27 +114,25 @@ export default function SubscriptionWidget() {
         <div className="flex items-center gap-2.5">
           <div className={clsx(
             'w-9 h-9 rounded-xl flex items-center justify-center shrink-0',
-            isFree ? 'bg-bg-soft text-text-subtle' : 'bg-primary/10 text-primary'
+            isOnTrial ? 'bg-success-50 text-success-dark' : isStarter ? 'bg-bg-soft text-text-subtle' : 'bg-primary/10 text-primary'
           )}>
             <Crown size={18} />
           </div>
-          <span className="font-cairo font-bold text-sm text-text">الاشتراك</span>
+          <span className="font-cairo font-bold text-sm text-text">{isOnTrial ? 'الفترة التجريبية' : 'الاشتراك'}</span>
         </div>
-        <PlanBadge plan={plan} status={status} />
+        <PlanBadge plan={plan} status={status} trial={isOnTrial} />
       </div>
 
       {/* ── Info rows ── */}
       <div className="flex flex-col gap-1.5 text-sm font-cairo">
 
         {/* Expiry */}
-        {expLabel && !isFree && (
+        {expLabel && !isExpired && (
           <div className="flex items-center justify-between">
             <span className="text-text-muted">تنتهي في</span>
             <span className={clsx(
               'font-semibold',
-              isExpired    ? 'text-danger'  :
-              expiringSoon ? 'text-warning' :
-                             'text-text'
+              expiringSoon ? 'text-warning' : 'text-text'
             )}>
               {expLabel}
             </span>
@@ -122,7 +140,7 @@ export default function SubscriptionWidget() {
         )}
 
         {/* Days remaining */}
-        {days !== null && !isFree && !isExpired && (
+        {days !== null && !isExpired && (
           <div className="flex items-center justify-between">
             <span className="text-text-muted">المتبقي</span>
             <span className={clsx(
@@ -157,14 +175,26 @@ export default function SubscriptionWidget() {
         </div>
       )}
 
+      {isRejected && (
+        <div className="flex flex-col gap-2 bg-danger-100 rounded-xl px-3 py-2.5 text-xs font-cairo text-danger">
+          <div className="flex items-start gap-2">
+            <XCircle size={13} className="shrink-0 mt-0.5" />
+            <span>تم رفض طلب الاشتراك السابق</span>
+          </div>
+          {rejectedSub?.reviewNote && (
+            <p className="mr-5 text-danger/80">السبب: {rejectedSub.reviewNote}</p>
+          )}
+        </div>
+      )}
+
       {/* ── CTA button ── */}
-      {(isFree || isExpired || expiringSoon) && (
+      {(isStarter || isExpired || expiringSoon || isRejected || isOnTrial || plan !== 'business') && (
         <button
-          onClick={() => navigate(`/subscribe?plan=${isFree ? 'pro' : plan}`)}
+          onClick={() => navigate(`/subscribe?plan=${isStarter ? 'pro' : (rejectedSub?.requestedPlan || plan)}`)}
           className="w-full flex items-center justify-center gap-2 font-cairo font-bold text-sm py-2.5 rounded-xl bg-primary text-white hover:bg-primary-700 active:scale-95 transition-all"
         >
           <Crown size={14} />
-          {isFree ? 'ترقية الخطة' : isExpired ? 'تجديد الاشتراك' : 'جدّد الآن'}
+          {isOnTrial ? 'اشترك الآن' : isTrialExpired ? 'اشترك الآن' : isExpired ? 'تجديد الاشتراك' : isRejected ? 'إعادة المحاولة' : plan !== 'business' ? 'ترقية الخطة' : 'جدّد الآن'}
         </button>
       )}
 

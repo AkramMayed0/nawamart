@@ -69,8 +69,8 @@ const storeSchema = new mongoose.Schema(
     // ─── Subscription / Plan ─────────────────────────────────────────────────
     plan: {
       type: String,
-      enum: ['free', 'pro', 'business'],
-      default: 'free',
+      enum: ['starter', 'pro', 'business'],
+      default: 'starter',
     },
     planExpiresAt: {
       type: Date,

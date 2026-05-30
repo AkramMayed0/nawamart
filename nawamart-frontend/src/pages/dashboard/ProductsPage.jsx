@@ -103,7 +103,7 @@ export default function ProductsPage() {
   usePageTitle('المنتجات')
   const storeRaw    = useAuthStore(s => s.store)
   const store       = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
-  const plan        = store?.plan || 'free'
+  const plan        = store?.plan || 'starter'
   const queryClient = useQueryClient()
   const navigate    = useNavigate()
 
@@ -173,8 +173,8 @@ export default function ProductsPage() {
   function openEdit(p)   { setEditTarget(p);    setModalOpen(true) }
 
   const isSaving = creating || updating
-  const isFree = plan === 'free'
-  const atLimit = isFree && products.length >= 10
+  const isStarter = plan === 'starter'
+  const atLimit = isStarter && products.length >= 10
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
