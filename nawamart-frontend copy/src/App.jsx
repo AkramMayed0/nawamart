@@ -29,6 +29,7 @@ import DashboardLayout from '@/pages/dashboard/DashboardLayout'
 import DashboardHome from '@/pages/dashboard/DashboardHome'
 import ShopPage from '@/pages/dashboard/ShopPage'
 import OrdersPage from '@/pages/dashboard/OrdersPage'
+import OrderDetailPage from '@/pages/dashboard/OrderDetailPage'
 import ProductsPage from '@/pages/dashboard/ProductsPage'
 import CustomersPage from '@/pages/dashboard/CustomersPage'
 import ChatListPage from '@/pages/dashboard/ChatListPage'
@@ -203,6 +204,7 @@ export default function App() {
         <Route index element={<DashboardHome />} />
         <Route path="shop" element={<ShopPage />} />
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="orders/:orderId" element={<OrderDetailPage />} />
         <Route path="products" element={<ProductsPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="chat" element={<ChatListPage />} />
