@@ -72,6 +72,7 @@ const verifyToken = async (req, res, next) => {
     // 4. Attach to request
     req.user = user;
     req.userRole = decoded.role;
+    if (decoded.storeId) req.customerStoreId = decoded.storeId;
     next();
   } catch (error) {
     next(error);

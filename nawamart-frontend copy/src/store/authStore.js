@@ -33,8 +33,6 @@ export const useAuthStore = create(
       })),
 
       // Computed helpers
-      isMerchant: () => get().user?.role === 'merchant',
-      isCustomer: () => get().user?.role === 'customer',
       isLoggedIn: () => !!get().token,
     }),
     {

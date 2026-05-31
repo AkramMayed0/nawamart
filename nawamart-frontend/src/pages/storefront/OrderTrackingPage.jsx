@@ -67,11 +67,11 @@ export default function OrderTrackingPage() {
 
       {/* Back */}
       <button
-        onClick={() => navigate(`/store/${slug}`)}
+        onClick={() => navigate(`/store/${slug}/orders`)}
         className="inline-flex items-center gap-2 text-sm text-text-muted font-cairo hover:text-primary transition-colors mb-6"
       >
         <Icon name="arrow-right" size={14} />
-        العودة للمتجر
+        العودة للطلبات
       </button>
 
       {/* Title */}
@@ -200,7 +200,8 @@ const DIGITAL_STEPS = [
 function StatusTimeline({ order }) {
   const isDigital = order.store?.type === 'digital'
   const steps     = isDigital ? DIGITAL_STEPS : PHYSICAL_STEPS
-  const curIdx    = steps.findIndex(s => s.id === order.status)
+  const normalizedStatus = order.status === 'payment_under_review' ? 'pending' : order.status
+  const curIdx    = steps.findIndex(s => s.id === normalizedStatus)
   const cur       = curIdx === -1 ? 0 : curIdx
 
   // Rejected is a special off-track state
@@ -212,17 +213,18 @@ function StatusTimeline({ order }) {
 
       <div className="flex items-start">
         {steps.map((step, i) => {
-          const isDone    = !isRejected && i < cur
+          const isLast    = i === steps.length - 1
           const isCurrent = !isRejected && i === cur
+          const isDone    = !isRejected && (i < cur || (isLast && isCurrent))
           const isTodo    = isRejected || i > cur
 
           return (
             <div key={step.id} className="flex-1 flex flex-col items-center relative">
 
-              {/* Connector line — left side */}
+              {/* Connector line — between previous and current step */}
               {i > 0 && (
-                <div className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 ${
-                  isDone ? 'bg-success' : 'bg-border'
+                <div className={`absolute top-4 left-1/2 w-full h-0.5 -translate-y-1/2 ${
+                  !isRejected && i <= cur ? 'bg-success' : 'bg-border'
                 }`} />
               )}
 

@@ -33,6 +33,15 @@ const createOrder = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'المتجر غير متاح', data: null });
   }
 
+  // Tenant validation: if customer is store-scoped, verify they belong to this store
+  if (req.user.store && req.user.store.toString() !== storeId) {
+    return res.status(403).json({
+      success: false,
+      data: null,
+      message: 'لا يمكنك الطلب من هذا المتجر — الحساب مسجل في متجر آخر',
+    });
+  }
+
   // Calculate shipping fee for physical stores based on delivery city
   let shippingFee = 0;
   if (store.type === 'physical' && deliveryAddress?.city) {
@@ -137,6 +146,38 @@ const getMerchantOrders = asyncHandler(async (req, res) => {
     Order.find(query)
       .populate('customer', 'name phone')
       .populate('store', 'name type')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Order.countDocuments(query),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    message: 'تم جلب الطلبات بنجاح',
+    data: orders,
+    pagination: paginateResponse(total, page, limit),
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /api/orders/customer
+// List orders for the logged-in customer (paginated + filterable)
+// ─────────────────────────────────────────────────────────────────────────────
+const getCustomerOrders = asyncHandler(async (req, res) => {
+  const { limit, skip, page } = getPaginationParams(req);
+  const { status, storeId } = req.query;
+
+  // If customer is store-scoped, restrict to their store only
+  const query = { customer: req.user._id };
+  if (req.user.store) query.store = req.user.store;
+  if (status)  query.status = status;
+  if (storeId) query.store  = storeId;
+
+  const [orders, total] = await Promise.all([
+    Order.find(query)
+      .populate('store', 'name type logo slug')
+      .populate('items.product', 'name images')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -313,6 +354,7 @@ const deliverOrder = asyncHandler(async (req, res) => {
 
 module.exports = {
   createOrder,
+  getCustomerOrders,
   getMerchantOrders,
   getOrderById,
   confirmOrder,

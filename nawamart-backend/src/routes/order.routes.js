@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   createOrder,
+  getCustomerOrders,
   getMerchantOrders,
   getOrderById,
   confirmOrder,
@@ -15,6 +16,7 @@ const { enforceOrderLimit } = require('../middleware/planLimits');
 // Customer checkout — requires authentication
 router.post('/', verifyToken, requireRole('customer'), enforceOrderLimit, createOrder);
 
+router.get('/customer', verifyToken, requireRole('customer'), getCustomerOrders);
 router.get('/merchant', verifyToken, requireRole('merchant'), getMerchantOrders);
 router.put('/:id/confirm', verifyToken, requireRole('merchant'), confirmOrder);
 router.put('/:id/reject', verifyToken, requireRole('merchant'), rejectOrder);

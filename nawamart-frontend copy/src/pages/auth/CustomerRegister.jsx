@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { useAuthStore } from '@/store/authStore'
+import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import { customerRegister, customerLoginGoogle } from '@/api/auth'
 import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
@@ -42,7 +42,8 @@ export default function CustomerRegister() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
-  const login = useAuthStore((s) => s.login)
+  const storeId = searchParams.get('storeId') || undefined
+  const login = useCustomerAuthStore((s) => s.login)
 
   const [fields, setFields] = useState({ name: '', email: '', phone: '', password: '' })
   const [errors, setErrors] = useState({})
@@ -69,6 +70,7 @@ export default function CustomerRegister() {
         email: fields.email.trim().toLowerCase(),
         phone: fields.phone.trim(),
         password: fields.password,
+        ...(storeId ? { storeId } : {}),
       })
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
@@ -84,7 +86,10 @@ export default function CustomerRegister() {
   async function handleGoogleSuccess(credentialResponse) {
     setLoading(true)
     try {
-      const res = await customerLoginGoogle({ credential: credentialResponse.credential })
+      const res = await customerLoginGoogle({
+        credential: credentialResponse.credential,
+        ...(storeId ? { storeId } : {}),
+      })
       const { token, user, role } = res.data.data
       login(token, { ...user, role })
       toast.success('تم إنشاء الحساب بنجاح!')
@@ -219,7 +224,7 @@ export default function CustomerRegister() {
 
           <p className="font-cairo text-sm text-center text-text-muted mt-6">
             لديك حساب؟{' '}
-            <Link to={`/customer/login?redirect=${encodeURIComponent(redirect)}`} className="text-primary font-semibold hover:underline">
+            <Link to={`/customer/login?redirect=${encodeURIComponent(redirect)}${storeId ? `&storeId=${storeId}` : ''}`} className="text-primary font-semibold hover:underline">
               سجّل دخولك
             </Link>
           </p>

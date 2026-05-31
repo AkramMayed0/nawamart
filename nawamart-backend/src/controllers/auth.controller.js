@@ -8,10 +8,12 @@ const Store = require('../models/Store');
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Sign a JWT with role embedded in payload
+ * Sign a JWT with role embedded in payload (storeId included for customers)
  */
-const signToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+const signToken = (id, role, storeId = null) => {
+  const payload = { id, role };
+  if (storeId) payload.storeId = storeId;
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };
@@ -20,7 +22,8 @@ const signToken = (id, role) => {
  * Standard auth response shape
  */
 const sendAuthResponse = (res, statusCode, user, role, message) => {
-  const token = signToken(user._id, role);
+  const storeId = user.store || null;
+  const token = signToken(user._id, role, storeId);
   const safeUser = user.toSafeJSON ? user.toSafeJSON() : user;
 
   return res.status(statusCode).json({
@@ -28,7 +31,7 @@ const sendAuthResponse = (res, statusCode, user, role, message) => {
     message,
     data: {
       token,
-      user: { ...safeUser, role },
+      user: { ...safeUser, role, store: storeId },
       role,
     },
   });
@@ -145,7 +148,7 @@ const merchantLogin = async (req, res, next) => {
  */
 const customerRegister = async (req, res, next) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, storeId } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({
@@ -155,14 +158,34 @@ const customerRegister = async (req, res, next) => {
       });
     }
 
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: 'معرّف المتجر مطلوب للتسجيل',
+      });
+    }
+
+    // Validate store exists
+    const store = await Store.findById(storeId);
+    if (!store) {
+      return res.status(400).json({
+        success: false,
+        data: null,
+        message: 'المتجر غير موجود',
+      });
+    }
+
+    // Check duplicate email within the same store
     const existingCustomer = await Customer.findOne({
       email: email.toLowerCase().trim(),
+      store: storeId,
     });
     if (existingCustomer) {
       return res.status(409).json({
         success: false,
         data: null,
-        message: 'البريد الإلكتروني مستخدم بالفعل — يرجى استخدام بريد آخر أو تسجيل الدخول',
+        message: 'هذا البريد مسجل بالفعل في هذا المتجر — يرجى تسجيل الدخول',
       });
     }
 
@@ -171,6 +194,7 @@ const customerRegister = async (req, res, next) => {
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
       password,
+      store: storeId,
     });
 
     return sendAuthResponse(res, 201, customer, 'customer', 'تم تسجيل حسابك بنجاح');
@@ -184,7 +208,7 @@ const customerRegister = async (req, res, next) => {
  */
 const customerLogin = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, storeId } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -194,9 +218,13 @@ const customerLogin = async (req, res, next) => {
       });
     }
 
-    const customer = await Customer.findOne({
-      email: email.toLowerCase().trim(),
-    }).select('+password');
+    // Build query — if storeId is provided, only that store's customers can log in
+    const query = { email: email.toLowerCase().trim() };
+    if (storeId) {
+      query.store = storeId;
+    }
+
+    const customer = await Customer.findOne(query).select('+password');
 
     if (!customer) {
       return res.status(401).json({
@@ -360,7 +388,8 @@ async function verifyGoogleCredential(credential) {
  */
 const customerGoogleLogin = async (req, res, next) => {
   try {
-    const { credential } = req.body;
+    const { credential, storeId: rawStoreId } = req.body;
+    const storeId = rawStoreId || null;
 
     if (!credential) {
       return res.status(400).json({
@@ -382,11 +411,16 @@ const customerGoogleLogin = async (req, res, next) => {
     }
 
     const { sub: googleId, email, name, picture } = payload;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    // Find existing customer by googleId or email
-    let customer = await Customer.findOne({
-      $or: [{ googleId }, { email: email.toLowerCase().trim() }],
-    });
+    // Find existing customer — prefer store-specific match, fallback to googleId
+    let customer = storeId
+      ? await Customer.findOne({ email: normalizedEmail, store: storeId })
+      : null;
+
+    if (!customer) {
+      customer = await Customer.findOne({ googleId });
+    }
 
     if (customer) {
       // Link googleId if not already linked
@@ -402,12 +436,13 @@ const customerGoogleLogin = async (req, res, next) => {
       // Create new customer
       customer = await Customer.create({
         name: name || 'مستخدم Google',
-        email: email.toLowerCase().trim(),
+        email: normalizedEmail,
         phone: '0000000000', // placeholder — customer can update later
         password: crypto.randomBytes(16).toString('hex'),
         googleId,
         authProvider: 'google',
         profileImage: picture || null,
+        store: storeId,
       });
     }
 

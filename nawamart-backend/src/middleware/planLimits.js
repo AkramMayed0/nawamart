@@ -14,14 +14,16 @@ const PLAN_LIMITS = {
  * Returns the effective plan of a store.
  * - Starter with expired planExpiresAt → trial ended, fully blocked ('expired')
  * - Pro/Business with expired planExpiresAt → downgraded to 'starter'
+ * - Missing/null plan → defaults to 'starter' for safety
  */
 const getEffectivePlan = (store) => {
-  if (store.plan === 'starter') {
+  const currentPlan = store.plan || 'starter';
+  if (currentPlan === 'starter') {
     if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'expired';
     return 'starter';
   }
   if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'starter';
-  return store.plan;
+  return currentPlan;
 };
 
 // ─── Middleware: enforce product limit ────────────────────────────────────────
@@ -35,7 +37,15 @@ const enforceProductLimit = async (req, res, next) => {
     if (!store) return next(); // 403 handled by controller
 
     const plan = getEffectivePlan(store);
-    const limit = PLAN_LIMITS[plan].maxProducts;
+    const limits = PLAN_LIMITS[plan];
+    if (!limits) {
+      return res.status(500).json({
+        success: false,
+        data: null,
+        message: 'تكوين خطة المتجر غير مكتمل — يرجى التواصل مع الدعم',
+      });
+    }
+    const limit = limits.maxProducts;
 
     if (limit === Infinity) return next();
 
@@ -65,7 +75,15 @@ const enforceOrderLimit = async (req, res, next) => {
     if (!store) return next();
 
     const plan = getEffectivePlan(store);
-    const limit = PLAN_LIMITS[plan].maxOrdersPerMonth;
+    const limits = PLAN_LIMITS[plan];
+    if (!limits) {
+      return res.status(500).json({
+        success: false,
+        data: null,
+        message: 'تكوين خطة المتجر غير مكتمل — يرجى التواصل مع الدعم',
+      });
+    }
+    const limit = limits.maxOrdersPerMonth;
 
     if (limit === Infinity) return next();
 

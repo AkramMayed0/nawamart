@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MapPin, MessageSquare, 
 import { getStoreBySlug } from '@/api/stores'
 import { createOrder, uploadWaslFile } from '@/api/orders'
 import { getProductPrice, useCartStore } from '@/store/cartStore'
-import { useAuthStore } from '@/store/authStore'
+import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import usePageTitle from '@/hooks/usePageTitle'
 import { resolveAssetUrl } from '@/utils/assets'
 import WalletBadge from '@/components/storefront/WalletBadge'
@@ -34,8 +34,8 @@ export default function CheckoutPage() {
   usePageTitle('إتمام الطلب')
   const { slug } = useParams()
   const navigate = useNavigate()
-  const token = useAuthStore((state) => state.token)
-  const user = useAuthStore((state) => state.user)
+  const token = useCustomerAuthStore((state) => state.token)
+  const user = useCustomerAuthStore((state) => state.user)
   const items = useCartStore((state) => state.items)
   const clearCart = useCartStore((state) => state.clearCart)
 

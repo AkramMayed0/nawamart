@@ -1,9 +1,10 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getProfile } from '@/api/auth'
 import { getAdminSession } from '@/api/admin'
 import { useAuthStore } from '@/store/authStore'
+import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import { useAdminStore } from '@/store/adminStore'
 
 import LandingPage from '@/pages/LandingPage'
@@ -11,6 +12,7 @@ import NotFoundPage from '@/pages/NotFoundPage'
 import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
+import CustomerRegister from '@/pages/auth/CustomerRegister'
 import OnboardingPage from '@/pages/OnboardingPage'
 import SubscribePage from '@/pages/subscribe/SubscribePage'
 
@@ -41,6 +43,7 @@ import CartPage from '@/pages/storefront/CartPage'
 import CheckoutPage from '@/pages/storefront/CheckoutPage'
 import OrderConfirmationPage from '@/pages/storefront/OrderConfirmationPage'
 import OrderTrackingPage from '@/pages/storefront/OrderTrackingPage'
+import CustomerOrdersPage from '@/pages/storefront/CustomerOrdersPage'
 
 function RouteLoader() {
   return (
@@ -122,6 +125,18 @@ function GuestRoute({ children }) {
   return <Navigate to={dashboardForRole(session.data?.role ?? user?.role)} replace />
 }
 
+function CustomerGuestRoute({ children }) {
+  const token = useCustomerAuthStore((state) => state.token)
+  const [searchParams] = useSearchParams()
+
+  if (token) {
+    const redirect = searchParams.get('redirect') || '/'
+    return <Navigate to={redirect} replace />
+  }
+
+  return children
+}
+
 function AdminRoute({ children }) {
   const token = useAdminStore((state) => state.token)
   const login = useAdminStore((state) => state.login)
@@ -179,7 +194,8 @@ export default function App() {
 
       <Route path="/merchant/login" element={<GuestRoute><MerchantLogin /></GuestRoute>} />
       <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
-      <Route path="/customer/login" element={<GuestRoute><CustomerLogin /></GuestRoute>} />
+      <Route path="/customer/login" element={<CustomerGuestRoute><CustomerLogin /></CustomerGuestRoute>} />
+      <Route path="/customer/register" element={<CustomerGuestRoute><CustomerRegister /></CustomerGuestRoute>} />
       <Route path="/onboarding" element={<PrivateRoute role="merchant"><OnboardingPage /></PrivateRoute>} />
       <Route path="/subscribe" element={<PrivateRoute role="merchant"><SubscribePage /></PrivateRoute>} />
 
@@ -201,6 +217,7 @@ export default function App() {
         <Route path="product/:productId" element={<ProductDetailPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
+        <Route path="orders" element={<CustomerOrdersPage />} />
         <Route path="order/:orderId" element={<OrderConfirmationPage />} />
         <Route path="order/:orderId/track" element={<OrderTrackingPage />} />
       </Route>

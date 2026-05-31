@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LogOut, Menu, ShieldCheck, ShoppingBag, Store, User, X } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { LogOut, Menu, Package, ShieldCheck, ShoppingBag, Store, User, UserRound, X } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
-import { useAuthStore } from '@/store/authStore'
+import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import { resolveAssetUrl } from '@/utils/assets'
 
 function StoreMark({ store, compact = false }) {
@@ -33,9 +34,9 @@ export default function StorefrontLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const itemCount = useCartStore((state) => state.itemCount)
-  const token = useAuthStore((state) => state.token)
-  const user = useAuthStore((state) => state.user)
-  const logout = useAuthStore((state) => state.logout)
+  const token = useCustomerAuthStore((state) => state.token)
+  const user = useCustomerAuthStore((state) => state.user)
+  const logout = useCustomerAuthStore((state) => state.logout)
   const isCustomer = token && user?.role === 'customer'
 
   function handleLogout() {
@@ -49,6 +50,18 @@ export default function StorefrontLayout() {
     staleTime: 1000 * 60 * 5,
     retry: false,
   })
+
+  // Validate customer belongs to this store — log out if mismatch
+  useEffect(() => {
+    if (store && isCustomer && user?.store) {
+      const storeIdStr = typeof store._id === 'string' ? store._id : store._id?.toString()
+      const userStoreStr = typeof user.store === 'string' ? user.store : user.store?.toString()
+      if (storeIdStr && userStoreStr && storeIdStr !== userStoreStr) {
+        toast.error('هذا الحساب غير مسجل في هذا المتجر')
+        logout()
+      }
+    }
+  }, [store, isCustomer, user, logout])
 
   const onStoreHome = location.pathname === `/store/${slug}`
   const navItems = [
@@ -150,6 +163,23 @@ export default function StorefrontLayout() {
                         <p className="truncate font-cairo text-sm font-bold text-text">{user?.name}</p>
                         <p className="truncate font-cairo text-xs text-text-muted">{user?.email}</p>
                       </div>
+                      <Link
+                        to="#"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 font-cairo text-sm font-semibold text-text transition-colors hover:bg-bg"
+                      >
+                        <UserRound size={16} />
+                        الملف الشخصي
+                      </Link>
+                      <Link
+                        to={`/store/${slug}/orders`}
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 font-cairo text-sm font-semibold text-text transition-colors hover:bg-bg"
+                      >
+                        <Package size={16} />
+                        طلباتي
+                      </Link>
+                      <div className="border-t border-border my-1" />
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -165,7 +195,7 @@ export default function StorefrontLayout() {
             ) : (
               <div className="flex items-center gap-2">
                 <Link
-                  to={`/customer/login?redirect=${encodeURIComponent(`/store/${slug}`)}`}
+                  to={`/customer/login?storeId=${store?._id ?? ''}&redirect=${encodeURIComponent(location.pathname + location.search)}`}
                   className="flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 text-sm font-extrabold text-text transition-colors hover:bg-bg"
                 >
                   تسجيل الدخول
