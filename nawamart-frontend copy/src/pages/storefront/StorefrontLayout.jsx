@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, Outlet, useParams } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { LogOut, Menu, Search, ShieldCheck, ShoppingBag, Store, User, X } from 'lucide-react'
+import { LogOut, Menu, ShieldCheck, ShoppingBag, Store, User, X } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
 import { useAuthStore } from '@/store/authStore'
@@ -21,9 +21,6 @@ function StoreMark({ store, compact = false }) {
       </div>
       <div className="min-w-0">
         <p className="truncate font-cairo text-sm font-extrabold text-text">{store?.name ?? 'NawaMart'}</p>
-        <p className="truncate font-cairo text-xs font-semibold text-text-muted">
-          {store?.type === 'digital' ? 'متجر رقمي' : 'متجر بتوصيل'}
-        </p>
       </div>
     </Link>
   )
@@ -31,6 +28,8 @@ function StoreMark({ store, compact = false }) {
 
 export default function StorefrontLayout() {
   const { slug } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const itemCount = useCartStore((state) => state.itemCount)
@@ -51,10 +50,10 @@ export default function StorefrontLayout() {
     retry: false,
   })
 
+  const onStoreHome = location.pathname === `/store/${slug}`
   const navItems = [
-    { label: 'الرئيسية', href: `/store/${slug}` },
-    { label: 'المنتجات', href: `/store/${slug}#products` },
-    { label: 'السلة', href: `/store/${slug}/cart` },
+    { label: 'الرئيسية', to: `/store/${slug}`, scrollTo: 'top' },
+    { label: 'المنتجات', to: `/store/${slug}#products`, scrollTo: 'products' },
   ]
 
   return (
@@ -83,26 +82,40 @@ export default function StorefrontLayout() {
           <StoreMark store={store ? { ...store, slug } : { slug }} />
 
           <nav className="mr-2 hidden items-center gap-1 lg:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.href}
-                className="rounded-lg px-4 py-2 text-sm font-extrabold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) =>
+              item.scrollTo ? (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => {
+                    if (!onStoreHome) {
+                      navigate(item.to);
+                      return;
+                    }
+                    if (item.scrollTo === 'top') {
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else {
+                      const el = document.getElementById(item.scrollTo);
+                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="rounded-lg px-4 py-2 text-sm font-extrabold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
+                >
+                  {item.label}
+                </button>
+              ) : (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  className="rounded-lg px-4 py-2 text-sm font-extrabold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+              )
+            )}
           </nav>
 
-          <div className="relative mx-auto hidden max-w-xl flex-1 lg:block">
-            <Search size={17} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle" />
-            <a
-              href={`/store/${slug}#products`}
-              className="flex h-11 w-full items-center rounded-lg border border-border bg-bg pr-10 pl-4 text-sm font-semibold text-text-muted transition-colors hover:border-primary hover:bg-white"
-            >
-              ابحث داخل منتجات المتجر
-            </a>
-          </div>
+
 
           <Link
             to={`/store/${slug}/cart`}
@@ -110,7 +123,6 @@ export default function StorefrontLayout() {
             aria-label="سلة التسوق"
           >
             <ShoppingBag size={18} />
-            <span className="hidden sm:inline">السلة</span>
             {itemCount > 0 && (
               <span className="absolute -left-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full bg-danger px-1.5 font-inter text-xs font-extrabold text-white">
                 {itemCount.toLocaleString('en-US')}
@@ -168,17 +180,42 @@ export default function StorefrontLayout() {
             <div className="mb-3">
               <StoreMark store={store ? { ...store, slug } : { slug }} compact />
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="rounded-lg border border-border bg-bg px-3 py-2 text-center text-sm font-extrabold text-text-muted"
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="grid grid-cols-2 gap-2">
+              {navItems.map((item) =>
+                item.scrollTo ? (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setTimeout(() => {
+                        if (!onStoreHome) {
+                          navigate(item.to);
+                          return;
+                        }
+                        if (item.scrollTo === 'top') {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                          const el = document.getElementById(item.scrollTo);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }, 120);
+                    }}
+                    className="rounded-lg border border-border bg-bg px-3 py-2 text-center text-sm font-extrabold text-text-muted"
+                  >
+                    {item.label}
+                  </button>
+                ) : (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className="rounded-lg border border-border bg-bg px-3 py-2 text-center text-sm font-extrabold text-text-muted"
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
             </div>
           </div>
         )}

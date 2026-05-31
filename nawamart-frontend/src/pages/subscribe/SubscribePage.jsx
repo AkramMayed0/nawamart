@@ -131,11 +131,13 @@ function StepNav({ step, totalSteps, onBack, onNext, nextLabel = 'التالي',
 }
 
 // ── Already-active success screen ────────────────────────────────────────
-function SuccessScreen({ plan: planKey, expiry: expiryIso, onGoHome }) {
+function SuccessScreen({ plan: planKey, expiry: expiryIso, billing, onGoHome }) {
   const planMeta = PLANS[planKey] ?? PLANS.starter
   const expiry   = expiryIso
     ? new Date(expiryIso).toLocaleDateString('ar-YE', { year: 'numeric', month: 'long', day: 'numeric' })
     : null
+
+  const billingLabel = billing === 'yearly' ? 'السنوية' : 'الشهرية'
 
   return (
     <div className="min-h-screen bg-bg font-cairo flex items-center justify-center px-4" dir="rtl">
@@ -147,11 +149,13 @@ function SuccessScreen({ plan: planKey, expiry: expiryIso, onGoHome }) {
         </div>
 
         <h2 className="font-extrabold text-xl text-text mb-2">
-          اشتراكك نشط بالفعل
+          {billing ? `أنت في أعلى خطة ${billingLabel}` : 'اشتراكك نشط بالفعل'}
         </h2>
         <p className="text-sm text-text-muted leading-relaxed mb-6">
-          أنت مشترك في خطة{' '}
-          <strong className="text-text">{planMeta.name}</strong> وهي نشطة حالياً.
+          {billing
+            ? `أنت مشترك في أعلى خطة ${billingLabel} متاحة (${planMeta.name}). لا توجد خطط أعلى للترقية إليها.`
+            : <>أنت مشترك في خطة <strong className="text-text">{planMeta.name}</strong> وهي نشطة حالياً.</>
+          }
         </p>
 
         <div className="flex flex-col gap-2.5 bg-bg rounded-xl px-4 py-3.5 text-sm mb-6 text-right">
@@ -367,6 +371,11 @@ export default function SubscribePage() {
   const currentPlan     = activeStore?.plan || 'starter'
   const [billing, setBilling] = useState('monthly')
 
+  // ── Billing cycle lock for upgrades (non-free-trial, billing is fixed) ──
+  const hasBillingLock = !!approvedSub
+  const lockedBilling  = approvedSub?.billing ?? 'monthly'
+  const effectiveBilling = hasBillingLock ? lockedBilling : billing
+
   // ── Plan hierarchy for upgrade targeting ──
   const PLAN_HIERARCHY = { starter: 1, pro: 2, business: 3 }
   const currentRank    = PLAN_HIERARCHY[currentPlan] ?? 1
@@ -400,11 +409,11 @@ export default function SubscribePage() {
   useEffect(() => {
     if (!storeId) return
     setProrationLoad(true)
-    getSubscriptionProration(planKey, billing)
+    getSubscriptionProration(planKey, effectiveBilling)
       .then(res => setProration(res.data.data))
       .catch(() => setProration(null))
       .finally(() => setProrationLoad(false))
-  }, [planKey, billing, storeId])
+  }, [planKey, effectiveBilling, storeId])
 
   // On mount: fetch merchant's store + check for pending subscription
   useEffect(() => {
@@ -459,7 +468,7 @@ export default function SubscribePage() {
       const waslUrl   = uploadRes.data.data?.url ?? uploadRes.data.url
 
       // 2. Create subscription — backend expects: { storeId, requestedPlan, waslUrl, billing }
-      await createSubscription({ storeId, requestedPlan: planKey, waslUrl, billing })
+      await createSubscription({ storeId, requestedPlan: planKey, waslUrl, billing: effectiveBilling })
 
       // 3. Advance to pending-review screen
       setStep(TOTAL)
@@ -474,7 +483,7 @@ export default function SubscribePage() {
   // If the user is on Business (top plan), show the "already active" screen
   // since there are no valid upgrade targets.
   if (freshStore && atHighestPlan && isPlanActive) {
-    return <SuccessScreen plan={storePlan} expiry={storeExpiresAt} onGoHome={() => navigate('/dashboard')} />
+    return <SuccessScreen plan={storePlan} expiry={storeExpiresAt} billing={hasBillingLock ? lockedBilling : null} onGoHome={() => navigate('/dashboard')} />
   }
 
   // ── Pending subscription guard ──
@@ -565,16 +574,27 @@ export default function SubscribePage() {
                   <CheckCircle size={28} className="text-success" />
                 </div>
                 <h3 className="font-cairo font-extrabold text-xl text-text mb-2">
-                  أنت مشترك في أعلى خطة متاحة
+                  {hasBillingLock
+                    ? `أنت مشترك في أعلى خطة ${lockedBilling === 'yearly' ? 'سنوية' : 'شهرية'} متاحة`
+                    : 'أنت مشترك في أعلى خطة متاحة'}
                 </h3>
                 <p className="font-cairo text-sm text-text-muted leading-relaxed">
-                  أنت حالياً في خطة {PLANS[storePlan]?.name}. لا توجد خطط أعلى للترقية إليها.
+                  {hasBillingLock
+                    ? `أنت حالياً في خطة ${PLANS[storePlan]?.name} ${lockedBilling === 'yearly' ? 'السنوية' : 'الشهرية'}. لا توجد خطط أعلى للترقية إليها.`
+                    : `أنت حالياً في خطة ${PLANS[storePlan]?.name}. لا توجد خطط أعلى للترقية إليها.`}
                 </p>
               </div>
             ) : (
               <>
-                <BillingToggle billing={billing} onChange={setBilling} plan={plan} />
-                <PlanPicker plans={allowedPlans} selected={planKey} onSelect={setPlanKey} billing={billing} />
+                {!hasBillingLock && <BillingToggle billing={billing} onChange={setBilling} plan={plan} />}
+                {hasBillingLock && (
+                  <div className="flex items-center justify-center mb-6">
+                    <span className="bg-primary-50 text-primary font-cairo font-bold text-sm px-5 py-2 rounded-xl">
+                      الفوترة: {lockedBilling === 'yearly' ? 'سنوي' : 'شهري'}
+                    </span>
+                  </div>
+                )}
+                <PlanPicker plans={allowedPlans} selected={planKey} onSelect={setPlanKey} billing={effectiveBilling} />
               </>
             )}
           </>
@@ -655,7 +675,7 @@ export default function SubscribePage() {
               )}
               <div className="flex justify-between">
                 <span className="text-text-muted">مدة الفوترة</span>
-                <span className="font-semibold text-text">{billing === 'yearly' ? 'سنوي' : 'شهري'}</span>
+                <span className="font-semibold text-text">{effectiveBilling === 'yearly' ? 'سنوي' : 'شهري'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">طريقة الدفع</span>

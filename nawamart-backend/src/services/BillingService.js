@@ -85,6 +85,11 @@ async function approveWithProration(subscription, adminId) {
   const hasApprovedSub = !!lastApproved;
   const isFreeTrial = !lastApproved || !lastApproved.expiresAt;
 
+  // 1.5 Defense-in-depth: billing cycle must match for upgrades
+  if (currentBilling && subscription.billing && currentBilling !== subscription.billing) {
+    throw new Error('الترقية مسموحة فقط ضمن نفس دورة الفوترة');
+  }
+
   // 2. Calculate proration
   const proration = calculateProration({
     currentPlan: store.plan,

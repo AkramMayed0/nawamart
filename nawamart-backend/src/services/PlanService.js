@@ -33,9 +33,14 @@ function getBillingDays(billing) {
   return BILLING_DAYS[billing];
 }
 
-function validateUpgrade(currentPlan, requestedPlan, isFreeTrial = false) {
+function validateUpgrade(currentPlan, requestedPlan, isFreeTrial = false, currentBilling = null, requestedBilling = null) {
   // Free Trial is NOT a paid plan — can upgrade to any plan without restriction
   if (isFreeTrial) return;
+
+  // Billing cycle consistency — cross-cycle upgrades are NOT allowed
+  if (currentBilling && requestedBilling && currentBilling !== requestedBilling) {
+    throw new Error('الترقية مسموحة فقط ضمن نفس دورة الفوترة');
+  }
 
   if (currentPlan === requestedPlan) {
     throw new Error('أنت مشترك بالفعل في هذه الخطة');

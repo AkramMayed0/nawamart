@@ -263,9 +263,9 @@ console.log(CYAN + BOLD + '\n═══ Edge Cases ═══' + RESET);
 }
 
 // ═══════════════════════════════════════════════════════════════════
-console.log(CYAN + BOLD + '\n═══ Upgrade Validation ═══' + RESET);
+console.log(CYAN + BOLD + '\n═══ Upgrade Validation (No Billing) ═══' + RESET);
 
-// Allowed upgrades
+// Allowed upgrades (no billing passed — backward-compat defaults to null)
 {
   const tests = [
     ['starter', 'pro',     'Starter → Pro (allowed)'],
@@ -321,6 +321,74 @@ console.log(CYAN + BOLD + '\n═══ Upgrade Validation ═══' + RESET);
     } catch (e) {
       passed++;
       console.log(`  ${GREEN}✓${RESET} ${label} → "${e.message}"`);
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+console.log(CYAN + BOLD + '\n═══ Billing Cycle Validation ═══' + RESET);
+
+// Allowed: same-cycle upgrades
+{
+  const tests = [
+    ['starter', 'pro',     'monthly', 'monthly', 'Starter Monthly → Pro Monthly (allowed)'],
+    ['starter', 'business','monthly', 'monthly', 'Starter Monthly → Business Monthly (allowed)'],
+    ['pro',     'business','monthly', 'monthly', 'Pro Monthly → Business Monthly (allowed)'],
+    ['starter', 'pro',     'yearly',  'yearly',  'Starter Yearly → Pro Yearly (allowed)'],
+    ['starter', 'business','yearly',  'yearly',  'Starter Yearly → Business Yearly (allowed)'],
+    ['pro',     'business','yearly',  'yearly',  'Pro Yearly → Business Yearly (allowed)'],
+  ];
+  for (const [from, to, currBilling, tgtBilling, label] of tests) {
+    try {
+      validateUpgrade(from, to, false, currBilling, tgtBilling);
+      passed++;
+      console.log(`  ${GREEN}✓${RESET} ${label}`);
+    } catch (e) {
+      console.error(`${RED}❌ FAIL: ${label} — unexpected error: ${e.message}${RESET}`);
+      failed++;
+      process.exitCode = 1;
+    }
+  }
+}
+
+// Blocked: cross-cycle upgrades
+{
+  const tests = [
+    ['starter', 'pro',     'monthly', 'yearly',  'Starter Monthly → Pro Yearly (blocked)'],
+    ['starter', 'business','monthly', 'yearly',  'Starter Monthly → Business Yearly (blocked)'],
+    ['pro',     'business','monthly', 'yearly',  'Pro Monthly → Business Yearly (blocked)'],
+    ['starter', 'pro',     'yearly',  'monthly', 'Starter Yearly → Pro Monthly (blocked)'],
+    ['starter', 'business','yearly',  'monthly', 'Starter Yearly → Business Monthly (blocked)'],
+    ['pro',     'business','yearly',  'monthly', 'Pro Yearly → Business Monthly (blocked)'],
+  ];
+  for (const [from, to, currBilling, tgtBilling, label] of tests) {
+    try {
+      validateUpgrade(from, to, false, currBilling, tgtBilling);
+      console.error(`${RED}❌ FAIL: ${label} — should have thrown${RESET}`);
+      failed++;
+      process.exitCode = 1;
+    } catch (e) {
+      passed++;
+      console.log(`  ${GREEN}✓${RESET} ${label} → "${e.message}"`);
+    }
+  }
+}
+
+// Free Trial bypasses billing cycle check
+{
+  const tests = [
+    ['starter', 'pro',     'monthly', 'yearly', 'Free Trial: Starter → Pro Yearly (allowed)'],
+    ['starter', 'business','yearly',  'monthly','Free Trial: Starter → Business Monthly (allowed)'],
+  ];
+  for (const [from, to, currBilling, tgtBilling, label] of tests) {
+    try {
+      validateUpgrade(from, to, true, currBilling, tgtBilling);
+      passed++;
+      console.log(`  ${GREEN}✓${RESET} ${label}`);
+    } catch (e) {
+      console.error(`${RED}❌ FAIL: ${label} — unexpected error: ${e.message}${RESET}`);
+      failed++;
+      process.exitCode = 1;
     }
   }
 }

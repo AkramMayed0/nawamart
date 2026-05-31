@@ -46,9 +46,11 @@ const requestSubscription = asyncHandler(async (req, res) => {
   const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
   const requestType = lastApprovedSub ? 'UPGRADE' : 'NEW_SUBSCRIPTION';
 
-  // Validate upgrade rules (block same-plan and downgrades, but NOT for Free Trial)
+  // Validate upgrade rules (block same-plan, downgrades, and cross-cycle upgrades, but NOT for Free Trial)
+  const currentBilling = lastApprovedSub?.billing ?? null;
+  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
   try {
-    BillingService.validateUpgrade(store.plan, requestedPlan, isFreeTrial);
+    BillingService.validateUpgrade(store.plan, requestedPlan, isFreeTrial, currentBilling, targetBilling);
   } catch (err) {
     return res.status(400).json({
       success: false,
@@ -56,9 +58,6 @@ const requestSubscription = asyncHandler(async (req, res) => {
       message: err.message,
     });
   }
-
-  // Calculate proration estimate
-  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
   const proration = await BillingService.getProrationEstimate(store, requestedPlan, targetBilling);
 
   // Create the subscription. A partial unique index on {store, status: 'pending'}
@@ -179,8 +178,10 @@ const getProration = asyncHandler(async (req, res) => {
   const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
 
   // Validate upgrade rules upfront (but not for Free Trial)
+  const currentBilling = lastApprovedSub?.billing ?? null;
+  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
   try {
-    BillingService.validateUpgrade(store.plan, targetPlan, isFreeTrial);
+    BillingService.validateUpgrade(store.plan, targetPlan, isFreeTrial, currentBilling, targetBilling);
   } catch (err) {
     return res.status(400).json({
       success: false,
@@ -188,8 +189,6 @@ const getProration = asyncHandler(async (req, res) => {
       message: err.message,
     });
   }
-
-  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
   const proration = await BillingService.getProrationEstimate(store, targetPlan, targetBilling);
 
   return apiResponse(res, {

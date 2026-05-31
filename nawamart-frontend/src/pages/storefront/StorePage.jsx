@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { ArrowLeft, CheckCircle2, Clock, Package, Search, ShieldCheck, ShoppingBag, Sparkles, Store, Truck } from 'lucide-react'
+import { CreditCard, Package, Search, ShoppingBag, Store, Timer, TrendingUp, Truck } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { getProductsByStore } from '@/api/products'
 import { usePreferencesStore } from '@/store/preferencesStore'
 import usePageTitle from '@/hooks/usePageTitle'
+import StoreHero from '@/components/storefront/StoreHero'
 import ProductCard from '@/components/storefront/ProductCard'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
-import NotFound from '@/components/ui/NotFound'
 
 function normalize(value) {
   return String(value ?? '').trim().toLowerCase()
@@ -72,7 +72,7 @@ export default function StorePage() {
   }, [products, query, category])
 
   const { showFeaturedProducts } = usePreferencesStore()
-  const featuredProducts = filteredProducts.slice(0, 4)
+  const featuredProducts = filteredProducts.filter(p => p.isFeatured).slice(0, 4)
   const isDigital = store?.type === 'digital'
 
   if (storeError) {
@@ -108,56 +108,69 @@ export default function StorePage() {
 
   return (
     <div dir="rtl">
+      <StoreHero store={store} productCount={products.length} isDigital={isDigital} />
+
+      {/* ── Feature grid ── */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-6 lg:grid-cols-[1.5fr_.8fr]">
-          <div className="relative overflow-hidden rounded-xl bg-primary p-6 text-white md:p-8">
-            <div className="relative z-10 max-w-2xl">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 font-cairo text-xs font-bold text-white">
-                <Sparkles size={14} />
-                {isDigital ? 'متجر رقمي بتسليم سريع' : 'تسوق منتجات مختارة بعناية'}
-              </span>
-              <h1 className="mt-5 font-cairo text-3xl font-extrabold leading-tight md:text-4xl">
-                {store.name}
-              </h1>
-              <p className="mt-3 max-w-xl font-cairo text-sm leading-7 text-white/78 md:text-base">
-                {store.description || 'اكتشف منتجات المتجر، أضف ما يعجبك إلى السلة، وأكمل طلبك بخطوات واضحة وسريعة.'}
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <a
-                  href="#products"
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-5 font-cairo text-sm font-extrabold text-white transition-colors hover:bg-accent-700"
-                >
-                  تسوق الآن
-                  <ArrowLeft size={16} />
-                </a>
-                <span className="inline-flex h-11 items-center gap-2 rounded-lg bg-white/10 px-4 font-cairo text-sm font-bold text-white">
-                  <CheckCircle2 size={16} />
-                  {products.length.toLocaleString('en-US')} منتج متاح
-                </span>
+        <div className="mx-auto max-w-7xl px-4 py-16 md:py-20">
+          <h2 className="font-cairo text-2xl font-extrabold text-text text-center mb-3">
+            لماذا {store.name}؟
+          </h2>
+          <p className="font-cairo text-sm text-text-muted text-center mb-10 max-w-lg mx-auto">
+            نقدم لك تجربة تسوق مريحة وآمنة من البداية إلى النهاية.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                  <CreditCard size={22} />
+                </div>
+                <div>
+                  <h3 className="font-cairo text-sm font-extrabold text-text">دفع موثوق</h3>
+                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
+                    ادفع بأمان وتابع حالة طلبك بسهولة.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <Truck className="text-primary" size={24} />
-              <p className="mt-4 font-cairo text-sm font-extrabold text-text">{isDigital ? 'تسليم رقمي' : 'توصيل للمنزل'}</p>
-              <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">طريقة تسليم مناسبة لنوع المتجر.</p>
+            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                  <Truck size={22} />
+                </div>
+                <div>
+                  <h3 className="font-cairo text-sm font-extrabold text-text">توصيل للمنازل</h3>
+                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
+                    استلم طلباتك بسرعة إلى باب المنزل.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <ShieldCheck className="text-success-dark" size={24} />
-              <p className="mt-4 font-cairo text-sm font-extrabold text-text">دفع موثق</p>
-              <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">ارفع الوصل وتابع حالة طلبك.</p>
+            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                  <ShoppingBag size={22} />
+                </div>
+                <div>
+                  <h3 className="font-cairo text-sm font-extrabold text-text">سلة ذكية</h3>
+                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
+                    احفظ مشترياتك وأكمل الطلب في أي وقت.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <Clock className="text-accent-700" size={24} />
-              <p className="mt-4 font-cairo text-sm font-extrabold text-text">تجربة سريعة</p>
-              <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">تصفح، أضف، وأكمل الطلب بسهولة.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
-              <ShoppingBag className="text-primary" size={24} />
-              <p className="mt-4 font-cairo text-sm font-extrabold text-text">سلة ذكية</p>
-              <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">كل مشترياتك محفوظة حتى الدفع.</p>
+            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
+                  <TrendingUp size={22} />
+                </div>
+                <div>
+                  <h3 className="font-cairo text-sm font-extrabold text-text">تجربة سريعة</h3>
+                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
+                    تصفح المنتجات وأكمل الطلب بخطوات بسيطة.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
