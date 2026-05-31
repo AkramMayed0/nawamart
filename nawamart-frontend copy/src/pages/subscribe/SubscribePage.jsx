@@ -26,13 +26,14 @@ const STEPS = ['الخطة', 'طريقة الدفع', 'الوصل', 'التأك�
 
 function StepsBar({ current }) {          // current = 0-based index
   return (
-    <ol className="flex items-center justify-center gap-0 mb-8 mx-auto">
+    <ol className="flex items-center gap-0 w-full mb-8">
       {STEPS.map((label, i) => {
         const done   = i < current
         const active = i === current
         return (
-          <li key={i} className="flex items-start">
-            <div className="flex flex-col items-center gap-1 w-24">
+          <li key={i} className="flex-1 flex items-center">
+            {/* Circle */}
+            <div className="flex flex-col items-center gap-1 relative z-10">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors
                 ${done   ? 'bg-primary border-primary text-white'
                 : active ? 'bg-white border-primary text-primary'
@@ -44,8 +45,9 @@ function StepsBar({ current }) {          // current = 0-based index
                 {label}
               </span>
             </div>
+            {/* Connector line (not after last) */}
             {i < STEPS.length - 1 && (
-              <div className={`w-12 h-0.5 mt-4 transition-colors
+              <div className={`flex-1 h-0.5 mb-4 mx-1 transition-colors
                 ${done ? 'bg-primary' : 'bg-border'}`} />
             )}
           </li>
@@ -285,7 +287,7 @@ const PLAN_COLORS = {
 
 function PlanPicker({ plans, selected, onSelect, billing }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {Object.values(plans).filter(p => p.price > 0).map(p => {
         const isSel = selected === p.key
         const Icon = PLAN_ICONS[p.key]
@@ -530,7 +532,7 @@ export default function SubscribePage() {
       </header>
 
       {/* ── Body ── */}
-      <main className="max-w-5xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 py-8">
 
         {storePlan === 'starter' && isPlanExpired && (
           <div className="flex items-start gap-2 bg-danger-100 rounded-xl px-4 py-3 mb-6 text-xs font-cairo text-danger">

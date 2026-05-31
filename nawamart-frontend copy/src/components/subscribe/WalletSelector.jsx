@@ -8,12 +8,9 @@
  *   setWallet  fn
  *   amount     number  — subscription price in YER
  */
-import { useState } from 'react'
 import clsx from 'clsx'
-import { Copy, Check } from 'lucide-react'
 import { WALLETS } from '@/api/subscriptions'
 import WalletBadge from '@/components/storefront/WalletBadge'
-import toast from 'react-hot-toast'
 
 // Static NawaMart payment accounts (replace with real data from API)
 const ACCOUNTS = {
@@ -24,19 +21,6 @@ const ACCOUNTS = {
 
 export default function WalletSelector({ wallet, setWallet, amount }) {
   const account = ACCOUNTS[wallet]
-  const [copied, setCopied] = useState(false)
-
-  async function copyNumber() {
-    if (!account) return
-    try {
-      await navigator.clipboard.writeText(account.number)
-      setCopied(true)
-      toast.success('تم نسخ رقم الحساب')
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      toast.error('تعذر النسخ')
-    }
-  }
 
   return (
     <div className="bg-white border border-border rounded-2xl p-6">
@@ -91,19 +75,9 @@ export default function WalletSelector({ wallet, setWallet, amount }) {
           </div>
           <div className="flex justify-between items-center">
             <span className="text-text-muted">رقم الحساب</span>
-            <div className="flex items-center gap-2">
-              <span className="font-inter font-bold text-primary dk-num tracking-wide">
-                {account.number}
-              </span>
-              <button
-                type="button"
-                onClick={copyNumber}
-                className="p-1.5 rounded-lg hover:bg-primary-100 transition-colors text-primary"
-                title="نسخ رقم الحساب"
-              >
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-              </button>
-            </div>
+            <span className="font-inter font-bold text-primary dk-num tracking-wide">
+              {account.number}
+            </span>
           </div>
           <div className="flex justify-between items-center">
             <span className="text-text-muted">باسم</span>

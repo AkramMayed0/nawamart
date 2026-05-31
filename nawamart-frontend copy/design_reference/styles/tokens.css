@@ -1,0 +1,201 @@
+/* ============================================================
+   Dukkan (دكان) Design System — Colors & Type
+   RTL-first, Arabic-primary, English secondary
+   ============================================================ */
+
+/* Fonts: Cairo (local files) for Arabic + Latin, Inter for English-only contexts */
+@font-face {
+  font-family: "Cairo";
+  src: url("../assets/fonts/Cairo-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("../assets/fonts/Cairo-Medium.ttf") format("truetype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("../assets/fonts/Cairo-SemiBold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("../assets/fonts/Cairo-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* --------- BRAND COLORS --------- */
+  --dk-primary:        #1B3F72;   /* dark navy — primary brand */
+  --dk-primary-700:    #163358;   /* hover / pressed */
+  --dk-primary-800:    #102746;
+  --dk-primary-100:    #E4ECF7;   /* tint backgrounds, chips */
+  --dk-primary-50:     #F2F6FB;
+
+  --dk-accent:         #F5A623;   /* golden orange — CTA / accent */
+  --dk-accent-700:     #D88D10;
+  --dk-accent-100:     #FDF0D6;
+  --dk-accent-50:      #FEF8EA;
+
+  /* --------- NEUTRALS --------- */
+  --dk-bg:             #F8F9FA;   /* app background */
+  --dk-surface:        #FFFFFF;   /* card / sheet */
+  --dk-text:           #1A1A2E;   /* primary text */
+  --dk-text-muted:     #5A6072;   /* secondary text */
+  --dk-text-subtle:    #8A90A2;   /* hints, captions */
+  --dk-border:         #E4E7EC;   /* dividers, default border */
+  --dk-border-strong:  #CFD3DB;
+  --dk-bg-soft:        #EEF0F3;   /* inactive chip, skeleton */
+
+  /* --------- SEMANTIC --------- */
+  --dk-success:        #27AE60;
+  --dk-success-100:    #DFF5E7;
+  --dk-success-dark:   #1E8C4D;   /* "delivered" deep green */
+
+  --dk-danger:         #E74C3C;
+  --dk-danger-100:     #FCE4E1;
+
+  --dk-warning:        #F39C12;
+  --dk-warning-100:    #FDEBCB;
+
+  --dk-info:           #2D7BE0;   /* shipped / informational */
+  --dk-info-100:       #DCE9FA;
+
+  /* --------- ORDER STATUS (mapped from semantics) --------- */
+  --dk-status-pending:    var(--dk-warning);
+  --dk-status-pending-bg: var(--dk-warning-100);
+  --dk-status-confirmed:    var(--dk-success);
+  --dk-status-confirmed-bg: var(--dk-success-100);
+  --dk-status-rejected:    var(--dk-danger);
+  --dk-status-rejected-bg: var(--dk-danger-100);
+  --dk-status-shipped:    var(--dk-info);
+  --dk-status-shipped-bg: var(--dk-info-100);
+  --dk-status-delivered:    var(--dk-success-dark);
+  --dk-status-delivered-bg: #C8EBD6;
+
+  /* --------- TYPE FAMILIES --------- */
+  --dk-font-ar: "Cairo", "Segoe UI Arabic", "Tahoma", sans-serif;
+  --dk-font-en: "Inter", "Cairo", system-ui, -apple-system, sans-serif;
+
+  /* --------- TYPE SCALE --------- */
+  --dk-display:  64px;
+  --dk-h1:       40px;
+  --dk-h2:       28px;
+  --dk-h3:       20px;
+  --dk-body:     16px;
+  --dk-small:    13px;
+
+  --dk-weight-regular: 400;
+  --dk-weight-medium:  500;
+  --dk-weight-semibold:600;
+  --dk-weight-bold:    700;
+
+  --dk-leading-tight:  1.2;
+  --dk-leading-normal: 1.55;
+  --dk-leading-loose:  1.75;
+
+  /* --------- SPACING (4px base) --------- */
+  --dk-space-1:  4px;
+  --dk-space-2:  8px;
+  --dk-space-3:  12px;
+  --dk-space-4:  16px;
+  --dk-space-6:  24px;
+  --dk-space-8:  32px;
+  --dk-space-12: 48px;
+  --dk-space-16: 64px;
+
+  /* --------- RADII --------- */
+  --dk-radius-sm:   4px;
+  --dk-radius:      8px;   /* default for components */
+  --dk-radius-lg:   12px;  /* default for cards */
+  --dk-radius-pill: 999px;
+
+  /* --------- ELEVATION (flat — use sparingly) --------- */
+  --dk-shadow-none:  none;
+  --dk-shadow-1:     0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 1px rgba(16, 24, 40, 0.03);
+  --dk-shadow-2:     0 2px 6px rgba(16, 24, 40, 0.06);
+  --dk-shadow-focus: 0 0 0 3px rgba(27, 63, 114, 0.18);
+
+  /* --------- MOTION --------- */
+  --dk-ease: cubic-bezier(.4,.0,.2,1);
+  --dk-duration-fast: 120ms;
+  --dk-duration:      180ms;
+}
+
+/* ============================================================
+   SEMANTIC ELEMENT STYLES
+   ============================================================ */
+
+html[dir="rtl"], [dir="rtl"] body { direction: rtl; }
+
+body {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-body);
+  line-height: var(--dk-leading-normal);
+  color: var(--dk-text);
+  background: var(--dk-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.dk-display, .display {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-display);
+  font-weight: var(--dk-weight-bold);
+  line-height: var(--dk-leading-tight);
+  letter-spacing: -0.01em;
+  color: var(--dk-text);
+}
+
+h1, .dk-h1 {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-h1);
+  font-weight: var(--dk-weight-bold);
+  line-height: var(--dk-leading-tight);
+  letter-spacing: -0.005em;
+  color: var(--dk-text);
+  margin: 0;
+}
+
+h2, .dk-h2 {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-h2);
+  font-weight: var(--dk-weight-bold);
+  line-height: 1.3;
+  color: var(--dk-text);
+  margin: 0;
+}
+
+h3, .dk-h3 {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-h3);
+  font-weight: var(--dk-weight-medium);
+  line-height: 1.4;
+  color: var(--dk-text);
+  margin: 0;
+}
+
+p, .dk-body {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-body);
+  font-weight: var(--dk-weight-regular);
+  line-height: var(--dk-leading-normal);
+  color: var(--dk-text);
+  margin: 0;
+}
+
+.dk-small, small {
+  font-family: var(--dk-font-ar);
+  font-size: var(--dk-small);
+  line-height: 1.5;
+  color: var(--dk-text-muted);
+}
+
+.dk-en { font-family: var(--dk-font-en); direction: ltr; unicode-bidi: isolate; }
+.dk-num { font-feature-settings: "tnum" 1, "lnum" 1; }
+
+/* utility */
+.dk-muted { color: var(--dk-text-muted); }
+.dk-subtle { color: var(--dk-text-subtle); }
