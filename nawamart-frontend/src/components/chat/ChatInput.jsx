@@ -63,9 +63,9 @@ export default function ChatInput({ onSendText, onSendFile, sending = false, dis
   return (
     <div
       className={clsx(
-        'flex items-end gap-2 bg-white border-t border-border px-3 py-2',
-        // On mobile we add safe-area padding for home-bar
-        'pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]'
+        'flex items-end gap-2 bg-white border-t border-border px-3 py-2 shrink-0',
+        // iOS home-bar safe area — env() fallback to 0px on non-iOS
+        'pb-[max(0.5rem,env(safe-area-inset-bottom))]'
       )}
     >
       {/* ── Attachment button ── */}

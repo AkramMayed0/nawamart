@@ -2,7 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 
 // Pages — Landing & Auth
-import LandingPage from '@/pages/LandingPage'
+import LandingPage    from '@/pages/LandingPage'
+import NotFoundPage   from '@/pages/NotFoundPage'
 import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
@@ -77,7 +78,7 @@ export default function App() {
       </Route>
 
       {/* ── 404 fallback ── */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }

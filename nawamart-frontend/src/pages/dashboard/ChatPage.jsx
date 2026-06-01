@@ -119,7 +119,7 @@ export default function ChatPage() {
      * h-[100dvh] uses dynamic viewport height (handles mobile browsers with
      * address bar / keyboard pop-up). Falls back to 100vh on older browsers.
      */
-    <div className="flex flex-col h-[100dvh] overflow-hidden bg-bg font-cairo">
+    <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
 
       {/* ── Header ── */}
       <ChatHeader
