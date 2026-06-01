@@ -35,6 +35,8 @@ import CustomersPage from '@/pages/dashboard/CustomersPage'
 import ChatListPage from '@/pages/dashboard/ChatListPage'
 import ChatPage from '@/pages/dashboard/ChatPage'
 import FinancePage from '@/pages/dashboard/FinancePage'
+import ReportsPage from '@/pages/dashboard/ReportsPage'
+import ProfilePage from '@/pages/dashboard/ProfilePage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
 
 import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
@@ -211,6 +213,8 @@ export default function App() {
         <Route path="chat/order/:orderId" element={<ChatPage />} />
         <Route path="chat/:chatId" element={<ChatPage />} />
         <Route path="finance" element={<FinancePage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
       </Route>
 

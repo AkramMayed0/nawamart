@@ -4,7 +4,7 @@ import { getMerchantOrders } from '@/api/orders'
 import { resolveAssetUrl } from '@/utils/assets'
 import usePageTitle from '@/hooks/usePageTitle'
 import Icon, { StatusBadge } from '@/components/ui/Icon'
-import { Zap, Truck, Phone } from 'lucide-react'
+import { Phone } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const PAGE_SIZE = 10

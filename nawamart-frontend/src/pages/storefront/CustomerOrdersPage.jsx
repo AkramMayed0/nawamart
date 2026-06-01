@@ -4,16 +4,6 @@ import { getCustomerOrders } from '@/api/orders'
 import Icon, { StatusBadge } from '@/components/ui/Icon'
 import usePageTitle from '@/hooks/usePageTitle'
 
-const STATUS_ORDER = ['pending', 'confirmed', 'shipped', 'delivered', 'rejected']
-const STATUS_AR = {
-  all: 'الكل',
-  pending: 'بانتظار المراجعة',
-  confirmed: 'مؤكد',
-  shipped: 'تم الشحن',
-  delivered: 'تم التسليم',
-  rejected: 'مرفوض',
-}
-
 export default function CustomerOrdersPage() {
   const { slug } = useParams()
   usePageTitle('طلباتي')
