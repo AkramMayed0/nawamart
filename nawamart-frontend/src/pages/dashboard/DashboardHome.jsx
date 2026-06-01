@@ -2,11 +2,14 @@
  * DashboardHome — /dashboard
  * Built in units: 9a (shell), 9b (stats), 9c (subscription), 9d (orders)
  */
-import { useState, useEffect } from 'react'
+import usePageTitle            from '@/hooks/usePageTitle'
 import { useAuthStore }        from '@/store/authStore'
+import { usePreferencesStore } from '@/store/preferencesStore'
+import { useQuery }            from '@tanstack/react-query'
 import { getMerchantOrders }   from '@/api/orders'
-import { ShoppingBag, Clock, Banknote, MessageSquare } from 'lucide-react'
+import { ShoppingBag, Clock, Banknote, MessageSquare, Zap, Truck, BarChart3 } from 'lucide-react'
 import SubscriptionWidget      from '@/components/dashboard/SubscriptionWidget'
+import { useEffect }           from 'react'
 import { useNavigate }         from 'react-router-dom'
 
 // ── Arabic weekday + date ─────────────────────────────────────────────────
@@ -127,7 +130,7 @@ function RecentOrders({ orders, loading }) {
 
                 {/* Customer name */}
                 <span className="font-cairo text-sm text-text truncate flex-1">
-                  {order.shippingAddress?.name ?? order.customer?.name ?? '—'}
+                  {order.deliveryAddress?.name ?? order.customer?.name ?? '—'}
                 </span>
 
                 {/* Status badge */}
@@ -155,17 +158,23 @@ function RecentOrders({ orders, loading }) {
 
 export default function DashboardHome() {
   const user  = useAuthStore(s => s.user)
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store    = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
+  const navigate = useNavigate()
+  const prefs = usePreferencesStore()
 
-  const [orders,  setOrders]  = useState([])
-  const [loading, setLoading] = useState(true)
-
+  // Redirect based on default view preference
   useEffect(() => {
-    getMerchantOrders()
-      .then(res => setOrders(res.data.data ?? []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    if (prefs.defaultView !== 'overview') {
+      navigate(`/dashboard/${prefs.defaultView}`, { replace: true })
+    }
   }, [])
+
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ['merchant-orders'],
+    queryFn:  () => getMerchantOrders().then(res => res.data.data ?? []),
+    staleTime: 30_000,
+  })
 
   const isDigital = store?.type === 'digital'
   const stats     = deriveStats(orders)
@@ -201,6 +210,8 @@ export default function DashboardHome() {
     },
   ]
 
+  usePageTitle('لوحة التحكم')
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 font-cairo" dir="rtl">
 
@@ -209,7 +220,7 @@ export default function DashboardHome() {
         <div>
           <p className="text-sm text-text-muted mb-1">{todayLabel()}</p>
           <h1 className="font-extrabold text-2xl text-text leading-tight">
-            مرحباً، {user?.name ?? 'التاجر'} 👋
+            مرحباً، {user?.name ?? 'التاجر'}
           </h1>
           {store?.name && (
             <p className="text-sm text-text-muted mt-0.5">{store.name}</p>
@@ -221,7 +232,8 @@ export default function DashboardHome() {
               ? 'bg-accent-50 text-accent-700 border-accent-100'
               : 'bg-primary-50 text-primary border-primary-100'
           }`}>
-            {isDigital ? '⚡ متجر رقمي' : '🚚 متجر مادي'}
+            {isDigital ? <Zap size={14} /> : <Truck size={14} />}
+            {isDigital ? 'متجر رقمي' : 'متجر مادي'}
           </span>
         )}
       </div>
@@ -233,14 +245,28 @@ export default function DashboardHome() {
         ))}
       </div>
 
-      {/* ── Bottom grid: subscription widget + recent orders ── */}
+      {/* ── Bottom grid: reports, subscription, orders ── */}
       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 items-start">
 
+        {/* Reports card */}
+        <button
+          type="button"
+          onClick={() => navigate('/dashboard/reports')}
+          className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow text-right w-full"
+        >
+          <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">
+            <BarChart3 size={18} />
+          </div>
+          <p className="font-cairo font-extrabold text-lg text-text">التقارير</p>
+          <p className="font-cairo text-xs text-text-muted">تقارير المشتريات والمبيعات مع إمكانية التصدير إلى PDF.</p>
+          <span className="font-cairo text-xs font-bold text-primary mt-1">عرض التقارير ←</span>
+        </button>
+
         {/* Subscription widget */}
-        <SubscriptionWidget />
+        {prefs.showSubscriptionSummary && <SubscriptionWidget />}
 
         {/* Recent orders */}
-        <RecentOrders orders={orders} loading={loading} />
+        {prefs.showRecentOrders && <RecentOrders orders={orders} loading={loading} />}
 
       </div>
 

@@ -5,24 +5,54 @@ import Button from '@/components/ui/Button'
 
 const TIERS = [
   {
-    key: 'free',
-    name: 'Free', num: '0', unit: 'ر.ي / شهر',
-    sub: 'ابدأ بدون تكلفة، طوّر متجرك على راحتك.',
-    features: ['حتى 20 منتج', 'نطاق فرعي على nawa.shop', 'تأكيد الوصل اليدوي', 'تقارير مبيعات أساسية'],
-    cta: 'ابدأ مجاناً', ctaVariant: 'secondary', featured: false, paid: false,
+    key: 'starter',
+    name: 'Starter', num: '2,500', unit: 'ر.ي / شهر',
+    sub: 'انطلق بمتجر احترافي بأقل تكلفة شهرية.',
+    features: [
+      ['المنتجات',   'حتى 10 منتجات'],
+      ['النطاق',     'نطاق فرعي nawa.shop'],
+      ['الدفع',      'وصل يدوي (تحقق يدوي)'],
+      ['التقارير',   'تقارير مبيعات أساسية'],
+      ['التوصيل',    'يدوي — واتساب / انستقرام'],
+      ['التحليلات',  '—'],
+      ['المحادثة',   '—'],
+      ['الفريق',     '—'],
+      ['الدعم',      'دعم أساسي'],
+    ],
+    cta: 'اشترك الآن', ctaVariant: 'secondary', featured: false, paid: true,
   },
   {
     key: 'pro',
-    name: 'Pro', num: '4,900', unit: 'ر.ي / شهر',
-    sub: 'للتجار النشطين — مادي أو رقمي.',
-    features: ['منتجات بلا حدود', 'نطاق مخصص .com', 'قناة محادثة للمتاجر الرقمية', 'إشعارات SMS للعملاء', 'تقارير متقدمة'],
+    name: 'Pro', num: '8,000', unit: 'ر.ي / شهر',
+    sub: 'للتجار النشطين — تحليلات متوسطة وتوصيل عبر منصات متعددة.',
+    features: [
+      ['المنتجات',   'غير محدود'],
+      ['النطاق',     'نطاق مخصص .com'],
+      ['الدفع',      'وصل يدوي (تحقق يدوي)'],
+      ['التقارير',   'تقارير مبيعات + رسوم بيانية'],
+      ['التوصيل',    'يدوي — واتساب / انستقرام / تيليجرام'],
+      ['التحليلات',  'تحليلات متوسطة (رسوم بيانية شهرية)'],
+      ['المحادثة',   '—'],
+      ['الفريق',     '—'],
+      ['الدعم',      'دعم عبر البريد الإلكتروني'],
+    ],
     cta: 'اشترك الآن', ctaVariant: 'accent', featured: true, paid: true,
   },
   {
     key: 'business',
-    name: 'Business', num: '12,000', unit: 'ر.ي / شهر',
-    sub: 'للمتاجر التي تتوسع.',
-    features: ['كل مميزات Pro', 'حتى 5 مستخدمين فريق', 'API للتكامل الخارجي', 'أولوية الدعم 24/7', 'تقارير ضريبية مخصصة'],
+    name: 'Business', num: '13,000', unit: 'ر.ي / شهر',
+    sub: 'للمتاجر المتوسعة — محادثة مدمجة وتحليلات متقدمة.',
+    features: [
+      ['المنتجات',   'غير محدود + SKU / brand / barcode'],
+      ['النطاق',     'نطاق مخصص .com'],
+      ['الدفع',      'وصل يدوي (تحقق يدوي)'],
+      ['التقارير',   'تقارير متقدمة + تقارير ضريبية'],
+      ['التوصيل',    'مدمج (داخل التطبيق) + خارجي (واتساب/انستقرام/تيليجرام)'],
+      ['التحليلات',  'تحليلات متقدمة (رسوم بيانية + تقارير دورية)'],
+      ['المحادثة',   'محادثة مدمجة داخل التطبيق'],
+      ['الفريق',     'حتى 5 مستخدمين فريق'],
+      ['الدعم',      'دعم أولوية 24/7'],
+    ],
     cta: 'اشترك الآن', ctaVariant: 'secondary', featured: false, paid: true,
   },
 ]
@@ -33,7 +63,6 @@ export default function LandingPricing() {
 
   function handleCta(tier) {
     if (!tier.paid) {
-      // Free plan → go to register (or dashboard if logged in)
       navigate(token ? '/dashboard' : '/merchant/register')
       return
     }
@@ -86,12 +115,12 @@ export default function LandingPricing() {
 
               <p className="font-cairo text-[13.5px] text-text-muted mb-3">{t.sub}</p>
 
-              {/* Feature list */}
-              <div className="flex flex-col gap-2.5 py-4 border-t border-border mb-4 flex-1">
-                {t.features.map((f, i) => (
-                  <div key={i} className="flex items-center gap-2.5 font-cairo text-sm text-text">
-                    <Icon name="check" size={16} strokeWidth={2.5} className="text-success flex-none" />
-                    {f}
+              {/* Feature comparison table */}
+              <div className="flex flex-col py-4 border-t border-border mb-4 flex-1 gap-0">
+                {t.features.filter(([, v]) => v !== '—').map(([label, value], i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 py-2 border-b border-border/40 last:border-0">
+                    <span className="font-cairo text-[12px] text-text-muted">{label}</span>
+                    <span className="font-cairo text-sm font-semibold text-left text-text">{value}</span>
                   </div>
                 ))}
               </div>

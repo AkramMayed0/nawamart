@@ -4,19 +4,26 @@ const Order = require('../models/Order');
 
 // ─── Plan Limits ─────────────────────────────────────────────────────────────
 const PLAN_LIMITS = {
-  free:     { maxProducts: 5,  maxOrdersPerMonth: 30 },
+  starter:  { maxProducts: 10, maxOrdersPerMonth: 30 },
   pro:      { maxProducts: 50, maxOrdersPerMonth: 300 },
   business: { maxProducts: Infinity, maxOrdersPerMonth: Infinity },
+  expired:  { maxProducts: 0, maxOrdersPerMonth: 0 },
 };
 
 /**
  * Returns the effective plan of a store.
- * If planExpiresAt has passed, treat the store as 'free'.
+ * - Starter with expired planExpiresAt → trial ended, fully blocked ('expired')
+ * - Pro/Business with expired planExpiresAt → downgraded to 'starter'
+ * - Missing/null plan → defaults to 'starter' for safety
  */
 const getEffectivePlan = (store) => {
-  if (store.plan === 'free') return 'free';
-  if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'free';
-  return store.plan;
+  const currentPlan = store.plan || 'starter';
+  if (currentPlan === 'starter') {
+    if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'expired';
+    return 'starter';
+  }
+  if (store.planExpiresAt && store.planExpiresAt < new Date()) return 'starter';
+  return currentPlan;
 };
 
 // ─── Middleware: enforce product limit ────────────────────────────────────────
@@ -30,7 +37,15 @@ const enforceProductLimit = async (req, res, next) => {
     if (!store) return next(); // 403 handled by controller
 
     const plan = getEffectivePlan(store);
-    const limit = PLAN_LIMITS[plan].maxProducts;
+    const limits = PLAN_LIMITS[plan];
+    if (!limits) {
+      return res.status(500).json({
+        success: false,
+        data: null,
+        message: 'تكوين خطة المتجر غير مكتمل — يرجى التواصل مع الدعم',
+      });
+    }
+    const limit = limits.maxProducts;
 
     if (limit === Infinity) return next();
 
@@ -60,7 +75,15 @@ const enforceOrderLimit = async (req, res, next) => {
     if (!store) return next();
 
     const plan = getEffectivePlan(store);
-    const limit = PLAN_LIMITS[plan].maxOrdersPerMonth;
+    const limits = PLAN_LIMITS[plan];
+    if (!limits) {
+      return res.status(500).json({
+        success: false,
+        data: null,
+        message: 'تكوين خطة المتجر غير مكتمل — يرجى التواصل مع الدعم',
+      });
+    }
+    const limit = limits.maxOrdersPerMonth;
 
     if (limit === Infinity) return next();
 

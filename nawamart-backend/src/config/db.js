@@ -6,18 +6,18 @@ const connectDB = async () => {
       // These options are defaults in Mongoose 8 but explicit for clarity
     });
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`[DB] MongoDB Connected: ${conn.connection.host}`);
 
     mongoose.connection.on('error', (err) => {
-      console.error(`❌ MongoDB connection error: ${err.message}`);
+      console.error(`[DB] MongoDB connection error: ${err.message}`);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️  MongoDB disconnected');
+      console.warn('[DB] MongoDB disconnected');
     });
 
   } catch (error) {
-    console.error(`❌ MongoDB connection failed: ${error.message}`);
+    console.error(`[DB] MongoDB connection failed: ${error.message}`);
     process.exit(1);
   }
 };

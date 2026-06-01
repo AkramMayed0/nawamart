@@ -1,10 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
+import usePageTitle from '@/hooks/usePageTitle'
 
 /**
  * Full-page 404 — shown when no route matches.
  * Arabic text, RTL layout, NawaMart brand colors.
  */
 export default function NotFoundPage() {
+  usePageTitle('الصفحة غير موجودة')
   const navigate = useNavigate()
 
   return (

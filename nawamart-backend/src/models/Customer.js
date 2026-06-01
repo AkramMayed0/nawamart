@@ -14,7 +14,6 @@ const customerSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, 'البريد الإلكتروني مطلوب'],
-      unique: true,
       lowercase: true,
       trim: true,
       validate: {
@@ -46,8 +45,27 @@ const customerSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Timed suspension — null means permanent if isActive=false
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
     profileImage: {
       type: String,
+      default: null,
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ['email', 'google'],
+      default: 'email',
+    },
+    store: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Store',
       default: null,
     },
   },
@@ -59,7 +77,8 @@ const customerSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ────────────────────────────────────────────────────────────────
-// Note: email index is created automatically by unique:true on the field
+// Allow same email across different stores — compound unique
+customerSchema.index({ email: 1, store: 1 }, { unique: true, sparse: true });
 customerSchema.index({ phone: 1 });
 
 // ─── Pre-save: Hash password ─────────────────────────────────────────────────

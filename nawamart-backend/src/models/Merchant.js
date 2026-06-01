@@ -45,9 +45,23 @@ const merchantSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Timed suspension — null means permanent if isActive=false
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
     profileImage: {
       type: String,
       default: null,
+    },
+    googleId: {
+      type: String,
+      default: null,
+    },
+    authProvider: {
+      type: String,
+      enum: ['email', 'google'],
+      default: 'email',
     },
     // Reference to stores owned by this merchant
     stores: [

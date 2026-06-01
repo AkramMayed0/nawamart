@@ -1,396 +1,316 @@
-import { useState } from 'react'
-import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import { ArrowLeft, CheckCircle2, CreditCard, ImageIcon, MapPin, MessageSquare, ShieldCheck, Upload, X, MessageCircle, Send, Instagram, Phone, Navigation } from 'lucide-react'
 import { getStoreBySlug } from '@/api/stores'
 import { createOrder, uploadWaslFile } from '@/api/orders'
-import { useCartStore } from '@/store/cartStore'
-import Icon from '@/components/ui/Icon'
+import { getProductPrice, useCartStore } from '@/store/cartStore'
+import { useCustomerAuthStore } from '@/store/customerAuthStore'
+import usePageTitle from '@/hooks/usePageTitle'
+import { resolveAssetUrl } from '@/utils/assets'
+import WalletBadge from '@/components/storefront/WalletBadge'
 
 const WALLETS = [
-  { id: 'cherry',  label: 'Cherry',        sub: 'محفظة إلكترونية' },
-  { id: 'kuraimi', label: 'الكريمي',        sub: 'تطبيق بنك التضامن' },
-  { id: 'onecash', label: 'OneCash',        sub: 'محفظة إلكترونية' },
+  { id: 'kuraimi', label: 'الكريمي',  sub: 'تحويل بنكي أو محفظة' },
+  { id: 'oneCash', label: 'OneCash',  sub: 'محفظة إلكترونية' },
+  { id: 'jaib',    label: 'جيب',      sub: 'محفظة جيب' },
 ]
 
+const CITIES = ['صنعاء', 'عدن', 'تعز', 'إب', 'الحديدة', 'المكلا', 'حضرموت', 'مأرب', 'ذمار', 'البيضاء', 'عمران', 'ريمة', 'الضالع', 'لحج', 'أبين', 'شبوة', 'الجوف', 'صعدة']
+
+const CONTACT_METHODS = [
+  { id: 'whatsapp', label: 'واتساب', icon: MessageCircle },
+  { id: 'telegram', label: 'تيليجرام', icon: Send },
+  { id: 'instagram', label: 'انستقرام', icon: Instagram },
+  { id: 'phone', label: 'اتصال هاتفي', icon: Phone },
+]
+
+function formatPrice(value) {
+  return (value ?? 0).toLocaleString('en-US')
+}
+
 export default function CheckoutPage() {
-  const { slug }   = useParams()
-  const navigate   = useNavigate()
-  const items      = useCartStore(s => s.items)
+  usePageTitle('إتمام الطلب')
+  const { slug } = useParams()
+  const navigate = useNavigate()
+  const token = useCustomerAuthStore((state) => state.token)
+  const user = useCustomerAuthStore((state) => state.user)
+  const items = useCartStore((state) => state.items)
+  const clearCart = useCartStore((state) => state.clearCart)
 
-  const [wallet,      setWallet]      = useState('cherry')
-  const [waslFile,    setWaslFile]    = useState(null)
+  // Require customer authentication to checkout
+  if (!token || user?.role !== 'customer') {
+    return (
+      <section className="mx-auto max-w-3xl px-4 py-20 text-center" dir="rtl">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-border bg-white text-primary shadow-sm">
+          <CreditCard size={34} />
+        </div>
+        <h1 className="mt-5 font-cairo text-2xl font-extrabold text-text">تسجيل الدخول مطلوب</h1>
+        <p className="mx-auto mt-2 max-w-md font-cairo text-sm leading-7 text-text-muted">
+          يجب تسجيل الدخول كعميل أولاً لتتمكن من إتمام الطلب.
+        </p>
+        <Link
+          to={`/customer/login?redirect=${encodeURIComponent(`/store/${slug}/checkout`)}`}
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 font-cairo text-sm font-extrabold text-white transition-colors hover:bg-primary-700"
+        >
+          تسجيل الدخول
+        </Link>
+        <Link
+          to={`/store/${slug}`}
+          className="mt-3 inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-white px-5 font-cairo text-sm font-extrabold text-text-muted transition-colors hover:border-primary hover:text-primary mr-3"
+        >
+          العودة للتسوق
+        </Link>
+      </section>
+    )
+  }
+
+  const [wallet, setWallet] = useState('kuraimi')
+  const [waslFile, setWaslFile] = useState(null)
   const [waslPreview, setWaslPreview] = useState(null)
-  const [form,        setForm]        = useState({ name: '', phone: '', city: 'صنعاء', address: '' })
-  const [loading,     setLoading]     = useState(false)
+  const [form, setForm] = useState({ name: '', phone: '', city: 'صنعاء', address: '' })
+  const [contactMethod, setContactMethod] = useState('whatsapp')
+  const [contactHandle, setContactHandle] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [location, setLocation] = useState(null)
+  const [locationLoading, setLocationLoading] = useState(false)
 
-  const clearCart = useCartStore(s => s.clearCart)
+  function getLocation() {
+    if (!navigator.geolocation) {
+      toast.error('ميزة تحديد الموقع غير مدعومة في متصفحك')
+      return
+    }
+    setLocationLoading(true)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setLocationLoading(false)
+        toast.success('تم تحديد موقعك بنجاح')
+      },
+      () => {
+        setLocationLoading(false)
+        toast.error('تعذر تحديد الموقع. تأكد من تفعيل خدمة الموقع في جهازك.')
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    )
+  }
 
-  function setField(key, val) { setForm(f => ({ ...f, [key]: val })) }
+  const { data: store } = useQuery({
+    queryKey: ['store', slug],
+    queryFn: () => getStoreBySlug(slug).then((response) => response.data.data),
+    staleTime: 1000 * 60 * 5,
+  })
 
-  // Can submit: wasl required always; address fields required for physical stores
-  const canSubmit = Boolean(
-    waslFile &&
-    (!isDigital ? (form.name && form.phone && form.address) : true)
+  const isDigital = store?.type === 'digital'
+  const subtotal = useMemo(
+    () => items.reduce((sum, item) => sum + getProductPrice(item.product) * item.quantity, 0),
+    [items]
   )
+  // Calculate shipping based on store's per-city fees
+  const shipping = useMemo(() => {
+    if (isDigital || subtotal === 0) return 0
+    const cityFee = store?.shippingFees?.find((sf) => sf.city === form.city)
+    return cityFee?.fee ?? 0
+  }, [isDigital, subtotal, store?.shippingFees, form.city])
+  const total = subtotal + shipping
+
+  const isBusiness = store?.plan === 'business'
+
+  const canSubmit = Boolean(
+    store?._id &&
+    items.length > 0 &&
+    waslFile &&
+    form.name.trim() &&
+    form.phone.trim() &&
+    form.city.trim() &&
+    (isDigital || form.address.trim())
+  )
+
+  function setField(key, value) {
+    setForm((current) => ({ ...current, [key]: value }))
+  }
 
   async function handleSubmit() {
     if (!canSubmit || loading) return
+
     setLoading(true)
     try {
-      // 1. Upload wasl image first
-      const fd = new FormData()
-      fd.append('wasl', waslFile)
-      const uploadRes = await uploadWaslFile(fd)
-      const waslUrl   = uploadRes.data.data?.url ?? uploadRes.data.url
+      const formData = new FormData()
+      formData.append('wasl', waslFile)
+      const uploadRes = await uploadWaslFile(formData)
+      const waslUrl = uploadRes.data.data?.url ?? uploadRes.data.url
 
-      // 2. Build order payload
-      const orderPayload = {
-        storeSlug:    slug,
-        items: items.map(i => ({
-          product:         i.product._id,
-          quantity:        i.quantity,
-          selectedOptions: i.selectedOptions,
-          price:           i.product.price,
+      const payload = {
+        storeId: store._id,
+        items: items.map((item) => ({
+          product: item.product._id,
+          quantity: item.quantity,
+          selectedOptions: item.selectedOptions,
+          price: getProductPrice(item.product),
         })),
         paymentMethod: wallet,
-        waslUrl,
-        ...(isDigital ? {} : {
-          shippingAddress: {
-            name:    form.name,
-            phone:   form.phone,
-            city:    form.city,
-            address: form.address,
-          },
-        }),
+        paymentWasl: waslUrl,
+        deliveryAddress: {
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          city: form.city,
+          details: isDigital ? 'تسليم رقمي عبر ' + CONTACT_METHODS.find(m => m.id === contactMethod)?.label : form.address.trim(),
+          location: isDigital ? undefined : location,
+        },
+        contactMethod: isDigital ? contactMethod : undefined,
+        contactHandle: isDigital && contactHandle.trim() ? contactHandle.trim() : undefined,
+        notes: isDigital ? 'طلب رقمي' : null,
       }
 
-      // 3. Create order
-      const res = await createOrder(orderPayload)
+      const res = await createOrder(payload)
       const orderId = res.data.data?._id ?? res.data.data?.id
 
-      // 4. Clear cart and navigate to confirmation
       clearCart()
+      toast.success('تم إنشاء الطلب بنجاح')
       navigate(`/store/${slug}/order/${orderId}`)
-    } catch (err) {
-      toast.error(err?.message ?? 'حدث خطأ، يرجى المحاولة مجدداً')
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'حدث خطأ، يرجى المحاولة مرة أخرى'
+      toast.error(message)
     } finally {
       setLoading(false)
     }
   }
 
-  const { data: store } = useQuery({
-    queryKey: ['store', slug],
-    queryFn:  () => getStoreBySlug(slug).then(r => r.data.data),
-    staleTime: 1000 * 60 * 5,
-  })
-
-  const isDigital = store?.type === 'digital'
-
-  // Redirect to store if cart is empty
   if (items.length === 0) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-24 text-center" dir="rtl">
-        <div className="w-16 h-16 rounded-2xl bg-bg-soft border border-border flex items-center justify-center mx-auto mb-4">
-          <Icon name="cart" size={28} className="text-text-subtle" />
+      <section className="mx-auto max-w-3xl px-4 py-20 text-center" dir="rtl">
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-xl border border-border bg-white text-primary shadow-sm">
+          <CreditCard size={34} />
         </div>
-        <h2 className="font-cairo font-bold text-xl text-text mb-2">السلة فارغة</h2>
-        <p className="font-cairo text-sm text-text-muted mb-6">
-          أضف منتجات للمتجر أولاً ثم عد لإتمام الطلب.
+        <h1 className="mt-5 font-cairo text-2xl font-extrabold text-text">لا يوجد طلب للدفع</h1>
+        <p className="mx-auto mt-2 max-w-md font-cairo text-sm leading-7 text-text-muted">
+          أضف منتجات إلى السلة أولا، ثم انتقل للدفع من صفحة السلة.
         </p>
         <Link
           to={`/store/${slug}`}
-          className="inline-flex items-center gap-2 bg-primary text-white font-cairo font-semibold px-5 py-2.5 rounded-lg hover:bg-primary-700 transition-colors"
+          className="mt-6 inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 font-cairo text-sm font-extrabold text-white transition-colors hover:bg-primary-700"
         >
-          <Icon name="arrow-right" size={16} />
-          العودة للمتجر
+          العودة للتسوق
+          <ArrowLeft size={16} />
         </Link>
-      </div>
+      </section>
     )
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
-
-      {/* Back button */}
-      <button
-        onClick={() => navigate(`/store/${slug}`)}
-        className="inline-flex items-center gap-2 text-sm text-text-muted font-cairo hover:text-primary transition-colors mb-6"
-      >
-        <Icon name="arrow-right" size={14} />
-        العودة للتسوق
-      </button>
-
-      {/* Page title */}
-      <div className="flex items-center gap-3 mb-8">
-        <h1 className="font-cairo font-extrabold text-2xl text-text">إتمام الطلب</h1>
-        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold font-cairo px-2.5 py-1 rounded-pill ${
-          isDigital
-            ? 'bg-accent-50 text-accent-700 border border-accent-200'
-            : 'bg-primary-50 text-primary border border-primary-200'
-        }`}>
-          {isDigital ? <><Icon name="bolt" size={11} />تسليم فوري</> : <><Icon name="truck" size={11} />توصيل</>}
-        </span>
+    <section className="mx-auto max-w-7xl px-4 py-8" dir="rtl">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="font-cairo text-sm font-bold text-primary">الدفع الآمن</p>
+          <h1 className="mt-1 font-cairo text-3xl font-extrabold text-text">إتمام الطلب</h1>
+          <p className="mt-2 font-cairo text-sm text-text-muted">
+            ارفع وصل الدفع وأكمل بيانات التواصل ليصل الطلب للتاجر مباشرة.
+          </p>
+        </div>
+        <Link
+          to={`/store/${slug}/cart`}
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-white px-4 font-cairo text-sm font-extrabold text-text-muted transition-colors hover:border-primary hover:text-primary"
+        >
+          العودة للسلة
+          <ArrowLeft size={15} />
+        </Link>
       </div>
 
-      {/* Two-column grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
-
-        {/* ── Main column ── */}
-        <div className="flex flex-col gap-5">
-
-          {/* Wallet selector */}
-          <WalletSelector wallet={wallet} setWallet={setWallet} />
-
-          {/* Wasl uploader */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-5">
+          <WalletSelector wallet={wallet} setWallet={setWallet} store={store} total={total} />
           <WaslUploader
             waslFile={waslFile}
             waslPreview={waslPreview}
             setWaslFile={setWaslFile}
             setWaslPreview={setWaslPreview}
           />
-
-          {/* Address form / digital note */}
-          {isDigital
-            ? <DigitalNote />
-            : <AddressForm form={form} setField={setField} />
-          }
-
+          <ContactForm form={form} setField={setField} isDigital={isDigital} isBusiness={isBusiness} location={location} locationLoading={locationLoading} getLocation={getLocation} contactMethod={contactMethod} setContactMethod={setContactMethod} contactHandle={contactHandle} setContactHandle={setContactHandle} />
+          {isDigital && <DigitalNote />}
         </div>
 
-        {/* ── Sidebar — order summary + submit ── */}
         <OrderSummary
           items={items}
           isDigital={isDigital}
-          waslFile={waslFile}
+          subtotal={subtotal}
+          shipping={shipping}
+          total={total}
           canSubmit={canSubmit}
           loading={loading}
           onSubmit={handleSubmit}
+          hasWasl={Boolean(waslFile)}
         />
-
       </div>
-    </div>
+    </section>
   )
 }
 
-/* ─────────────────────────────────────────
-   Order Summary sidebar
-───────────────────────────────────────── */
-function OrderSummary({ items, isDigital, waslFile, canSubmit, loading, onSubmit }) {
-  const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0)
-  const shipping = isDigital ? 0 : 1500
-  const total    = subtotal + shipping
+function WalletSelector({ wallet, setWallet, store, total }) {
+  const activeWallet = WALLETS.find((item) => item.id === wallet)
+  const accountNumber = store?.paymentAccounts?.[wallet]
 
   return (
-    <aside className="bg-white border border-border rounded-xl p-5 lg:sticky lg:top-20">
-      <h3 className="font-cairo font-bold text-lg text-text mb-4">ملخص الطلب</h3>
+    <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary">
+          <CreditCard size={20} />
+        </div>
+        <div>
+          <h2 className="font-cairo text-lg font-extrabold text-text">طريقة الدفع</h2>
+          <p className="font-cairo text-sm text-text-muted">حوّل المبلغ ثم ارفع صورة الوصل.</p>
+        </div>
+      </div>
 
-      {/* Items */}
-      <div className="flex flex-col gap-3 pb-4 mb-4 border-b border-border">
-        {items.map((item) => (
-          <div
-            key={`${item.product._id}-${JSON.stringify(item.selectedOptions)}`}
-            className="flex items-center gap-3"
-          >
-            {/* Thumb */}
-            <div className="w-11 h-11 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0">
-              {item.product.images?.[0] ? (
-                <img
-                  src={item.product.images[0]}
-                  alt={item.product.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <Icon name="image" size={16} className="text-border-strong" />
-                </div>
-              )}
-            </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {WALLETS.map((item) => {
+          const active = wallet === item.id
+          return (
+            <button
+              type="button"
+              key={item.id}
+              onClick={() => setWallet(item.id)}
+              className={`rounded-lg border p-4 text-start transition-colors ${
+                active ? 'border-primary bg-primary-50 shadow-focus' : 'border-border bg-white hover:border-primary'
+              }`}
+            >
+              <WalletBadge wallet={item.id} active={active} compact />
+              <p className={`mt-3 font-cairo text-sm font-extrabold ${active ? 'text-primary' : 'text-text'}`}>{item.label}</p>
+              <p className="mt-1 font-cairo text-xs text-text-muted">{item.sub}</p>
+            </button>
+          )
+        })}
+      </div>
 
-            {/* Name + qty */}
-            <div className="flex-1 min-w-0">
-              <p className="font-cairo font-semibold text-[13px] text-text truncate">
-                {item.product.name}
-              </p>
-              <p className="font-cairo text-xs text-text-muted">
-                ×{item.quantity}
-                {Object.values(item.selectedOptions || {}).length > 0 && (
-                  <> · {Object.values(item.selectedOptions).join(', ')}</>
-                )}
-              </p>
-            </div>
-
-            {/* Line total */}
-            <span className="font-inter font-bold text-sm text-text dk-num shrink-0">
-              {(item.product.price * item.quantity).toLocaleString('en-US')}
-            </span>
+      <div className="mt-4 rounded-lg bg-bg p-4">
+        <div className="flex flex-col gap-2 font-cairo text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-text-muted">المحفظة</span>
+            <span className="font-extrabold text-text">{activeWallet?.label}</span>
           </div>
-        ))}
-      </div>
-
-      {/* Totals */}
-      <div className="flex flex-col gap-2 mb-5">
-        <div className="flex justify-between font-cairo text-sm text-text-muted">
-          <span>المجموع الفرعي</span>
-          <span className="dk-num font-inter font-semibold text-text">
-            {subtotal.toLocaleString('en-US')} ر.ي
-          </span>
-        </div>
-        <div className="flex justify-between font-cairo text-sm text-text-muted">
-          <span>{isDigital ? 'التسليم' : 'الشحن'}</span>
-          <span className={isDigital ? 'text-success font-semibold' : 'dk-num font-inter font-semibold text-text'}>
-            {isDigital ? 'مجاناً ⚡' : `${shipping.toLocaleString('en-US')} ر.ي`}
-          </span>
-        </div>
-        <div className="flex justify-between font-cairo font-bold text-base text-text pt-2 border-t border-border">
-          <span>الإجمالي</span>
-          <span className="dk-num font-inter">
-            {total.toLocaleString('en-US')} ر.ي
-          </span>
-        </div>
-      </div>
-
-      {/* Submit button */}
-      <button
-        onClick={onSubmit}
-        disabled={!canSubmit || loading}
-        className="w-full flex items-center justify-center gap-2 font-cairo font-bold text-[15px] py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-accent hover:bg-accent-700 text-white"
-      >
-        {loading ? (
-          <>
-            <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-            </svg>
-            جاري إرسال الطلب…
-          </>
-        ) : (
-          <>
-            تأكيد الطلب
-            <Icon name="check" size={16} />
-          </>
-        )}
-      </button>
-
-      {/* Hint below button */}
-      {!canSubmit && (
-        <p className="font-cairo text-xs text-text-muted text-center mt-2">
-          {!waslFile
-            ? 'ارفع صورة الوصل أولاً لتفعيل الزر'
-            : 'أكمل بيانات التوصيل لتفعيل الزر'}
-        </p>
-      )}
-
-      <p className="font-cairo text-xs text-text-muted text-center mt-3">
-        {isDigital
-          ? 'سيراجع التاجر الوصل خلال دقائق وتفتح المحادثة فوراً.'
-          : 'سيتواصل التاجر معك خلال 24 ساعة لتأكيد الطلب.'}
-      </p>
-    </aside>
-  )
-}
-
-const CITIES = ['صنعاء','عدن','تعز','إب','الحديدة','المكلا','حضرموت','مأرب','ذمار','البيضاء','عمران','ريمة','الضالع','لحج','أبين','شبوة','الجوف','صعدة']
-
-/* ─────────────────────────────────────────
-   Address form (physical stores)
-───────────────────────────────────────── */
-function AddressForm({ form, setField }) {
-  return (
-    <div className="bg-white border border-border rounded-xl p-5">
-      <h3 className="font-cairo font-bold text-lg text-text mb-4">معلومات التوصيل</h3>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Full name */}
-        <div className="flex flex-col gap-1.5">
-          <label className="font-cairo text-sm font-semibold text-text">الاسم الكامل</label>
-          <input
-            value={form.name}
-            onChange={e => setField('name', e.target.value)}
-            placeholder="مثال: عبدالرحمن المقطري"
-            className="w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border border-border bg-white text-text placeholder:text-text-subtle outline-none focus:border-primary focus:shadow-focus transition-[border-color,box-shadow] duration-default"
-          />
-        </div>
-
-        {/* Phone */}
-        <div className="flex flex-col gap-1.5">
-          <label className="font-cairo text-sm font-semibold text-text">رقم الجوال (واتساب)</label>
-          <input
-            value={form.phone}
-            onChange={e => setField('phone', e.target.value)}
-            placeholder="7XXXXXXXX"
-            type="tel"
-            dir="ltr"
-            className="w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border border-border bg-white text-text placeholder:text-text-subtle outline-none focus:border-primary focus:shadow-focus transition-[border-color,box-shadow] duration-default text-right"
-          />
-        </div>
-
-        {/* City */}
-        <div className="flex flex-col gap-1.5">
-          <label className="font-cairo text-sm font-semibold text-text">المحافظة</label>
-          <select
-            value={form.city}
-            onChange={e => setField('city', e.target.value)}
-            className="w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border border-border bg-white text-text outline-none focus:border-primary focus:shadow-focus transition-[border-color,box-shadow] duration-default"
-          >
-            {CITIES.map(c => <option key={c}>{c}</option>)}
-          </select>
-        </div>
-
-        {/* Address detail */}
-        <div className="flex flex-col gap-1.5">
-          <label className="font-cairo text-sm font-semibold text-text">العنوان التفصيلي</label>
-          <input
-            value={form.address}
-            onChange={e => setField('address', e.target.value)}
-            placeholder="الحي، الشارع، علامة مميزة"
-            className="w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border border-border bg-white text-text placeholder:text-text-subtle outline-none focus:border-primary focus:shadow-focus transition-[border-color,box-shadow] duration-default"
-          />
+          <div className="flex justify-between gap-4">
+            <span className="text-text-muted">المبلغ المطلوب</span>
+            <span className="font-inter font-extrabold text-primary">{formatPrice(total)} ر.ي</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-text-muted">رقم الحساب</span>
+            <span className="font-inter font-extrabold text-text">{accountNumber || 'لم يضف التاجر رقما بعد'}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-text-muted">رقم التواصل</span>
+            <span className="font-inter font-extrabold text-text">{store?.contactPhone || 'غير مضاف'}</span>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-/* ─────────────────────────────────────────
-   Digital info note
-───────────────────────────────────────── */
-function DigitalNote() {
-  return (
-    <div className="bg-accent-50 border border-accent-200 rounded-xl p-5 flex gap-4">
-      <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
-        <Icon name="msgs" size={20} />
-      </div>
-      <div>
-        <p className="font-cairo font-bold text-sm text-text mb-1">ماذا يحدث بعد تأكيد الدفع؟</p>
-        <p className="font-cairo text-sm text-text-muted leading-relaxed">
-          فور مراجعة التاجر للوصل (عادةً خلال دقائق)، ستفتح{' '}
-          <strong className="text-text">محادثة خاصة</strong> بينك وبين المتجر.
-          يرسل لك التاجر بيانات المنتج (الحساب، الكود، أو الملف)،
-          ثم تؤكد الاستلام داخل المحادثة.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-/* ─────────────────────────────────────────
-   وصل uploader
-───────────────────────────────────────── */
 function WaslUploader({ waslFile, waslPreview, setWaslFile, setWaslPreview }) {
   function handleFile(file) {
     if (!file) return
     setWaslFile(file)
     setWaslPreview(URL.createObjectURL(file))
-  }
-
-  function handleInputChange(e) {
-    handleFile(e.target.files?.[0])
-  }
-
-  function handleDrop(e) {
-    e.preventDefault()
-    handleFile(e.dataTransfer.files?.[0])
   }
 
   function handleRemove() {
@@ -400,55 +320,52 @@ function WaslUploader({ waslFile, waslPreview, setWaslFile, setWaslPreview }) {
   }
 
   return (
-    <div className="bg-white border border-border rounded-xl p-5">
-      <h3 className="font-cairo font-bold text-lg text-text mb-1">رفع صورة الوصل</h3>
-      <p className="font-cairo text-sm text-text-muted mb-4">
-        بعد التحويل، ارفع صورة أو لقطة شاشة للوصل.
-      </p>
+    <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent-50 text-accent-700">
+          <Upload size={20} />
+        </div>
+        <div>
+          <h2 className="font-cairo text-lg font-extrabold text-text">صورة الوصل</h2>
+          <p className="font-cairo text-sm text-text-muted">PNG أو JPG أو WEBP، حتى 10 ميجابايت.</p>
+        </div>
+      </div>
 
       {!waslFile ? (
-        /* Drop zone */
         <label
-          onDrop={handleDrop}
-          onDragOver={e => e.preventDefault()}
-          className="flex items-center gap-4 p-4 border-[1.5px] border-dashed border-border-strong rounded-xl cursor-pointer bg-bg hover:border-primary hover:bg-primary-50 transition-all group"
+          onDrop={(event) => {
+            event.preventDefault()
+            handleFile(event.dataTransfer.files?.[0])
+          }}
+          onDragOver={(event) => event.preventDefault()}
+          className="flex cursor-pointer items-center gap-4 rounded-xl border border-dashed border-border-strong bg-bg p-5 transition-colors hover:border-primary hover:bg-primary-50"
         >
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleInputChange}
-          />
-          <div className="w-11 h-11 rounded-lg bg-white border border-border flex items-center justify-center shrink-0 text-primary group-hover:border-primary transition-colors">
-            <Icon name="upload" size={20} />
+          <input type="file" accept="image/*" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-primary shadow-sm">
+            <ImageIcon size={22} />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-cairo font-bold text-sm text-text">ارفع صورة الوصل</p>
-            <p className="font-cairo text-xs text-text-muted">PNG أو JPG · حتى 5 ميجابايت · اسحب أو اضغط</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-cairo text-sm font-extrabold text-text">اختر صورة أو اسحبها هنا</p>
+            <p className="mt-1 font-cairo text-xs text-text-muted">سيتم إرسال الوصل للتاجر للمراجعة.</p>
           </div>
-          <span className="shrink-0 text-xs font-semibold font-cairo text-primary border border-primary-200 bg-primary-50 px-3 py-1.5 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
-            اختر ملف
-          </span>
+          <span className="rounded-lg bg-primary px-4 py-2 font-cairo text-xs font-extrabold text-white">اختيار ملف</span>
         </label>
       ) : (
-        /* Preview */
-        <div className="flex items-center gap-3 bg-success-100 border border-green-200 rounded-xl p-3">
-          {/* Image thumbnail */}
-          <div className="w-14 h-14 rounded-lg border border-border overflow-hidden shrink-0 bg-white">
-            <img src={waslPreview} alt="الوصل" className="w-full h-full object-cover" />
+        <div className="flex items-center gap-3 rounded-xl border border-success-100 bg-success-100 p-3">
+          <div className="h-16 w-16 overflow-hidden rounded-lg border border-border bg-white">
+            <img src={waslPreview} alt="وصل الدفع" className="h-full w-full object-cover" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-cairo font-semibold text-sm text-text truncate">{waslFile.name}</p>
-            <p className="font-cairo text-xs text-success">
-              {(waslFile.size / 1024 / 1024).toFixed(1)} ميجابايت · تم الرفع ✓
-            </p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate font-cairo text-sm font-extrabold text-text">{waslFile.name}</p>
+            <p className="mt-1 font-cairo text-xs font-bold text-success-dark">تم اختيار الصورة</p>
           </div>
           <button
+            type="button"
             onClick={handleRemove}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-text-muted hover:text-danger hover:bg-white transition-colors"
-            aria-label="إزالة"
+            className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-text-muted transition-colors hover:text-danger"
+            aria-label="إزالة الوصل"
           >
-            <Icon name="x" size={16} />
+            <X size={17} />
           </button>
         </div>
       )}
@@ -456,68 +373,238 @@ function WaslUploader({ waslFile, waslPreview, setWaslFile, setWaslPreview }) {
   )
 }
 
-/* ─────────────────────────────────────────
-   Wallet selector
-───────────────────────────────────────── */
-function WalletSelector({ wallet, setWallet }) {
-  const subtotal = useCartStore(s => s.items.reduce((n, i) => n + i.product.price * i.quantity, 0))
-
-  const walletLabel = WALLETS.find(w => w.id === wallet)?.label ?? ''
-
+function ContactForm({ form, setField, isDigital, isBusiness, location, locationLoading, getLocation, contactMethod, setContactMethod, contactHandle, setContactHandle }) {
   return (
-    <div className="bg-white border border-border rounded-xl p-5">
-      <h3 className="font-cairo font-bold text-lg text-text mb-1">طريقة الدفع</h3>
-      <p className="font-cairo text-sm text-text-muted mb-4">
-        اختر المحفظة، حوّل المبلغ{' '}
-        <strong className="text-primary dk-num font-inter">
-          {subtotal.toLocaleString('en-US')} ر.ي
-        </strong>
-        ، ثم ارفع صورة الوصل.
+    <div className="rounded-xl border border-border bg-white p-5 shadow-sm">
+      <h2 className="font-cairo text-lg font-extrabold text-text">بيانات العميل</h2>
+      <p className="mt-1 font-cairo text-sm text-text-muted">
+        {isDigital ? 'اختر طريقة التواصل المفضلة ليتم تسليم المنتج الرقمي.' : 'هذه البيانات مطلوبة لتأكيد الطلب والتوصيل.'}
       </p>
 
-      {/* Wallet cards */}
-      <div className="grid grid-cols-3 gap-3 mb-4">
-        {WALLETS.map(w => {
-          const active = wallet === w.id
-          return (
-            <button
-              key={w.id}
-              onClick={() => setWallet(w.id)}
-              className={`flex flex-col gap-2 p-3 rounded-xl border text-start transition-all ${
-                active
-                  ? 'bg-primary-50 border-primary shadow-focus'
-                  : 'bg-white border-border hover:border-primary-300'
-              }`}
-            >
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                active ? 'bg-primary text-white' : 'bg-bg-soft text-text-muted'
-              }`}>
-                <Icon name="credit" size={15} />
-              </div>
-              <span className={`font-cairo font-bold text-sm ${active ? 'text-primary' : 'text-text'}`}>
-                {w.label}
-              </span>
-              <span className="font-cairo text-[11px] text-text-muted leading-tight">{w.sub}</span>
-            </button>
-          )
-        })}
+      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Field label="الاسم الكامل" value={form.name} onChange={(value) => setField('name', value)} placeholder="مثال: عبدالرحمن" />
+        <Field label="رقم الجوال" value={form.phone} onChange={(value) => setField('phone', value)} placeholder="7XXXXXXXX" dir="ltr" type="tel" />
+        <label className="flex flex-col gap-1.5">
+          <span className="font-cairo text-sm font-extrabold text-text">المحافظة</span>
+          <select
+            value={form.city}
+            onChange={(event) => setField('city', event.target.value)}
+            className="h-11 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none transition-colors focus:border-primary"
+          >
+            {CITIES.map((city) => <option key={city}>{city}</option>)}
+          </select>
+        </label>
+        <Field
+          label={isDigital ? 'ملاحظة اختيارية' : 'العنوان التفصيلي'}
+          value={form.address}
+          onChange={(value) => setField('address', value)}
+          placeholder={isDigital ? 'مثال: أرسلوا الكود على واتساب' : 'الحي، الشارع، علامة مميزة'}
+          required={!isDigital}
+        />
       </div>
 
-      {/* Account info box */}
-      <div className="bg-primary-50 rounded-lg px-4 py-3 flex flex-col gap-1.5 text-sm font-cairo">
-        <div>
-          <span className="text-text-muted">المحفظة: </span>
-          <span className="font-semibold text-text">{walletLabel}</span>
+      {!isDigital && isBusiness && (
+        <div className="mt-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-cairo text-sm font-extrabold text-text">الموقع على الخريطة</span>
+            {location && (
+              <span className="font-cairo text-xs text-success flex items-center gap-1">
+                <MapPin size={12} /> تم التحديد
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={getLocation}
+            disabled={locationLoading}
+            className={`w-full flex items-center justify-center gap-2 h-11 rounded-lg border-2 font-cairo text-sm font-bold transition-colors ${
+              location
+                ? 'border-success bg-success-50 text-success'
+                : 'border-dashed border-border-strong bg-bg text-text-muted hover:border-primary hover:text-primary'
+            } disabled:opacity-50`}
+          >
+            {locationLoading ? (
+              <>جاري تحديد الموقع...</>
+            ) : location ? (
+              <>
+                <MapPin size={16} />
+                {location.lat.toFixed(4)}, {location.lng.toFixed(4)} — تغيير الموقع
+              </>
+            ) : (
+              <>
+                <Navigation size={16} />
+                تحديد موقعي الحالي
+              </>
+            )}
+          </button>
+          {location && (
+            <a
+              href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1 font-cairo text-xs text-primary hover:underline"
+            >
+              <MapPin size={12} /> عرض على خرائط Google
+            </a>
+          )}
         </div>
-        <div>
-          <span className="text-text-muted">رقم الحساب: </span>
-          <span className="font-inter font-bold text-primary dk-num">771 423 890</span>
+      )}
+
+      {isDigital && (
+        <div className="mt-5 border-t border-border pt-5">
+          <h3 className="font-cairo text-base font-extrabold text-text mb-1">طريقة التسليم المفضلة</h3>
+          <p className="font-cairo text-sm text-text-muted mb-4">سيتم تسليم المنتج الرقمي عبر:</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {CONTACT_METHODS.map(m => {
+              const active = contactMethod === m.id
+              const Icon = m.icon
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setContactMethod(m.id)}
+                  className={`flex flex-col items-center gap-1.5 rounded-lg border p-3 transition-colors ${
+                    active
+                      ? 'border-primary bg-primary-50 text-primary'
+                      : 'border-border bg-white text-text-muted hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="font-cairo text-xs font-semibold">{m.label}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {contactMethod === 'instagram' && (
+            <div className="mt-3">
+              <Field
+                label="اسم المستخدم في انستقرام"
+                value={contactHandle}
+                onChange={(value) => setContactHandle(value)}
+                placeholder="مثال: @user_name"
+                dir="ltr"
+              />
+            </div>
+          )}
+          {contactMethod === 'telegram' && (
+            <div className="mt-3">
+              <Field
+                label="اسم المستخدم في تيليجرام"
+                value={contactHandle}
+                onChange={(value) => setContactHandle(value)}
+                placeholder="مثال: @username"
+                dir="ltr"
+              />
+            </div>
+          )}
         </div>
-        <div>
-          <span className="text-text-muted">باسم: </span>
-          <span className="font-semibold text-text">عبدالملك المختار</span>
-        </div>
+      )}
+    </div>
+  )
+}
+
+function Field({ label, value, onChange, placeholder, type = 'text', dir = 'rtl' }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="font-cairo text-sm font-extrabold text-text">{label}</span>
+      <input
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        type={type}
+        dir={dir}
+        className="h-11 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-primary"
+      />
+    </label>
+  )
+}
+
+function DigitalNote() {
+  return (
+    <div className="flex gap-4 rounded-xl border border-info-100 bg-info-100 p-5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info text-white">
+        <MessageSquare size={20} />
+      </div>
+      <div>
+        <p className="font-cairo text-sm font-extrabold text-text">بعد تأكيد الدفع</p>
+        <p className="mt-1 font-cairo text-sm leading-7 text-text-muted">
+          سيراجع التاجر الوصل، ثم يتابع مع العميل عبر المحادثة لتسليم الكود أو الملف أو بيانات المنتج الرقمي.
+        </p>
       </div>
     </div>
+  )
+}
+
+function OrderSummary({ items, isDigital, subtotal, shipping, total, canSubmit, loading, onSubmit, hasWasl }) {
+  return (
+    <aside className="h-fit rounded-xl border border-border bg-white p-5 shadow-sm lg:sticky lg:top-28">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-50 text-primary">
+          <ShieldCheck size={20} />
+        </div>
+        <div>
+          <h2 className="font-cairo text-lg font-extrabold text-text">ملخص الطلب</h2>
+          <p className="font-cairo text-xs font-semibold text-text-muted">سيظهر للتاجر بعد الإرسال مباشرة.</p>
+        </div>
+      </div>
+
+      <div className="mb-4 max-h-80 space-y-3 overflow-auto border-b border-border pb-4">
+        {items.map((item) => (
+          <div key={`${item.product._id}-${JSON.stringify(item.selectedOptions || {})}`} className="flex gap-3">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-bg-soft">
+              {item.product.images?.[0] ? (
+                <img src={resolveAssetUrl(item.product.images[0])} alt={item.product.name} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-primary">
+                  <CreditCard size={17} />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-cairo text-sm font-extrabold text-text">{item.product.name}</p>
+              <p className="mt-1 font-cairo text-xs text-text-muted">الكمية: {item.quantity.toLocaleString('en-US')}</p>
+            </div>
+            <span className="font-inter text-sm font-extrabold text-text">
+              {formatPrice(getProductPrice(item.product) * item.quantity)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <div className="space-y-3 border-b border-border pb-4">
+        <div className="flex justify-between font-cairo text-sm text-text-muted">
+          <span>المجموع الفرعي</span>
+          <span className="font-inter font-bold text-text">{formatPrice(subtotal)} ر.ي</span>
+        </div>
+        <div className="flex justify-between font-cairo text-sm text-text-muted">
+          <span>{isDigital ? 'التسليم' : 'الشحن'}</span>
+          <span className={isDigital ? 'font-bold text-success-dark' : 'font-inter font-bold text-text'}>
+            {isDigital ? 'مجانا' : shipping > 0 ? `${formatPrice(shipping)} ر.ي` : 'مجاني'}
+          </span>
+        </div>
+        <div className="flex justify-between pt-2 font-cairo text-base font-extrabold text-text">
+          <span>الإجمالي</span>
+          <span className="font-inter">{formatPrice(total)} ر.ي</span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onSubmit}
+        disabled={!canSubmit || loading}
+        className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent font-cairo text-sm font-extrabold text-white transition-colors hover:bg-accent-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {loading ? 'جاري إرسال الطلب...' : 'تأكيد الطلب'}
+        {!loading && <CheckCircle2 size={17} />}
+      </button>
+
+      {!canSubmit && (
+        <p className="mt-3 text-center font-cairo text-xs leading-6 text-text-muted">
+          {!hasWasl ? 'ارفع صورة الوصل لتفعيل زر التأكيد.' : 'أكمل بيانات العميل المطلوبة لتأكيد الطلب.'}
+        </p>
+      )}
+    </aside>
   )
 }

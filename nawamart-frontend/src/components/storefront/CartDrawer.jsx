@@ -1,7 +1,9 @@
 import { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { Truck } from 'lucide-react'
 import { useCartStore } from '@/store/cartStore'
 import Icon from '@/components/ui/Icon'
+import { resolveAssetUrl } from '@/utils/assets'
 
 export default function CartDrawer() {
   const { slug } = useParams()
@@ -90,8 +92,9 @@ export default function CartDrawer() {
               </span>
             </div>
 
-            <p className="font-cairo text-xs text-text-muted">
-              🚚 رسوم الشحن تُحسب في خطوة الدفع
+            <p className="font-cairo text-xs text-text-muted inline-flex items-center gap-1">
+              <Truck size={12} />
+              رسوم الشحن تُحسب في خطوة الدفع
             </p>
 
             {/* CTA */}
@@ -120,7 +123,7 @@ function CartItem({ item, onUpdate, onRemove }) {
       {/* Thumb */}
       <div className="w-16 h-16 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0">
         {product.images?.[0] ? (
-          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+          <img src={resolveAssetUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Icon name="image" size={20} className="text-border-strong" />

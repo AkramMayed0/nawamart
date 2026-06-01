@@ -52,16 +52,27 @@ const verifyToken = async (req, res, next) => {
     }
 
     if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        data: null,
-        message: 'تم تعليق حسابك — يرجى التواصل مع الدعم',
-      });
+      // Check if suspension was timed and has expired — auto-restore
+      if (user.suspendedUntil && new Date(user.suspendedUntil) <= new Date()) {
+        user.isActive = true;
+        user.suspendedUntil = null;
+        await user.save();
+      } else {
+        const remaining = user.suspendedUntil
+          ? ` حتى ${new Date(user.suspendedUntil).toLocaleDateString('ar-YE')}`
+          : ' — يرجى التواصل مع الدعم';
+        return res.status(403).json({
+          success: false,
+          data: null,
+          message: `تم تعليق حسابك${remaining}`,
+        });
+      }
     }
 
     // 4. Attach to request
     req.user = user;
     req.userRole = decoded.role;
+    if (decoded.storeId) req.customerStoreId = decoded.storeId;
     next();
   } catch (error) {
     next(error);

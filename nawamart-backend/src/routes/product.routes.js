@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createProduct,
   getProductsByStore,
+  getProductById,
   updateProduct,
   deleteProduct,
 } = require('../controllers/product.controller');
@@ -14,15 +15,18 @@ const { enforceProductLimit } = require('../middleware/planLimits');
 // GET /api/products/store/:storeId
 router.get('/store/:storeId', getProductsByStore);
 
+// GET /api/products/:id
+router.get('/:id', getProductById);
+
 // ─── Protected Routes (Merchant Only) ─────────────────────────────────────────
 router.use(verifyToken);
 router.use(requireRole('merchant'));
 
 // POST /api/products — enforces per-plan product cap
-router.post('/', enforceProductLimit, uploadProduct.single('image'), createProduct);
+router.post('/', enforceProductLimit, uploadProduct.array('images', 10), createProduct);
 
 // PUT /api/products/:id
-router.put('/:id', uploadProduct.single('image'), updateProduct);
+router.put('/:id', uploadProduct.array('images', 10), updateProduct);
 
 // DELETE /api/products/:id
 router.delete('/:id', deleteProduct);

@@ -5,8 +5,11 @@ const {
   initChat,
   getChat,
   sendMessage,
+  uploadAttachment,
+  confirmReceipt,
 } = require('../controllers/chat.controller');
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
+const { uploadChatFile } = require('../utils/cloudinary');
 
 // All chat routes require authentication
 router.use(verifyToken);
@@ -22,5 +25,11 @@ router.get('/:chatId', getChat);
 
 // POST /api/chats/:chatId/message
 router.post('/:chatId/message', sendMessage);
+
+// POST /api/chats/:chatId/attachment
+router.post('/:chatId/attachment', uploadChatFile.single('file'), uploadAttachment);
+
+// POST /api/chats/:chatId/confirm-receipt
+router.post('/:chatId/confirm-receipt', requireRole('customer'), confirmReceipt);
 
 module.exports = router;

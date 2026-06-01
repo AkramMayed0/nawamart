@@ -1,4 +1,6 @@
 import Icon from '@/components/ui/Icon'
+import { Zap, Truck } from 'lucide-react'
+import { resolveAssetUrl } from '@/utils/assets'
 
 export default function StoreHeader({ store }) {
   const isDigital = store.type === 'digital'
@@ -10,7 +12,7 @@ export default function StoreHeader({ store }) {
         {/* Logo */}
         {store.logo ? (
           <img
-            src={store.logo}
+            src={resolveAssetUrl(store.logo)}
             alt={store.name}
             className="w-20 h-20 rounded-2xl object-cover border border-border shrink-0"
           />
@@ -29,7 +31,8 @@ export default function StoreHeader({ store }) {
                 ? 'bg-accent-50 text-accent-700 border-accent-200'
                 : 'bg-primary-50 text-primary border-primary-200'
             }`}>
-              {isDigital ? '⚡ رقمي' : '🚚 مادي'}
+              {isDigital ? <Zap size={14} /> : <Truck size={14} />}
+              {isDigital ? 'رقمي' : 'مادي'}
             </span>
           </div>
 

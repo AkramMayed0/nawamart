@@ -55,10 +55,10 @@ export function useChat(chatId) {
 
     getChatMessages(chatId)
       .then(res => {
-        const data = res.data.data
-        setMessages(data?.messages ?? [])
-        setChatMeta(data?.chat ?? null)
-        setConfirmed(data?.chat?.receiptConfirmed ?? false)
+        const chat = res.data.data
+        setMessages(chat?.messages ?? [])
+        setChatMeta(chat ?? null)
+        setConfirmed(chat?.receiptConfirmed ?? false)
       })
       .catch(err => {
         if (err.status !== 404) {

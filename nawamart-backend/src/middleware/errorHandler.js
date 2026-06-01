@@ -5,7 +5,7 @@
 const errorHandler = (err, req, res, next) => {
   // Log in development
   if (process.env.NODE_ENV === 'development') {
-    console.error('❌ Error:', err);
+    console.error('[Error]', err);
   }
 
   let statusCode = err.statusCode || 500;

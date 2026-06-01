@@ -1,3 +1,4 @@
+import usePageTitle          from '@/hooks/usePageTitle'
 import LandingNav            from '@/components/landing/LandingNav'
 import LandingHero           from '@/components/landing/LandingHero'
 import LandingStoreTypes     from '@/components/landing/LandingStoreTypes'
@@ -7,6 +8,7 @@ import LandingTestimonials   from '@/components/landing/LandingTestimonials'
 import LandingFooter, { LandingFinalCta } from '@/components/landing/LandingFooter'
 
 export default function LandingPage() {
+  usePageTitle()
   return (
     <div className="bg-bg min-h-screen">
       <LandingNav />

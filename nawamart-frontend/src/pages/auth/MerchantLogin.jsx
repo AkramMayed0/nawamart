@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useAuthStore } from '@/store/authStore'
-import { merchantLogin } from '@/api/auth'
+import { merchantLogin, merchantLoginGoogle } from '@/api/auth'
+import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import GoogleSignInButton from '@/components/ui/GoogleSignInButton'
 
 // ── Validation helpers ──────────────────────────────────────────────────
 function validate(fields) {
@@ -55,9 +57,9 @@ export default function MerchantLogin() {
         password: fields.password,
       })
 
-      const { token, user } = res.data.data
-      login(token, user)
-      toast.success('أهلاً بعودتك! 👋')
+      const { token, user, role } = res.data.data
+      login(token, { ...user, role })
+      toast.success('أهلاً بعودتك!')
       navigate('/dashboard', { replace: true })
     } catch (err) {
       const msg = err?.message || 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
@@ -66,6 +68,23 @@ export default function MerchantLogin() {
       setLoading(false)
     }
   }
+
+  async function handleGoogleSuccess(credentialResponse) {
+    setLoading(true)
+    try {
+      const res = await merchantLoginGoogle({ credential: credentialResponse.credential })
+      const { token, user, role } = res.data.data
+      login(token, { ...user, role })
+      toast.success('أهلاً بعودتك!')
+      navigate('/dashboard', { replace: true })
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'فشل تسجيل الدخول بحساب Google')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  usePageTitle('تسجيل دخول')
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">
@@ -139,6 +158,24 @@ export default function MerchantLogin() {
               {loading ? 'جاري تسجيل الدخول…' : 'تسجيل الدخول'}
             </Button>
           </form>
+
+          <>
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="bg-white px-3 font-cairo text-text-muted">أو</span>
+              </div>
+            </div>
+
+            <GoogleSignInButton
+              onSuccess={handleGoogleSuccess}
+              onError={() => toast.error('فشل تسجيل الدخول بحساب Google')}
+              text="signin_with"
+              loading={loading}
+            />
+          </>
 
           <p className="font-cairo text-sm text-center text-text-muted mt-6">
             ليس لديك حساب؟{' '}

@@ -78,7 +78,7 @@ uploads وصل screenshot → merchant reviews manually →
 confirms or rejects order
 
 ## Brand
-- Primary: #1B3F72 | Accent: #F5A623
+- Primary: #0D1B2A | Accent: #DC2626
 - Fonts: Cairo (Arabic) + Inter (English)
 - Direction: RTL throughout
 

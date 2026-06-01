@@ -32,7 +32,7 @@ const getMyChats = asyncHandler(async (req, res) => {
     Chat.find(query)
       .populate('customer', 'name')
       .populate('merchant', 'name')
-      .populate('store', 'name logo')
+      .populate('store', 'name logo type')
       .sort({ lastMessageAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -52,24 +52,27 @@ const getMyChats = asyncHandler(async (req, res) => {
  * Initialize a chat with a store (Customer only)
  */
 const initChat = asyncHandler(async (req, res) => {
-  const { storeId } = req.body;
+  const { storeId, orderId } = req.body;
 
   const store = await Store.findById(storeId);
   if (!store) {
     return res.status(404).json({ success: false, message: 'المتجر غير موجود', data: null });
   }
 
-  // Check if chat already exists
-  let chat = await Chat.findOne({
-    customer: req.user._id,
-    store: storeId,
-  });
+  // Check if chat already exists for this order/store
+  const query = { customer: req.user._id, store: storeId };
+  if (orderId) {
+    query.order = orderId;
+  }
+
+  let chat = await Chat.findOne(query);
 
   if (!chat) {
     chat = await Chat.create({
       customer: req.user._id,
       merchant: store.merchant,
       store: storeId,
+      order: orderId || null,
       messages: [],
     });
   }
@@ -89,11 +92,20 @@ const getChat = asyncHandler(async (req, res) => {
   const chat = await Chat.findById(req.params.chatId)
     .populate('customer', 'name')
     .populate('merchant', 'name')
-    .populate('store', 'name logo');
+    .populate('store', 'name logo')
+    .populate('order');
 
   if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
     return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
   }
+
+  // Reset unread count for the active viewer
+  if (req.userRole === 'customer') {
+    chat.customerUnread = 0;
+  } else {
+    chat.merchantUnread = 0;
+  }
+  await chat.save();
 
   return apiResponse(res, {
     message: 'تم جلب المحادثة',
@@ -112,25 +124,36 @@ const sendMessage = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
   }
 
-  const { content, image } = req.body;
+  const type = req.body.type || 'text';
+  const content = req.body.content || req.body.text || '';
 
-  if ((!content || content.trim().length === 0) && !image) {
-    return res.status(400).json({ success: false, message: 'يجب إرسال نص أو صورة', data: null });
+  if (!content && type === 'text') {
+    return res.status(400).json({ success: false, message: 'محتوى الرسالة مطلوب', data: null });
   }
 
   const newMessage = {
-    sender: req.userRole === 'customer' ? 'customer' : 'merchant',
-    senderId: req.user._id,
-    text: content || null,
-    image: image || null,
+    sender: req.user._id,
+    senderRole: req.userRole,
+    senderType: req.userRole,
+    type,
+    content,
     isRead: false,
+    createdAt: new Date(),
   };
 
   chat.messages.push(newMessage);
+  chat.lastMessage = type === 'text' ? content : `[مرفق]`;
   chat.lastMessageAt = new Date();
-  
+
+  if (req.userRole === 'customer') {
+    chat.merchantUnread += 1;
+  } else {
+    chat.customerUnread += 1;
+  }
+
   await chat.save();
 
+  // Socket broadcast to room
   const io = req.app.get('io');
   if (io) {
     io.to(chat._id.toString()).emit('receiveMessage', newMessage);
@@ -139,7 +162,97 @@ const sendMessage = asyncHandler(async (req, res) => {
   return apiResponse(res, {
     statusCode: 201,
     message: 'تم إرسال الرسالة',
-    data: newMessage, // returning only the new message for efficiency
+    data: newMessage,
+  });
+});
+
+/**
+ * POST /api/chats/:chatId/attachment
+ * Upload an attachment to a chat (Merchant or Customer)
+ */
+const uploadAttachment = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.chatId);
+
+  if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
+    return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ success: false, message: 'لم يتم إرفاق أي ملف', data: null });
+  }
+
+  const isImage = req.file.mimetype.startsWith('image/');
+  const type = isImage ? 'image' : 'file';
+
+  const newMessage = {
+    sender: req.user._id,
+    senderRole: req.userRole,
+    senderType: req.userRole,
+    type,
+    content: req.file.path, // Cloudinary URL
+    fileName: req.file.originalname || 'ملف مرفق',
+    isRead: false,
+    createdAt: new Date(),
+  };
+
+  chat.messages.push(newMessage);
+  chat.lastMessage = isImage ? '[صورة]' : `[ملف: ${newMessage.fileName}]`;
+  chat.lastMessageAt = new Date();
+
+  if (req.userRole === 'customer') {
+    chat.merchantUnread += 1;
+  } else {
+    chat.customerUnread += 1;
+  }
+
+  await chat.save();
+
+  // Socket broadcast to room
+  const io = req.app.get('io');
+  if (io) {
+    io.to(chat._id.toString()).emit('receiveMessage', newMessage);
+  }
+
+  return apiResponse(res, {
+    statusCode: 201,
+    message: 'تم رفع وإرسال الملف بنجاح',
+    data: newMessage,
+  });
+});
+
+/**
+ * POST /api/chats/:chatId/confirm-receipt
+ * Confirm order receipt inside chat (Customer only)
+ */
+const confirmReceipt = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.chatId);
+
+  if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
+    return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
+  }
+
+  if (req.userRole !== 'customer') {
+    return res.status(403).json({ success: false, message: 'تأكيد الاستلام مسموح للمشتري فقط', data: null });
+  }
+
+  chat.receiptConfirmed = true;
+  await chat.save();
+
+  // If there's an associated digital order, update its status to 'delivered'!
+  if (chat.order) {
+    const Order = require('../models/Order');
+    await Order.findByIdAndUpdate(chat.order, { status: 'delivered' });
+  }
+
+  // Socket broadcast to room
+  const io = req.app.get('io');
+  if (io) {
+    io.to(chat._id.toString()).emit('receiptConfirmed');
+  }
+
+  return apiResponse(res, {
+    message: 'تم تأكيد استلام الطلب بنجاح',
+    data: chat,
   });
 });
 
@@ -148,4 +261,6 @@ module.exports = {
   initChat,
   getChat,
   sendMessage,
+  uploadAttachment,
+  confirmReceipt,
 };

@@ -35,6 +35,12 @@ const storeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    // physical = ships products, digital = delivers via chat
+    type: {
+      type: String,
+      enum: ['physical', 'digital'],
+      default: 'physical',
+    },
     category: {
       type: String,
       trim: true,
@@ -47,19 +53,24 @@ const storeSchema = new mongoose.Schema(
     },
     // Payment account info (Cherry, Kuraimi, OneCash)
     paymentAccounts: {
-      cherry: { type: String, trim: true, default: null },
       kuraimi: { type: String, trim: true, default: null },
       oneCash: { type: String, trim: true, default: null },
+      jaib: { type: String, trim: true, default: null },
     },
     isActive: {
       type: Boolean,
       default: true,
     },
+    // Timed suspension — null means permanent if isActive=false
+    suspendedUntil: {
+      type: Date,
+      default: null,
+    },
     // ─── Subscription / Plan ─────────────────────────────────────────────────
     plan: {
       type: String,
-      enum: ['free', 'pro', 'business'],
-      default: 'free',
+      enum: ['starter', 'pro', 'business'],
+      default: 'starter',
     },
     planExpiresAt: {
       type: Date,
@@ -69,7 +80,15 @@ const storeSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    // Metrics (updated via atomic ops)
+    // ─── Shipping Fees (physical stores only) ──────────────────────────────────
+    // Array of { city, fee } — merchant sets different shipping fees per city
+    shippingFees: [
+      {
+        city: { type: String, trim: true, required: true },
+        fee:  { type: Number, required: true, min: 0 },
+      },
+    ],
+    // ─── Metrics (updated via atomic ops) ─────────────────────────────────────
     totalProducts: {
       type: Number,
       default: 0,

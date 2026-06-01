@@ -1,10 +1,27 @@
 const express = require('express');
-const router = express.Router();
-const jwt = require('jsonwebtoken');
-const Admin = require('../models/Admin');
+const router  = express.Router();
+const jwt     = require('jsonwebtoken');
+const Admin   = require('../models/Admin');
 const { asyncHandler, apiResponse } = require('../utils/helpers');
+const { verifyAdmin } = require('../middleware/verifyAdmin');
+const {
+  getStats,
+  getMerchants,
+  getMerchantById,
+  toggleMerchantActive,
+  getStores,
+  toggleStoreActive,
+  setStorePlan,
+  getOrders,
+  getCustomers,
+  toggleCustomerActive,
+} = require('../controllers/admin.controller');
 
-// ─── POST /api/admin/login ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// PUBLIC ROUTES  (no auth required)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/admin/login
 router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
@@ -16,7 +33,7 @@ router.post('/login', asyncHandler(async (req, res) => {
     });
   }
 
-  const admin = await Admin.findOne({ email }).select('+password');
+  const admin = await Admin.findOne({ email: email.toLowerCase().trim() }).select('+password');
   if (!admin) {
     return res.status(401).json({ success: false, data: null, message: 'بيانات الدخول غير صحيحة' });
   }
@@ -26,13 +43,17 @@ router.post('/login', asyncHandler(async (req, res) => {
     return res.status(401).json({ success: false, data: null, message: 'بيانات الدخول غير صحيحة' });
   }
 
+  if (!admin.isActive) {
+    return res.status(403).json({ success: false, data: null, message: 'حساب المشرف معطل' });
+  }
+
   const token = jwt.sign(
     { id: admin._id, role: 'admin' },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
   );
 
-  const { password: _, ...adminData } = admin.toObject();
+  const { password: _pw, ...adminData } = admin.toObject();
 
   return apiResponse(res, {
     message: 'تم تسجيل دخول المشرف بنجاح',
@@ -40,8 +61,7 @@ router.post('/login', asyncHandler(async (req, res) => {
   });
 }));
 
-// ─── POST /api/admin/seed ─────────────────────────────────────────────────────
-// ONE-TIME route to create the admin — disable after first use in production!
+// POST /api/admin/seed  (dev only — creates the first admin account)
 router.post('/seed', asyncHandler(async (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ success: false, data: null, message: 'غير مسموح في الإنتاج' });
@@ -53,16 +73,63 @@ router.post('/seed', asyncHandler(async (req, res) => {
   }
 
   const admin = await Admin.create({
-    name: 'NawaMart Admin',
-    email: 'admin@nawamart.com',
+    name:     'NawaMart Admin',
+    email:    'admin@nawamart.com',
     password: 'Admin@123456',
   });
 
   return apiResponse(res, {
     statusCode: 201,
-    message: 'تم إنشاء حساب المشرف بنجاح',
-    data: { email: admin.email, note: 'قم بتغيير كلمة المرور فوراً' },
+    message: 'تم إنشاء حساب المشرف — قم بتغيير كلمة المرور فوراً',
+    data: { email: admin.email },
   });
 }));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PROTECTED ROUTES  (verifyAdmin middleware — admin JWT required)
+// ─────────────────────────────────────────────────────────────────────────────
+router.use(verifyAdmin);
+
+// GET /api/admin/me
+router.get('/me', (req, res) => {
+  const admin = req.user.toObject ? req.user.toObject() : req.user;
+  delete admin.password;
+  delete admin.__v;
+
+  return apiResponse(res, {
+    message: 'تم جلب بيانات المشرف بنجاح',
+    data: { admin },
+  });
+});
+
+// ── Platform Stats ────────────────────────────────────────────────────────────
+// GET /api/admin/stats
+router.get('/stats', getStats);
+
+// ── Merchants ─────────────────────────────────────────────────────────────────
+// GET  /api/admin/merchants              list all (paginated, searchable)
+// GET  /api/admin/merchants/:id          single merchant + stores
+// PATCH /api/admin/merchants/:id/toggle-active   activate / suspend
+router.get  ('/merchants',                    getMerchants);
+router.get  ('/merchants/:id',                getMerchantById);
+router.patch('/merchants/:id/toggle-active',  toggleMerchantActive);
+
+// ── Stores ────────────────────────────────────────────────────────────────────
+// GET  /api/admin/stores                 list all (paginated, filterable by plan)
+// PATCH /api/admin/stores/:id/toggle-active   activate / deactivate
+// PATCH /api/admin/stores/:id/set-plan        manually override subscription plan
+router.get  ('/stores',                    getStores);
+router.patch('/stores/:id/toggle-active',  toggleStoreActive);
+router.patch('/stores/:id/set-plan',       setStorePlan);
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+// GET /api/admin/orders                  list all platform orders (paginated)
+router.get('/orders', getOrders);
+
+// ── Customers ─────────────────────────────────────────────────────────────────
+// GET  /api/admin/customers              list all (paginated, searchable)
+// PATCH /api/admin/customers/:id/toggle-active   activate / suspend
+router.get  ('/customers',                    getCustomers);
+router.patch('/customers/:id/toggle-active',  toggleCustomerActive);
 
 module.exports = router;

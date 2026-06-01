@@ -1,10 +1,14 @@
 const Subscription = require('../models/Subscription');
+const SubscriptionEvent = require('../models/SubscriptionEvent');
+const Invoice = require('../models/Invoice');
 const Store = require('../models/Store');
 const { asyncHandler, apiResponse } = require('../utils/helpers');
+const { getNextSequence } = require('../utils/counters');
+const BillingService = require('../services/BillingService');
 
 // ─── POST /api/subscriptions/request ─────────────────────────────────────────
 const requestSubscription = asyncHandler(async (req, res) => {
-  const { storeId, requestedPlan, waslUrl } = req.body;
+  const { storeId, requestedPlan, waslUrl, billing } = req.body;
 
   if (!storeId || !requestedPlan || !waslUrl) {
     return res.status(400).json({
@@ -14,11 +18,11 @@ const requestSubscription = asyncHandler(async (req, res) => {
     });
   }
 
-  if (!['pro', 'business'].includes(requestedPlan)) {
+  if (!BillingService.VALID_PLANS.includes(requestedPlan)) {
     return res.status(400).json({
       success: false,
       data: null,
-      message: 'الخطة المطلوبة غير صالحة — اختر pro أو business',
+      message: 'الخطة المطلوبة غير صالحة',
     });
   }
 
@@ -32,35 +36,110 @@ const requestSubscription = asyncHandler(async (req, res) => {
     });
   }
 
-  // Block duplicate pending requests
-  const existing = await Subscription.findOne({
-    store: storeId,
-    status: 'pending',
-  });
-  if (existing) {
-    return res.status(409).json({
+  // Determine Free Trial status + request type from last completed subscription
+  const lastApprovedSub = await Subscription.findOne({
+    store: store._id,
+    status: 'approved',
+    expiresAt: { $ne: null },
+  }).sort({ approvedAt: -1 });
+
+  const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
+  const requestType = lastApprovedSub ? 'UPGRADE' : 'NEW_SUBSCRIPTION';
+
+  // Validate upgrade rules (block same-plan, downgrades, and cross-cycle upgrades, but NOT for Free Trial)
+  const currentBilling = lastApprovedSub?.billing ?? null;
+  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
+  try {
+    BillingService.validateUpgrade(store.plan, requestedPlan, isFreeTrial, currentBilling, targetBilling);
+  } catch (err) {
+    return res.status(400).json({
       success: false,
       data: null,
-      message: 'يوجد طلب اشتراك معلق بالفعل لهذا المتجر — يرجى انتظار مراجعة الإدارة',
+      message: err.message,
     });
   }
+  const proration = await BillingService.getProrationEstimate(store, requestedPlan, targetBilling);
 
-  const subscription = await Subscription.create({
+  // Create the subscription. A partial unique index on {store, status: 'pending'}
+  // prevents duplicate pending requests even under concurrent access.
+  let subscription;
+  try {
+    subscription = await Subscription.create({
+      type: requestType,
+      merchant: req.user._id,
+      store: storeId,
+      requestedPlan,
+      billing: targetBilling,
+      waslUrl,
+      status: 'pending',
+      previousPlan: store.plan,
+      previousExpiresAt: store.planExpiresAt,
+      remainingDays: proration.remainingDays,
+      creditApplied: proration.remainingValue,
+      amountDue: proration.upgradeCost,
+      walletCreditGenerated: proration.walletCredit,
+    });
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        data: null,
+        message: 'يوجد طلب اشتراك معلق بالفعل لهذا المتجر — يرجى انتظار مراجعة الإدارة',
+      });
+    }
+    throw err;
+  }
+
+  // Create invoice for this subscription request
+  const year = new Date().getFullYear();
+  const seq = await getNextSequence(`invoice-${year}`);
+  const invoiceNumber = `INV-${year}-${String(seq).padStart(5, '0')}`;
+
+  await Invoice.create({
+    invoiceNumber,
     merchant: req.user._id,
-    store: storeId,
-    requestedPlan,
+    subscription: subscription._id,
+    plan: requestedPlan,
+    billing: targetBilling,
+    planPrice: proration.newPlanPrice,
+    creditApplied: proration.remainingValue,
+    amountDue: proration.upgradeCost,
+    previousPlan: store.plan,
+    remainingDays: proration.remainingDays,
+    remainingValue: proration.remainingValue,
+    walletCreditGenerated: proration.walletCredit,
     waslUrl,
-    status: 'pending',
+    status: 'paid', // receipt already uploaded
   });
 
   // Save waslUrl to store as well for reference
   store.planWaslUrl = waslUrl;
   await store.save();
 
+  // Audit event for request
+  const eventDesc = requestType === 'UPGRADE'
+    ? `طلب ترقية من ${store.plan} إلى ${requestedPlan}`
+    : `طلب اشتراك ${requestedPlan}`;
+
+  await SubscriptionEvent.create({
+    subscription: subscription._id,
+    merchant: req.user._id,
+    store: storeId,
+    eventType: 'requested',
+    previousPlan: store.plan,
+    newPlan: requestedPlan,
+    previousExpiresAt: store.planExpiresAt,
+    billing: targetBilling,
+    description: eventDesc,
+  });
+
   return apiResponse(res, {
     statusCode: 201,
-    message: 'تم إرسال طلب الاشتراك بنجاح — سيتم مراجعته من قبل الإدارة',
-    data: subscription,
+    data: {
+      subscription,
+      invoice: { invoiceNumber, amountDue: proration.upgradeCost },
+      proration,
+    },
   });
 });
 
@@ -73,6 +152,48 @@ const getMySubscriptions = asyncHandler(async (req, res) => {
   return apiResponse(res, {
     message: 'تم جلب طلبات الاشتراك',
     data: subscriptions,
+  });
+});
+
+// ─── GET /api/subscriptions/prorate ───────────────────────────────────────────
+// Returns proration estimate for a target plan (no DB mutations)
+const getProration = asyncHandler(async (req, res) => {
+  const { targetPlan, billing } = req.query;
+
+  if (!targetPlan || !BillingService.VALID_PLANS.includes(targetPlan)) {
+    return res.status(400).json({ success: false, data: null, message: 'الخطة المطلوبة غير صالحة' });
+  }
+
+  const store = await Store.findOne({ merchant: req.user._id });
+  if (!store) {
+    return res.status(404).json({ success: false, data: null, message: 'لم يتم العثور على متجر' });
+  }
+
+  // Determine Free Trial status (no completed subscription on starter)
+  const lastApprovedSub = await Subscription.findOne({
+    store: store._id,
+    status: 'approved',
+    expiresAt: { $ne: null },
+  }).sort({ approvedAt: -1 });
+  const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
+
+  // Validate upgrade rules upfront (but not for Free Trial)
+  const currentBilling = lastApprovedSub?.billing ?? null;
+  const targetBilling = billing === 'yearly' ? 'yearly' : 'monthly';
+  try {
+    BillingService.validateUpgrade(store.plan, targetPlan, isFreeTrial, currentBilling, targetBilling);
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      data: null,
+      message: err.message,
+    });
+  }
+  const proration = await BillingService.getProrationEstimate(store, targetPlan, targetBilling);
+
+  return apiResponse(res, {
+    message: 'تم حساب المبلغ المتبقي',
+    data: proration,
   });
 });
 
@@ -94,13 +215,15 @@ const getAllSubscriptions = asyncHandler(async (req, res) => {
 
 // ─── PUT /api/subscriptions/:id/approve (admin only) ─────────────────────────
 const approveSubscription = asyncHandler(async (req, res) => {
-  const subscription = await Subscription.findById(req.params.id).populate('store');
+  // Atomically claim the pending subscription to prevent race conditions.
+  // Only one request will find it with status === 'pending'; all others get null.
+  const subscription = await Subscription.findOneAndUpdate(
+    { _id: req.params.id, status: 'pending' },
+    { $set: { status: 'approved', approvedAt: new Date(), reviewedBy: req.user._id } },
+    { new: true }
+  ).populate('store');
 
   if (!subscription) {
-    return res.status(404).json({ success: false, data: null, message: 'طلب الاشتراك غير موجود' });
-  }
-
-  if (subscription.status !== 'pending') {
     return res.status(400).json({
       success: false,
       data: null,
@@ -108,39 +231,52 @@ const approveSubscription = asyncHandler(async (req, res) => {
     });
   }
 
-  const now = new Date();
-  const expiresAt = new Date(now);
-  expiresAt.setDate(expiresAt.getDate() + 30); // 30 days
+  // Run proration + store update + ledger entries inside a try-catch.
+  // If anything fails, roll back the subscription status so it can be retried
+  // instead of leaving a phantom 'approved' subscription in the database.
+  let result;
+  try {
+    result = await BillingService.approveWithProration(subscription, req.user._id);
+  } catch (err) {
+    await Subscription.findByIdAndUpdate(subscription._id, {
+      $set: { status: 'pending', reviewedBy: null, approvedAt: null },
+    });
+    throw err;
+  }
 
-  // Approve subscription
-  subscription.status = 'approved';
-  subscription.reviewedBy = req.user._id;
-  subscription.approvedAt = now;
-  subscription.expiresAt = expiresAt;
-  await subscription.save();
-
-  // Upgrade the store plan
-  await Store.findByIdAndUpdate(subscription.store._id, {
-    plan: subscription.requestedPlan,
-    planExpiresAt: expiresAt,
-  });
+  // Mark the invoice as verified
+  await Invoice.findOneAndUpdate(
+    { subscription: subscription._id },
+    { $set: { status: 'verified', verifiedBy: req.user._id, verifiedAt: new Date() } }
+  );
 
   return apiResponse(res, {
-    message: `تم تفعيل خطة ${subscription.requestedPlan} للمتجر لمدة 30 يوماً`,
-    data: subscription,
+    message: `تم تفعيل خطة ${subscription.requestedPlan} للمتجر (${subscription.billing === 'yearly' ? 'سنوي' : 'شهري'})`,
+    data: {
+      subscription: result.subscription,
+      proration: result.proration,
+    },
   });
 });
 
 // ─── PUT /api/subscriptions/:id/reject (admin only) ──────────────────────────
 const rejectSubscription = asyncHandler(async (req, res) => {
   const { reason } = req.body;
-  const subscription = await Subscription.findById(req.params.id);
+
+  // Atomically claim for rejection — prevents race with approve
+  const subscription = await Subscription.findOneAndUpdate(
+    { _id: req.params.id, status: 'pending' },
+    {
+      $set: {
+        status: 'rejected',
+        reviewedBy: req.user._id,
+        reviewNote: reason || 'لم يتم قبول الطلب',
+      },
+    },
+    { new: true }
+  );
 
   if (!subscription) {
-    return res.status(404).json({ success: false, data: null, message: 'طلب الاشتراك غير موجود' });
-  }
-
-  if (subscription.status !== 'pending') {
     return res.status(400).json({
       success: false,
       data: null,
@@ -148,10 +284,24 @@ const rejectSubscription = asyncHandler(async (req, res) => {
     });
   }
 
-  subscription.status = 'rejected';
-  subscription.reviewedBy = req.user._id;
-  subscription.reviewNote = reason || 'لم يتم قبول الطلب';
-  await subscription.save();
+  // Cancel the linked invoice
+  await Invoice.findOneAndUpdate(
+    { subscription: subscription._id },
+    { $set: { status: 'cancelled' } }
+  );
+
+  // Audit event for rejection
+  const store = await Store.findById(subscription.store);
+  await SubscriptionEvent.create({
+    subscription: subscription._id,
+    merchant: store?.merchant ?? subscription.merchant,
+    store: subscription.store,
+    eventType: 'rejected',
+    newPlan: subscription.requestedPlan,
+    billing: subscription.billing,
+    description: reason || 'لم يتم قبول الطلب',
+    performedBy: req.user._id,
+  });
 
   return apiResponse(res, {
     message: 'تم رفض طلب الاشتراك',
@@ -162,6 +312,7 @@ const rejectSubscription = asyncHandler(async (req, res) => {
 module.exports = {
   requestSubscription,
   getMySubscriptions,
+  getProration,
   getAllSubscriptions,
   approveSubscription,
   rejectSubscription,

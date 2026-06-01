@@ -2,12 +2,23 @@ const Product = require('../models/Product');
 const Store = require('../models/Store');
 const { apiResponse, asyncHandler, getPaginationParams, paginateResponse } = require('../utils/helpers');
 
+function uploadedImageUrls(req) {
+  if (Array.isArray(req.files)) return req.files.map((file) => file.path);
+  if (req.file) return [req.file.path];
+  return [];
+}
+
+function bodyArray(value) {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 /**
  * POST /api/products
  * Create a new product (Merchant only)
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { storeId, name, description, price, salePrice, stock, category } = req.body;
+  const { storeId, name, description, price, salePrice, stock, category, weight, unlimitedStock, sku, brand, barcode, isFeatured } = req.body;
 
   // 1. Verify that the store belongs to the merchant
   const store = await Store.findOne({ _id: storeId, merchant: req.user._id });
@@ -19,23 +30,24 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  // 2. Handle image upload if provided
-  let image = null;
-  if (req.file) {
-    image = req.file.path;
-  }
+  const images = uploadedImageUrls(req);
 
-  // 3. Create the product
   const product = await Product.create({
     store: storeId,
-    merchant: store.merchant, // store.merchant is the merchant's _id
+    merchant: store.merchant,
     name,
     description,
     price,
     salePrice: salePrice || undefined,
     stock: stock || 0,
-    category,
-    ...(image ? { images: [image] } : {}),
+    category: category || undefined,
+    weight: weight || undefined,
+    unlimitedStock: unlimitedStock === 'true' || unlimitedStock === true,
+    sku: sku || undefined,
+    brand: brand || undefined,
+    barcode: barcode || undefined,
+    isFeatured: isFeatured === 'true' || isFeatured === true,
+    images,
   });
 
   return apiResponse(res, {
@@ -54,8 +66,17 @@ const getProductsByStore = asyncHandler(async (req, res) => {
   const { limit, skip, page } = getPaginationParams(req);
   const { search, category } = req.query;
 
+  const store = await Store.findOne({ _id: storeId, isActive: true });
+  if (!store) {
+    return res.status(404).json({
+      success: false,
+      message: 'المتجر غير موجود أو غير مفعل',
+      data: null,
+    });
+  }
+
   // Build query
-  const query = { store: storeId, isDeleted: false };
+  const query = { store: storeId, isDeleted: false, isActive: true };
   if (category) {
     query.category = category;
   }
@@ -73,6 +94,31 @@ const getProductsByStore = asyncHandler(async (req, res) => {
     message: 'تم جلب المنتجات بنجاح',
     data: products,
     pagination: paginateResponse(total, page, limit),
+  });
+});
+
+/**
+ * GET /api/products/:id
+ * Get a single active product for a public storefront.
+ */
+const getProductById = asyncHandler(async (req, res) => {
+  const product = await Product.findOne({
+    _id: req.params.id,
+    isDeleted: false,
+    isActive: true,
+  }).populate('store', 'name slug type isActive');
+
+  if (!product || !product.store?.isActive) {
+    return res.status(404).json({
+      success: false,
+      message: 'المنتج غير موجود أو غير متاح',
+      data: null,
+    });
+  }
+
+  return apiResponse(res, {
+    message: 'تم جلب بيانات المنتج بنجاح',
+    data: product,
   });
 });
 
@@ -103,12 +149,11 @@ const updateProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  const { name, description, price, salePrice, stock, category, isActive } = req.body;
+  const { name, description, price, salePrice, stock, category, isActive, weight, unlimitedStock, sku, brand, barcode, isFeatured } = req.body;
 
-  let images = product.images;
-  if (req.file) {
-    images = [req.file.path];
-  }
+  const existingImages = bodyArray(req.body.existingImages || req.body['existingImages[]']);
+  const newImages = uploadedImageUrls(req);
+  const images = [...existingImages, ...newImages].slice(0, 10);
 
   product.name = name || product.name;
   if (description !== undefined) product.description = description;
@@ -127,8 +172,16 @@ const updateProduct = asyncHandler(async (req, res) => {
     if (stock > 0 && !product.isActive) product.isActive = true;
   }
   if (category !== undefined) product.category = category;
+  if (weight !== undefined) product.weight = weight;
+  if (unlimitedStock !== undefined) product.unlimitedStock = unlimitedStock === 'true' || unlimitedStock === true;
   if (isActive !== undefined) product.isActive = isActive;
-  product.images = images;
+  if (sku !== undefined) product.sku = sku || null;
+  if (brand !== undefined) product.brand = brand || null;
+  if (barcode !== undefined) product.barcode = barcode || null;
+  if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
+  if (existingImages.length > 0 || newImages.length > 0) {
+    product.images = images;
+  }
 
   await product.save();
 
@@ -177,6 +230,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 module.exports = {
   createProduct,
   getProductsByStore,
+  getProductById,
   updateProduct,
   deleteProduct,
 };

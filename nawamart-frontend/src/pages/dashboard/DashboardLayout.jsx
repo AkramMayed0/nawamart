@@ -28,7 +28,8 @@ import { useAuthStore } from '@/store/authStore'
 
 export default function DashboardLayout() {
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store    = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">

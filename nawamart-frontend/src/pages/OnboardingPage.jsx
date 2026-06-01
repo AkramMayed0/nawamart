@@ -4,6 +4,7 @@ import toast from 'react-hot-toast'
 import clsx from 'clsx'
 import { useAuthStore } from '@/store/authStore'
 import { createStore } from '@/api/stores'
+import usePageTitle from '@/hooks/usePageTitle'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 
@@ -11,7 +12,6 @@ import Icon from '@/components/ui/Icon'
 const TYPES = [
   {
     value: 'physical',
-    emoji: '🚚',
     iconName: 'truck',
     title: 'منتجات مادية',
     desc: 'ملابس، أغذية، إكسسوارات، أي منتج يُشحن للعميل. يشمل سلة شراء، عنوان توصيل، وتتبع حالة الطلب.',
@@ -21,7 +21,6 @@ const TYPES = [
   },
   {
     value: 'digital',
-    emoji: '⚡',
     iconName: 'bolt',
     title: 'منتجات رقمية',
     desc: 'اشتراكات، حسابات، أكواد ألعاب، برامج. لا شحن — قناة محادثة خاصة بين متجرك والعميل لتسليم المنتج.',
@@ -32,21 +31,28 @@ const TYPES = [
 ]
 
 export default function OnboardingPage() {
+  usePageTitle('إعداد المتجر')
   const navigate  = useNavigate()
   const setStore  = useAuthStore(s => s.setStore)
   const user      = useAuthStore(s => s.user)
 
-  const [selected, setSelected] = useState(null)
-  const [loading,  setLoading]  = useState(false)
+  const [selected,  setSelected]  = useState(null)
+  const [storeName, setStoreName] = useState('')
+  const [nameError, setNameError] = useState('')
+  const [loading,   setLoading]   = useState(false)
 
   async function handleContinue() {
-    if (!selected) return
+    // Validate
+    if (!storeName.trim()) { setNameError('اسم المتجر مطلوب'); return }
+    if (storeName.trim().length < 2) { setNameError('الاسم يجب أن يكون حرفين على الأقل'); return }
+    if (!selected) { toast.error('اختر نوع المتجر أولاً'); return }
+
     setLoading(true)
     try {
-      const res = await createStore({ type: selected })
+      const res = await createStore({ name: storeName.trim(), type: selected })
       const store = res.data.data
       setStore(store)
-      toast.success('تم إنشاء متجرك بنجاح! 🎉')
+      toast.success('تم إنشاء متجرك بنجاح!')
       navigate('/dashboard', { replace: true })
     } catch (err) {
       toast.error(err?.message || 'حدث خطأ أثناء إنشاء المتجر')
@@ -72,6 +78,29 @@ export default function OnboardingPage() {
         <p className="font-cairo text-sm text-text-muted max-w-md mx-auto">
           سنُعدّ كل شيء بناءً على نوع منتجاتك. يمكنك تغيير الاختيار لاحقاً من الإعدادات.
         </p>
+      </div>
+
+      {/* Store name input */}
+      <div className="w-full max-w-2xl mb-6">
+        <label className="block font-cairo font-semibold text-sm text-text mb-1.5">
+          اسم المتجر
+        </label>
+        <input
+          type="text"
+          value={storeName}
+          onChange={e => { setStoreName(e.target.value); setNameError('') }}
+          placeholder="مثال: متجر المختار، أكواد برو..."
+          className={`w-full font-cairo text-sm px-4 py-2.5 rounded-xl border bg-white text-text placeholder:text-text-subtle outline-none transition-all ${
+            nameError
+              ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(231,76,60,0.15)]'
+              : 'border-border focus:border-primary focus:shadow-[0_0_0_3px_rgba(220,38,38,0.12)]'
+          }`}
+          disabled={loading}
+          maxLength={100}
+        />
+        {nameError && (
+          <p className="font-cairo text-xs text-danger mt-1">{nameError}</p>
+        )}
       </div>
 
       {/* Type cards */}
@@ -107,7 +136,7 @@ export default function OnboardingPage() {
               </div>
 
               <h3 className="font-cairo font-bold text-lg text-text mb-1">
-                {type.emoji} {type.title}
+                {type.title}
               </h3>
               <p className="font-cairo text-sm text-text-muted leading-relaxed mb-4">
                 {type.desc}

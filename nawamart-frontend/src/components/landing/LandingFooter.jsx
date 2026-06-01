@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button'
 export function LandingFinalCta() {
   const navigate = useNavigate()
   return (
-    <section className="px-8 py-20 bg-primary-800 text-white text-center">
+    <section id="contact" className="px-8 py-20 bg-primary-800 text-white text-center">
       <div className="max-w-[720px] mx-auto">
         <div className="h-1.5 w-[100px] bg-accent rounded-full mx-auto mb-7" />
         <h2 className="font-cairo font-extrabold text-[44px] leading-[1.15] text-white mb-4">

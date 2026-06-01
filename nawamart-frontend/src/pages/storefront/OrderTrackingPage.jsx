@@ -1,7 +1,16 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { MessageCircle, Send, Instagram, Phone, CheckCircle2 } from 'lucide-react'
 import { getOrderById } from '@/api/orders'
 import Icon from '@/components/ui/Icon'
+import { resolveAssetUrl } from '@/utils/assets'
+
+const METHOD_META = {
+  whatsapp:  { label: 'واتساب',  icon: MessageCircle },
+  telegram:  { label: 'تيليجرام', icon: Send },
+  instagram: { label: 'انستقرام', icon: Instagram },
+  phone:     { label: 'اتصال هاتفي', icon: Phone },
+}
 
 export default function OrderTrackingPage() {
   const { slug, orderId } = useParams()
@@ -58,11 +67,11 @@ export default function OrderTrackingPage() {
 
       {/* Back */}
       <button
-        onClick={() => navigate(`/store/${slug}`)}
+        onClick={() => navigate(`/store/${slug}/orders`)}
         className="inline-flex items-center gap-2 text-sm text-text-muted font-cairo hover:text-primary transition-colors mb-6"
       >
         <Icon name="arrow-right" size={14} />
-        العودة للمتجر
+        العودة للطلبات
       </button>
 
       {/* Title */}
@@ -96,29 +105,80 @@ export default function OrderTrackingPage() {
         </div>
       )}
 
-      {/* Open Chat — digital confirmed or chat-open */}
-      {order.storeType === 'digital' &&
-        (order.status === 'confirmed' || order.status === 'chat-open') && (
-          <div className="bg-accent-50 border border-accent-200 rounded-xl p-5 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
-              <Icon name="msgs" size={20} />
-            </div>
-            <div className="flex-1">
-              <p className="font-cairo font-bold text-sm text-text">محادثة تسليم المنتج جاهزة</p>
-              <p className="font-cairo text-xs text-text-muted mt-0.5">
-                تواصل مع التاجر لاستلام بيانات المنتج.
-              </p>
-            </div>
-            <a
-              href={`/store/${order.storeSlug ?? ''}/chat`}
-              className="inline-flex items-center gap-1.5 font-cairo font-bold text-sm bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-700 transition-colors shrink-0"
-            >
-              <Icon name="msgs" size={15} />
-              فتح المحادثة
-            </a>
+      {/* Delivery contact — digital confirmed */}
+      {order.store?.type === 'digital' && order.status === 'confirmed' && (
+        <DigitalDeliveryInfo order={order} />
+      )}
+
+      {/* Delivery contact — physical shipped */}
+      {order.store?.type !== 'digital' && order.status === 'shipped' && (
+        <div className="rounded-xl bg-success-100 border border-success p-5 text-center">
+          <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
+          <p className="font-cairo font-bold text-base text-success-dark">طلبك في الطريق إليك!</p>
+          <p className="font-cairo text-sm text-success-dark/70 mt-1">سيتم تحديث الحالة عند التسليم</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Digital delivery info ───────────────────────────────────── */
+function DigitalDeliveryInfo({ order }) {
+  const method = order.contactMethod || 'whatsapp'
+  const meta = METHOD_META[method] || METHOD_META.whatsapp
+  const Icon = meta.icon
+  const merchantPhone = order.store?.contactPhone || ''
+  const cleanPhone = merchantPhone.replace(/[^0-9]/g, '')
+  const handle = order.contactHandle || order.deliveryAddress?.phone || ''
+
+  return (
+    <div className="rounded-xl border border-accent-200 bg-accent-50 p-5">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
+          <Icon size={20} />
+        </div>
+        <div>
+          <p className="font-cairo font-bold text-sm text-text">تم تأكيد الدفع</p>
+          <p className="font-cairo text-xs text-text-muted mt-0.5">
+            سيتواصل معك التاجر عبر <span className="font-bold">{meta.label}</span> لتسليم المنتج.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 bg-white rounded-xl p-4 border border-accent-100">
+        <p className="font-cairo text-xs text-text-muted">تأكد من أن حسابك جاهز لاستقبال الرسائل</p>
+        <div className="flex items-center gap-2 text-sm font-cairo">
+          <span className="text-text-muted">طريقة التسليم:</span>
+          <span className="font-bold text-text flex items-center gap-1">
+            <Icon size={14} />
+            {meta.label}
+          </span>
+        </div>
+        {handle && (
+          <div className="flex items-center gap-2 text-sm font-cairo">
+            <span className="text-text-muted">بيانات التواصل:</span>
+            <span className="font-bold text-text">{handle}</span>
           </div>
-        )
-      }
+        )}
+        {merchantPhone && (
+          <div className="flex items-center gap-2 text-sm font-cairo">
+            <span className="text-text-muted">رقم التاجر:</span>
+            <span className="font-inter font-bold text-text dk-num" dir="ltr">{merchantPhone}</span>
+          </div>
+        )}
+      </div>
+
+      {method === 'whatsapp' && (
+        <a
+          href={`https://wa.me/${cleanPhone}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 text-white py-3 font-cairo font-bold text-sm hover:bg-green-600 transition-colors"
+        >
+          <MessageCircle size={18} />
+          مراسلة التاجر على واتساب
+        </a>
+      )}
     </div>
   )
 }
@@ -138,9 +198,10 @@ const DIGITAL_STEPS = [
 ]
 
 function StatusTimeline({ order }) {
-  const isDigital = order.storeType === 'digital'
+  const isDigital = order.store?.type === 'digital'
   const steps     = isDigital ? DIGITAL_STEPS : PHYSICAL_STEPS
-  const curIdx    = steps.findIndex(s => s.id === order.status)
+  const normalizedStatus = order.status === 'payment_under_review' ? 'pending' : order.status
+  const curIdx    = steps.findIndex(s => s.id === normalizedStatus)
   const cur       = curIdx === -1 ? 0 : curIdx
 
   // Rejected is a special off-track state
@@ -152,17 +213,18 @@ function StatusTimeline({ order }) {
 
       <div className="flex items-start">
         {steps.map((step, i) => {
-          const isDone    = !isRejected && i < cur
+          const isLast    = i === steps.length - 1
           const isCurrent = !isRejected && i === cur
+          const isDone    = !isRejected && (i < cur || (isLast && isCurrent))
           const isTodo    = isRejected || i > cur
 
           return (
             <div key={step.id} className="flex-1 flex flex-col items-center relative">
 
-              {/* Connector line — left side */}
+              {/* Connector line — between previous and current step */}
               {i > 0 && (
-                <div className={`absolute top-4 right-1/2 w-full h-0.5 -translate-y-1/2 ${
-                  isDone ? 'bg-success' : 'bg-border'
+                <div className={`absolute top-4 left-1/2 w-full h-0.5 -translate-y-1/2 ${
+                  !isRejected && i <= cur ? 'bg-success' : 'bg-border'
                 }`} />
               )}
 
@@ -174,7 +236,7 @@ function StatusTimeline({ order }) {
                     ? 'bg-success border-success text-white'
                     : isCurrent
                       ? isDigital
-                        ? 'bg-accent border-accent text-white shadow-[0_0_0_4px_rgba(245,166,35,0.2)]'
+                        ? 'bg-accent border-accent text-white shadow-[0_0_0_4px_rgba(220,38,38,0.2)]'
                         : 'bg-warning border-warning text-white shadow-[0_0_0_4px_rgba(243,156,18,0.2)]'
                       : 'bg-white border-border text-text-subtle'
               }`}>
@@ -210,11 +272,11 @@ function StatusTimeline({ order }) {
 
 /* ── Order summary card ──────────────────────────────────────── */
 function OrderSummaryCard({ order }) {
-  const isDigital = order.storeType === 'digital'
+  const isDigital = order.store?.type === 'digital'
   const subtotal  = order.items?.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0) ?? 0
-  const shipping  = isDigital ? 0 : 1500
+  const shipping  = isDigital ? 0 : (order.shippingFee ?? 0)
   const total     = subtotal + shipping
-  const customer  = order.shippingAddress?.name ?? 'عميل'
+  const customer  = order.deliveryAddress?.name ?? 'عميل'
   const createdAt = order.createdAt
     ? new Date(order.createdAt).toLocaleDateString('ar-YE', { day: 'numeric', month: 'long', year: 'numeric' })
     : '—'
@@ -228,14 +290,14 @@ function OrderSummaryCard({ order }) {
         {order.items?.map((item, i) => (
           <div key={i} className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0 flex items-center justify-center">
-              {item.productId?.images?.[0]
-                ? <img src={item.productId.images[0]} alt="" className="w-full h-full object-cover" />
+              {item.product?.images?.[0]
+                ? <img src={resolveAssetUrl(item.product.images[0])} alt="" className="w-full h-full object-cover" />
                 : <Icon name={isDigital ? 'bolt' : 'package'} size={16} className="text-text-subtle" />
               }
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-cairo font-semibold text-sm text-text truncate">
-                {item.productId?.name ?? 'منتج'}
+                {item.product?.name ?? 'منتج'}
               </p>
               <p className="font-cairo text-xs text-text-muted">×{item.quantity}</p>
             </div>
@@ -255,7 +317,7 @@ function OrderSummaryCard({ order }) {
         <div className="flex justify-between font-cairo text-sm text-text-muted">
           <span>{isDigital ? 'التسليم' : 'الشحن'}</span>
           <span className={isDigital ? 'text-success font-semibold' : 'dk-num font-inter font-semibold text-text'}>
-            {isDigital ? 'مجاناً ⚡' : `${shipping.toLocaleString('en-US')} ر.ي`}
+            {isDigital ? 'مجاناً' : `${shipping.toLocaleString('en-US')} ر.ي`}
           </span>
         </div>
         <div className="flex justify-between font-cairo font-bold text-base text-text pt-2 border-t border-border">
@@ -269,21 +331,21 @@ function OrderSummaryCard({ order }) {
         <span><span className="text-text-subtle ml-1">العميل:</span>{customer}</span>
         <span><span className="text-text-subtle ml-1">التاريخ:</span>{createdAt}</span>
         <span><span className="text-text-subtle ml-1">طريقة الدفع:</span>
-          {order.paymentMethod === 'cherry' ? 'Cherry' : order.paymentMethod === 'kuraimi' ? 'الكريمي' : 'OneCash'}
+          {order.paymentMethod === 'kuraimi' ? 'الكريمي' : order.paymentMethod === 'oneCash' ? 'OneCash' : order.paymentMethod === 'jaib' ? 'جيب' : order.paymentMethod}
         </span>
       </div>
 
       {/* وصل thumbnail */}
-      {order.waslUrl && (
+      {order.paymentWasl && (
         <div className="mt-4 flex items-center gap-3">
-          <a href={order.waslUrl} target="_blank" rel="noopener noreferrer"
+          <a href={resolveAssetUrl(order.paymentWasl)} target="_blank" rel="noopener noreferrer"
             className="w-16 h-16 rounded-lg border border-border overflow-hidden block hover:opacity-80 transition-opacity shrink-0"
           >
-            <img src={order.waslUrl} alt="وصل" className="w-full h-full object-cover" />
+            <img src={resolveAssetUrl(order.paymentWasl)} alt="وصل" className="w-full h-full object-cover" />
           </a>
           <div>
             <p className="font-cairo font-semibold text-sm text-text">وصل الدفع</p>
-            <a href={order.waslUrl} target="_blank" rel="noopener noreferrer"
+            <a href={resolveAssetUrl(order.paymentWasl)} target="_blank" rel="noopener noreferrer"
               className="font-cairo text-xs text-primary hover:underline"
             >
               عرض الصورة كاملة ←

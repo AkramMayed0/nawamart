@@ -7,8 +7,8 @@ const orderItemSchema = new mongoose.Schema(
       ref: 'Product',
       required: true,
     },
-    name: { type: String, required: true },   // snapshot at order time
-    price: { type: Number, required: true },   // snapshot at order time
+    name:     { type: String, required: true },  // snapshot at order time
+    price:    { type: Number, required: true },  // snapshot at order time
     quantity: {
       type: Number,
       required: true,
@@ -34,7 +34,7 @@ const orderSchema = new mongoose.Schema(
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Customer',
-      required: [true, 'العميل مطلوب'],
+      default: null,
     },
     items: {
       type: [orderItemSchema],
@@ -48,33 +48,56 @@ const orderSchema = new mongoose.Schema(
       required: true,
       min: [0, 'المبلغ الإجمالي لا يمكن أن يكون سالباً'],
     },
+    // Shipping fee snapshot (set at order creation, 0 for digital stores)
+    shippingFee: {
+      type: Number,
+      default: 0,
+      min: [0, 'رسوم الشحن لا يمكن أن تكون سالبة'],
+    },
     // Delivery address snapshot
     deliveryAddress: {
-      city: { type: String, required: true },
+      name:     { type: String, required: true },
+      city:     { type: String, required: true },
       district: { type: String, default: null },
-      details: { type: String, default: null },
-      phone: { type: String, required: true },
+      details:  { type: String, default: null },
+      phone:    { type: String, required: true },
+      location: {
+        lat: { type: Number, default: null },
+        lng: { type: Number, default: null },
+      },
+    },
+    // Preferred contact method for digital delivery
+    contactMethod: {
+      type: String,
+      enum: ['whatsapp', 'telegram', 'instagram', 'phone'],
+      default: 'whatsapp',
+    },
+    contactHandle: {
+      type: String,
+      trim: true,
+      default: null,
     },
     // Order lifecycle status
+    // payment_under_review = paid via transfer, awaiting merchant confirmation
     status: {
       type: String,
       enum: {
-        values: ['pending', 'confirmed', 'rejected', 'shipped', 'delivered'],
+        values: ['pending', 'payment_under_review', 'confirmed', 'rejected', 'shipped', 'delivered'],
         message: 'حالة الطلب غير صالحة',
       },
       default: 'pending',
     },
-    // Payment via Cherry/Kuraimi/OneCash
+    // Payment method
     paymentMethod: {
       type: String,
       enum: {
-        values: ['cherry', 'kuraimi', 'oneCash', 'cash'],
+        values: ['kuraimi', 'oneCash', 'jaib', 'cash'],
         message: 'طريقة الدفع غير صالحة',
       },
       required: [true, 'طريقة الدفع مطلوبة'],
     },
-    // Wasl (receipt) screenshot uploaded by customer
-    waslImage: {
+    // Wasl (receipt) screenshot URL uploaded by customer
+    paymentWasl: {
       type: String,
       default: null,
     },
@@ -89,20 +112,26 @@ const orderSchema = new mongoose.Schema(
       maxlength: [500, 'الملاحظات لا يمكن أن تتجاوز 500 حرف'],
       default: null,
     },
-    // Timestamps for each status transition
-    confirmedAt: { type: Date, default: null },
-    rejectedAt: { type: Date, default: null },
-    shippedAt: { type: Date, default: null },
-    deliveredAt: { type: Date, default: null },
     rejectionReason: {
       type: String,
       trim: true,
       default: null,
     },
+    // Link to the chat created for this order (digital delivery)
+    chatId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Chat',
+      default: null,
+    },
+    // Timestamps for each status transition
+    confirmedAt:  { type: Date, default: null },
+    rejectedAt:   { type: Date, default: null },
+    shippedAt:    { type: Date, default: null },
+    deliveredAt:  { type: Date, default: null },
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
+    toJSON:   { virtuals: true },
     toObject: { virtuals: true },
   }
 );
