@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Lock, Mail, ShieldCheck } from 'lucide-react'
 import { adminLogin } from '@/api/auth'
@@ -111,6 +111,12 @@ export default function AdminLogin() {
                 />
               </span>
             </label>
+
+            <div className="flex justify-end">
+              <Link to="/admin/forgot-password" className="font-cairo text-xs text-primary hover:underline font-semibold">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
 
             <button
               id="admin-login-btn"

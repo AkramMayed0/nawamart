@@ -90,9 +90,12 @@ app.get('/api/health', (req, res) => {
 // ─── API Routes ───────────────────────────────────────────────────────────────
 app.use('/api/auth/merchant/register', authLimiter);
 app.use('/api/auth/merchant/login', authLimiter);
+app.use('/api/auth/merchant/forgot-password', authLimiter);
 app.use('/api/auth/customer/register', authLimiter);
 app.use('/api/auth/customer/login', authLimiter);
+app.use('/api/auth/customer/forgot-password', authLimiter);
 app.use('/api/admin/login', authLimiter);
+app.use('/api/admin/forgot-password', authLimiter);
 app.use('/api/auth', authRoutes);
 const storeRoutes = require('./routes/store.routes');
 const productRoutes = require('./routes/product.routes');
@@ -100,6 +103,8 @@ const orderRoutes = require('./routes/order.routes');
 const uploadRoutes = require('./routes/upload.routes');
 const chatRoutes = require('./routes/chat.routes');
 const subscriptionRoutes = require('./routes/subscription.routes');
+const walletRoutes = require('./routes/wallet.routes');
+const invoiceRoutes = require('./routes/invoice.routes');
 const adminRoutes = require('./routes/admin.routes');
 
 app.use('/api/stores', storeRoutes);
@@ -108,6 +113,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/chats', chatRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
+app.use('/api/wallet', walletRoutes);
+app.use('/api/invoices', invoiceRoutes);
 app.use('/api/admin', adminRoutes);
 
 // ─── 404 & Global Error Handler ──────────────────────────────────────────────

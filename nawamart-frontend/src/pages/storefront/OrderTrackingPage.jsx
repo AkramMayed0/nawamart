@@ -1,16 +1,9 @@
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { MessageCircle, Send, Instagram, Phone, CheckCircle2 } from 'lucide-react'
+import { MessageCircle, CheckCircle2 } from 'lucide-react'
 import { getOrderById } from '@/api/orders'
 import Icon from '@/components/ui/Icon'
 import { resolveAssetUrl } from '@/utils/assets'
-
-const METHOD_META = {
-  whatsapp:  { label: 'واتساب',  icon: MessageCircle },
-  telegram:  { label: 'تيليجرام', icon: Send },
-  instagram: { label: 'انستقرام', icon: Instagram },
-  phone:     { label: 'اتصال هاتفي', icon: Phone },
-}
 
 export default function OrderTrackingPage() {
   const { slug, orderId } = useParams()
@@ -105,83 +98,42 @@ export default function OrderTrackingPage() {
         </div>
       )}
 
-      {/* Delivery contact — digital confirmed */}
-      {order.store?.type === 'digital' && order.status === 'confirmed' && (
-        <DigitalDeliveryInfo order={order} />
-      )}
-
-      {/* Delivery contact — physical shipped */}
-      {order.store?.type !== 'digital' && order.status === 'shipped' && (
-        <div className="rounded-xl bg-success-100 border border-success p-5 text-center">
-          <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
-          <p className="font-cairo font-bold text-base text-success-dark">طلبك في الطريق إليك!</p>
-          <p className="font-cairo text-sm text-success-dark/70 mt-1">سيتم تحديث الحالة عند التسليم</p>
-        </div>
+      {/* Delivery chat — for business plan stores only */}
+      {order.store?.plan === 'business' && (order.status === 'confirmed' || order.status === 'shipped') && (
+        order.chatId ? (
+          <div className="rounded-xl border border-accent-200 bg-accent-50 p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
+                <MessageCircle size={20} />
+              </div>
+              <div>
+                <p className="font-cairo font-bold text-sm text-text">محادثة التسليم</p>
+                <p className="font-cairo text-xs text-text-muted mt-0.5">
+                  يمكنك التواصل مع التاجر بخصوص طلبك عبر المحادثة
+                </p>
+              </div>
+            </div>
+            <Link
+              to={`/store/${slug}/chat/${order.chatId}`}
+              className="flex items-center justify-center gap-2 w-full rounded-xl bg-accent text-white py-3 font-cairo font-bold text-sm hover:bg-accent-700 transition-colors"
+            >
+              <MessageCircle size={18} />
+              فتح المحادثة
+            </Link>
+          </div>
+        ) : (
+          <div className="rounded-xl bg-success-100 border border-success p-5 text-center">
+            <CheckCircle2 size={32} className="text-success mx-auto mb-2" />
+            <p className="font-cairo font-bold text-base text-success-dark">تم تأكيد الطلب</p>
+            <p className="font-cairo text-sm text-success-dark/70 mt-1">سيقوم التاجر بفتح محادثة التسليم قريباً</p>
+          </div>
+        )
       )}
     </div>
   )
 }
 
-/* ── Digital delivery info ───────────────────────────────────── */
-function DigitalDeliveryInfo({ order }) {
-  const method = order.contactMethod || 'whatsapp'
-  const meta = METHOD_META[method] || METHOD_META.whatsapp
-  const Icon = meta.icon
-  const merchantPhone = order.store?.contactPhone || ''
-  const cleanPhone = merchantPhone.replace(/[^0-9]/g, '')
-  const handle = order.contactHandle || order.deliveryAddress?.phone || ''
 
-  return (
-    <div className="rounded-xl border border-accent-200 bg-accent-50 p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
-          <Icon size={20} />
-        </div>
-        <div>
-          <p className="font-cairo font-bold text-sm text-text">تم تأكيد الدفع</p>
-          <p className="font-cairo text-xs text-text-muted mt-0.5">
-            سيتواصل معك التاجر عبر <span className="font-bold">{meta.label}</span> لتسليم المنتج.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 bg-white rounded-xl p-4 border border-accent-100">
-        <p className="font-cairo text-xs text-text-muted">تأكد من أن حسابك جاهز لاستقبال الرسائل</p>
-        <div className="flex items-center gap-2 text-sm font-cairo">
-          <span className="text-text-muted">طريقة التسليم:</span>
-          <span className="font-bold text-text flex items-center gap-1">
-            <Icon size={14} />
-            {meta.label}
-          </span>
-        </div>
-        {handle && (
-          <div className="flex items-center gap-2 text-sm font-cairo">
-            <span className="text-text-muted">بيانات التواصل:</span>
-            <span className="font-bold text-text">{handle}</span>
-          </div>
-        )}
-        {merchantPhone && (
-          <div className="flex items-center gap-2 text-sm font-cairo">
-            <span className="text-text-muted">رقم التاجر:</span>
-            <span className="font-inter font-bold text-text dk-num" dir="ltr">{merchantPhone}</span>
-          </div>
-        )}
-      </div>
-
-      {method === 'whatsapp' && (
-        <a
-          href={`https://wa.me/${cleanPhone}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-4 flex items-center justify-center gap-2 w-full rounded-xl bg-green-500 text-white py-3 font-cairo font-bold text-sm hover:bg-green-600 transition-colors"
-        >
-          <MessageCircle size={18} />
-          مراسلة التاجر على واتساب
-        </a>
-      )}
-    </div>
-  )
-}
 
 /* ── Status timeline ─────────────────────────────────────────── */
 const PHYSICAL_STEPS = [

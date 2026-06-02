@@ -4,10 +4,39 @@ import { useAuthStore } from '@/store/authStore'
 import { updateProfile } from '@/api/auth'
 import usePageTitle from '@/hooks/usePageTitle'
 import Input from '@/components/ui/Input'
-import Icon from '@/components/ui/Icon'
 import Button from '@/components/ui/Button'
 import { resolveAssetUrl } from '@/utils/assets'
-import { User, Lock, Mail, Camera } from 'lucide-react'
+import { User, Lock, Mail, Camera, Phone, Pencil } from 'lucide-react'
+
+function SectionCard({ icon: Icon, title, subtitle, children, accent = 'primary' }) {
+  const topBorder = {
+    primary: 'bg-primary',
+    warning: 'bg-warning',
+    accent: 'bg-accent',
+  }
+  const iconBg = {
+    primary: 'bg-primary/10 text-primary',
+    warning: 'bg-warning-100 text-warning',
+    accent: 'bg-accent-50 text-accent-700',
+  }
+  return (
+    <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-card transition-shadow duration-fast">
+      <div className={`h-1 ${topBorder[accent] || topBorder.primary}`} />
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg[accent] || iconBg.primary}`}>
+          <Icon size={18} />
+        </div>
+        <div>
+          <h2 className="font-cairo font-bold text-base text-text">{title}</h2>
+          {subtitle && <p className="font-cairo text-xs text-text-muted mt-0.5">{subtitle}</p>}
+        </div>
+      </div>
+      <div className="p-5">
+        {children}
+      </div>
+    </div>
+  )
+}
 
 export default function ProfilePage() {
   usePageTitle('الملف الشخصي')
@@ -77,110 +106,119 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8" dir="rtl">
-      <h1 className="mb-1 font-cairo text-2xl font-extrabold text-text">الملف الشخصي</h1>
-      <p className="mb-8 font-cairo text-sm text-text-muted">
-        عدّل بيانات حسابك الشخصية وكلمة المرور.
-      </p>
+    <div className="max-w-3xl mx-auto px-4 py-8" dir="rtl">
+      <div className="mb-6">
+        <h1 className="font-cairo font-extrabold text-2xl text-text">الملف الشخصي</h1>
+        <p className="font-cairo text-sm text-text-muted mt-0.5">عدّل بيانات حسابك الشخصية وكلمة المرور.</p>
+      </div>
 
-      <form onSubmit={handleSave}>
-        <div className="flex flex-col gap-5 rounded-xl border border-border bg-white p-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold font-cairo text-text">الصورة الشخصية</label>
-            <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-bg-soft">
-                {profilePreview ? (
-                  <img
-                    src={resolveAssetUrl(profilePreview) || profilePreview}
-                    alt="الصورة الشخصية"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <User size={32} className="text-text-subtle" />
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
+      <form onSubmit={handleSave} className="flex flex-col gap-6">
+
+        {/* Profile header card */}
+        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+          <div className="h-1 bg-primary" />
+          <div className="p-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <div className="relative group">
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-bg-soft shadow-sm transition-shadow group-hover:shadow-md">
+                  {profilePreview ? (
+                    <img
+                      src={resolveAssetUrl(profilePreview) || profilePreview}
+                      alt="الصورة الشخصية"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <User size={40} className="text-text-subtle" />
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-2 rounded border border-border bg-white px-4 py-2 font-cairo text-sm font-semibold transition-colors hover:bg-bg"
+                  className="absolute bottom-0 left-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary-700 transition-all hover:scale-105"
                 >
-                  <Camera size={15} />
-                  {profilePreview ? 'تغيير الصورة' : 'إضافة صورة'}
+                  <Camera size={14} />
                 </button>
-                <p className="font-cairo text-xs text-text-subtle">PNG أو JPG · حتى 2 ميجابايت</p>
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={handleImageChange}
-              />
+              <div className="text-center sm:text-right flex-1 min-w-0">
+                <h2 className="font-cairo font-extrabold text-xl text-text">{user?.name || 'حسابي'}</h2>
+                <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-1">
+                  <Mail size={14} className="text-text-subtle shrink-0" />
+                  <p className="font-cairo text-sm text-text-muted">{user?.email || ''}</p>
+                </div>
+                <p className="font-cairo text-xs text-text-subtle mt-2">PNG أو JPG · حتى 2 ميجابايت</p>
+              </div>
             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={handleImageChange}
+            />
           </div>
+        </div>
 
-          <div className="border-t border-border" />
+        {/* Personal Information */}
+        <SectionCard icon={User} title="المعلومات الشخصية" subtitle="الاسم ورقم الهاتف" accent="primary">
+          <div className="flex flex-col gap-5">
+            <Input
+              label="الاسم"
+              placeholder="محمد أحمد"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={saving}
+              prefix={<Pencil size={16} />}
+            />
 
-          <Input
-            label="الاسم"
-            placeholder="محمد أحمد"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={saving}
-          />
-
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-semibold font-cairo text-text">البريد الإلكتروني</label>
-            <div className="flex items-center gap-2 rounded border border-border bg-bg-soft px-3.5 py-2.5">
-              <Mail size={16} className="text-text-subtle shrink-0" />
-              <span className="font-cairo text-[15px] text-text-muted">{user?.email || ''}</span>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold font-cairo text-text">البريد الإلكتروني</label>
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-soft px-3.5 py-2.5">
+                <Mail size={16} className="text-text-subtle shrink-0" />
+                <span className="font-cairo text-[15px] text-text-muted">{user?.email || ''}</span>
+              </div>
+              <p className="font-cairo text-xs text-text-subtle">البريد الإلكتروني لا يمكن تغييره.</p>
             </div>
-            <p className="font-cairo text-xs text-text-subtle">البريد الإلكتروني لا يمكن تغييره.</p>
+
+            <Input
+              label="رقم الهاتف"
+              placeholder="7XXXXXXXX"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              disabled={saving}
+              prefix={<Phone size={16} />}
+              inputClassName="font-en"
+            />
           </div>
+        </SectionCard>
 
-          <Input
-            label="رقم الهاتف"
-            placeholder="7XXXXXXXX"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            disabled={saving}
-          />
-
-          <div className="border-t border-border pt-2">
-            <h3 className="mb-1 font-cairo text-base font-extrabold text-text flex items-center gap-2">
-              <Lock size={18} />
-              تغيير كلمة المرور
-            </h3>
-            <p className="mb-4 font-cairo text-sm text-text-muted">
-              اترك الحقول فارغة إذا كنت لا تريد تغيير كلمة المرور.
-            </p>
-
-            <div className="flex flex-col gap-4">
-              <Input
-                label="كلمة المرور الحالية"
-                type="password"
-                placeholder="********"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                disabled={saving}
-              />
-              <Input
-                label="كلمة المرور الجديدة"
-                type="password"
-                placeholder="********"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={saving}
-              />
-            </div>
+        {/* Security */}
+        <SectionCard icon={Lock} title="تغيير كلمة المرور" subtitle="اترك الحقول فارغة إذا كنت لا تريد تغيير كلمة المرور." accent="warning">
+          <div className="flex flex-col gap-4">
+            <Input
+              label="كلمة المرور الحالية"
+              type="password"
+              placeholder="********"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              disabled={saving}
+              prefix={<Lock size={16} />}
+            />
+            <Input
+              label="كلمة المرور الجديدة"
+              type="password"
+              placeholder="********"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={saving}
+              prefix={<Lock size={16} />}
+            />
           </div>
+        </SectionCard>
 
-          <div className="flex justify-start">
-            <Button type="submit" variant="primary" size="md" loading={saving} disabled={saving}>
-              {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-            </Button>
-          </div>
+        <div className="flex justify-start">
+          <Button type="submit" variant="primary" size="lg" loading={saving} disabled={saving}>
+            {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
+          </Button>
         </div>
       </form>
     </div>

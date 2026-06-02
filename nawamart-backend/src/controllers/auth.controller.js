@@ -4,6 +4,7 @@ const { OAuth2Client } = require('google-auth-library');
 const Merchant = require('../models/Merchant');
 const Customer = require('../models/Customer');
 const Store = require('../models/Store');
+const { sendPasswordResetEmail } = require('../services/email');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -515,6 +516,145 @@ const merchantGoogleLogin = async (req, res, next) => {
   }
 };
 
+// ─── Password Reset ──────────────────────────────────────────────────────────
+
+/**
+ * Normalize client origin — try the CLIENT_URL env var first,
+ * fallback to the request's Referer or Origin header.
+ */
+function getClientOrigin(req) {
+  return (
+    process.env.CLIENT_URL?.split(',')[0]?.trim() ||
+    req.headers.referer?.replace(/\/+$/, '') ||
+    req.headers.origin ||
+    'http://localhost:5173'
+  );
+}
+
+/**
+ * POST /api/auth/:role/forgot-password
+ * :role = merchant | customer
+ */
+const forgotPassword = (Model, role) => {
+  return async (req, res, next) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'البريد الإلكتروني مطلوب',
+        });
+      }
+
+      const user = await Model.findOne({ email: email.toLowerCase().trim() });
+
+      // Always return success to prevent email enumeration
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          data: null,
+          message: 'إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور',
+        });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+      user.resetPasswordToken = hashedToken;
+      user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+      await user.save({ validateBeforeSave: false });
+
+      const clientOrigin = getClientOrigin(req);
+      const resetLink = `${clientOrigin}/${role}/reset-password/${resetToken}`;
+
+      try {
+        const result = await sendPasswordResetEmail({
+          to: user.email,
+          name: user.name,
+          resetLink,
+        });
+
+        return res.status(200).json({
+          success: true,
+          data: result?.sent ? null : { resetLink },
+          message: 'إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور',
+        });
+      } catch (emailError) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save({ validateBeforeSave: false });
+
+        return res.status(500).json({
+          success: false,
+          data: null,
+          message: 'فشل إرسال البريد الإلكتروني — يرجى المحاولة لاحقاً',
+        });
+      }
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
+/**
+ * POST /api/auth/:role/reset-password/:token
+ * :role = merchant | customer
+ */
+const resetPassword = (Model) => {
+  return async (req, res, next) => {
+    try {
+      const { token } = req.params;
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'كلمة المرور الجديدة مطلوبة',
+        });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'كلمة المرور يجب أن تكون 6 أحرف على الأقل',
+        });
+      }
+
+      const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+      const user = await Model.findOne({
+        resetPasswordToken: hashedToken,
+        resetPasswordExpires: { $gt: Date.now() },
+      }).select('+password');
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          data: null,
+          message: 'الرابط غير صالح أو منتهي الصلاحية',
+        });
+      }
+
+      user.password = password;
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        data: null,
+        message: 'تم إعادة تعيين كلمة المرور بنجاح — يمكنك تسجيل الدخول الآن',
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+};
+
 module.exports = {
   merchantRegister,
   merchantLogin,
@@ -524,4 +664,6 @@ module.exports = {
   customerGoogleLogin,
   getMe,
   updateMe,
+  forgotPassword,
+  resetPassword,
 };

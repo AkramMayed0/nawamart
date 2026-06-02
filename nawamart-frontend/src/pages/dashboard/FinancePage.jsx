@@ -1,9 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import usePageTitle from '@/hooks/usePageTitle'
 import { getMerchantOrders } from '@/api/orders'
-import { Banknote, ShoppingBag, TrendingUp, Wallet, Clock, Crown, BarChart3 } from 'lucide-react'
+import { getMyInvoices } from '@/api/invoices'
+import { getWalletBalance, getWalletLedger } from '@/api/wallet'
+import { getMySubscription } from '@/api/subscriptions'
+import { Banknote, ShoppingBag, TrendingUp, Wallet, Clock, Crown, BarChart3, FileDown, FileText, CreditCard } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import { exportOperationsToExcel, exportInvoicesToExcel } from '@/lib/exportExcel'
 
 function formatPrice(value) {
   return (value ?? 0).toLocaleString('en-US')
@@ -47,6 +51,12 @@ export default function FinancePage() {
 
   const store = useAuthStore(s => s.store)
   const plan = store?.plan || 'starter'
+  const isPaid = plan !== 'starter'
+
+  const today = new Date().toISOString().split('T')[0]
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const [dateFrom, setDateFrom] = useState(thirtyDaysAgo)
+  const [dateTo, setDateTo] = useState(today)
 
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['merchant-orders'],
@@ -73,6 +83,75 @@ export default function FinancePage() {
 
   const maxRevenue = Math.max(...monthlyData.map(([, v]) => v), 1)
 
+  const { data: walletData } = useQuery({
+    queryKey: ['wallet-balance-finance'],
+    queryFn: () => getWalletBalance().then(r => r.data.data),
+    staleTime: 30_000,
+    retry: false,
+    enabled: isPaid,
+  })
+
+  const { data: walletLedger = [] } = useQuery({
+    queryKey: ['wallet-ledger-finance'],
+    queryFn: () => getWalletLedger().then(r => r.data.data ?? []),
+    staleTime: 30_000,
+    retry: false,
+    enabled: isPaid,
+  })
+
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['my-invoices-finance'],
+    queryFn: () => getMyInvoices().then(r => r.data.data ?? []),
+    staleTime: 30_000,
+    retry: false,
+    enabled: isPaid,
+  })
+
+  const { data: subscriptions = [] } = useQuery({
+    queryKey: ['my-subscriptions-finance'],
+    queryFn: () => getMySubscription().then(r => {
+      const data = r.data.data
+      return Array.isArray(data) ? data : (data ? [data] : [])
+    }),
+    staleTime: 30_000,
+    retry: false,
+    enabled: isPaid,
+  })
+
+  const walletBalance = walletData?.balance ?? 0
+  const verifiedInvoices = invoices.filter(inv => inv.status === 'verified')
+  const totalSpent = verifiedInvoices.reduce((s, inv) => s + (inv.amountDue ?? 0), 0)
+
+  const filteredInvoices = useMemo(() => {
+    if (!dateFrom && !dateTo) return invoices
+    const from = dateFrom ? new Date(dateFrom) : new Date(0)
+    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
+    return invoices.filter(inv => {
+      const d = new Date(inv.createdAt)
+      return d >= from && d <= to
+    })
+  }, [invoices, dateFrom, dateTo])
+
+  const filteredLedger = useMemo(() => {
+    if (!dateFrom && !dateTo) return walletLedger
+    const from = dateFrom ? new Date(dateFrom) : new Date(0)
+    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
+    return walletLedger.filter(e => {
+      const d = new Date(e.createdAt)
+      return d >= from && d <= to
+    })
+  }, [walletLedger, dateFrom, dateTo])
+
+  const filteredSubscriptions = useMemo(() => {
+    if (!dateFrom && !dateTo) return subscriptions
+    const from = dateFrom ? new Date(dateFrom) : new Date(0)
+    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
+    return subscriptions.filter(s => {
+      const d = new Date(s.createdAt)
+      return d >= from && d <= to
+    })
+  }, [subscriptions, dateFrom, dateTo])
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
@@ -93,12 +172,70 @@ export default function FinancePage() {
     )
   }
 
+  const filteredOrders = useMemo(() => {
+    if (!dateFrom && !dateTo) return orders
+    const from = dateFrom ? new Date(dateFrom) : new Date(0)
+    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
+    return orders.filter(o => {
+      const d = new Date(o.createdAt)
+      return d >= from && d <= to
+    })
+  }, [orders, dateFrom, dateTo])
+
+  function handleExportOperations() {
+    exportOperationsToExcel(filteredOrders, filteredInvoices, filteredLedger, filteredSubscriptions, `financial-operations-${dateFrom}-${dateTo}.xlsx`)
+  }
+
+  const hasFilters = dateFrom !== thirtyDaysAgo || dateTo !== today
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
       <div className="mb-6">
         <h1 className="font-cairo font-extrabold text-2xl text-text">المالية</h1>
-        <p className="font-cairo text-sm text-text-muted mt-0.5">تقارير المبيعات والإيرادات.</p>
+        <p className="font-cairo text-sm text-text-muted mt-0.5">العمليات المالية والفواتير.</p>
       </div>
+
+      {/* Date filter bar */}
+      {isPaid && (
+        <div className="bg-white border border-border rounded-2xl p-4 mb-6">
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-cairo text-xs font-semibold text-text-muted">من تاريخ</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="h-10 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-cairo text-xs font-semibold text-text-muted">إلى تاريخ</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="h-10 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary transition-colors"
+              />
+            </div>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => { setDateFrom(thirtyDaysAgo); setDateTo(today) }}
+                className="h-10 rounded-lg border border-border bg-bg px-4 font-cairo text-sm font-semibold text-text-muted hover:bg-bg-soft transition-colors"
+              >
+                إعادة تعيين
+              </button>
+            )}
+            <button
+              onClick={handleExportOperations}
+              className="flex items-center gap-1.5 h-10 rounded-lg bg-primary text-white px-4 font-cairo text-xs font-bold hover:bg-primary-700 transition-colors shrink-0"
+            >
+              <FileDown size={14} />
+              تصدير ({filteredOrders.length + filteredInvoices.length + filteredLedger.length + filteredSubscriptions.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <StatCard
@@ -254,6 +391,104 @@ export default function FinancePage() {
           </div>
         )}
       </div>
+
+      {/* Subscription Finance — paid plans only */}
+      {isPaid && (
+        <div className="bg-white border border-border rounded-2xl overflow-hidden mt-6">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">
+                <CreditCard size={18} />
+              </div>
+              <h2 className="font-cairo font-bold text-base text-text">مالية الاشتراك</h2>
+            </div>
+            {invoices.length > 0 && (
+              <button
+                onClick={() => exportInvoicesToExcel(invoices)}
+                className="flex items-center gap-1.5 h-8 rounded-lg bg-primary text-white px-3 font-cairo text-xs font-bold hover:bg-primary-700 transition-colors"
+              >
+                <FileDown size={13} />
+                تصدير Excel
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5">
+            <div className="flex flex-col gap-1">
+              <span className="font-cairo text-xs text-text-muted flex items-center gap-1">
+                <Wallet size={13} /> رصيد المحفظة
+              </span>
+              <span className="font-inter font-extrabold text-xl text-success dk-num">
+                {formatPrice(walletBalance)} ر.ي
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-cairo text-xs text-text-muted flex items-center gap-1">
+                <FileText size={13} /> فواتير مدفوعة
+              </span>
+              <span className="font-inter font-extrabold text-xl text-text dk-num">
+                {verifiedInvoices.length}
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-cairo text-xs text-text-muted flex items-center gap-1">
+                <Banknote size={13} /> إجمالي المدفوع
+              </span>
+              <span className="font-inter font-extrabold text-xl text-text dk-num">
+                {formatPrice(totalSpent)} ر.ي
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="font-cairo text-xs text-text-muted flex items-center gap-1">
+                <CreditCard size={13} /> آخر دفعة
+              </span>
+              <span className="font-inter font-extrabold text-xl text-text dk-num">
+                {invoices.length > 0 ? `${formatPrice(invoices[0].amountDue ?? 0)} ر.ي` : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Invoices table */}
+          {invoices.length > 0 && (
+            <div className="border-t border-border overflow-x-auto">
+              <div className="min-w-[500px]">
+                <div className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-5 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
+                  <span>رقم الفاتورة</span>
+                  <span>الخطة</span>
+                  <span>المبلغ</span>
+                  <span>الحالة</span>
+                  <span>التاريخ</span>
+                </div>
+                <div className="divide-y divide-border">
+                  {invoices.slice(0, 10).map(inv => (
+                    <div key={inv._id} className="grid grid-cols-[1fr_auto_auto_auto_auto] gap-3 px-5 py-3 items-center hover:bg-bg/50 transition-colors">
+                      <span className="font-inter font-bold text-xs text-primary dk-num">{inv.invoiceNumber}</span>
+                      <span className="font-cairo text-sm text-text">
+                        {inv.plan === 'business' ? 'الأعمال' : inv.plan === 'pro' ? 'الاحترافي' : 'المبتدئ'}
+                      </span>
+                      <span className="font-inter font-bold text-sm text-text dk-num">{formatPrice(inv.amountDue ?? 0)} ر.ي</span>
+                      <span className={`font-cairo text-xs font-semibold px-2.5 py-1 rounded-pill w-fit ${
+                        inv.status === 'verified' ? 'bg-success-100 text-success'
+                        : inv.status === 'paid' ? 'bg-warning-100 text-yellow-700'
+                        : inv.status === 'cancelled' ? 'bg-danger-100 text-danger'
+                        : 'bg-bg-soft text-text-muted'
+                      }`}>
+                        {inv.status === 'verified' ? 'مدفوع'
+                          : inv.status === 'paid' ? 'بانتظار التحقق'
+                          : inv.status === 'cancelled' ? 'ملغي'
+                          : 'معلق'}
+                      </span>
+                      <span className="font-cairo text-xs text-text-muted">
+                        {new Date(inv.createdAt).toLocaleDateString('ar-YE', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

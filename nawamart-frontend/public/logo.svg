@@ -1,3 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1420 277" width="1420" height="277" role="img" aria-label="NawaMart">
-  <image href="logo.png" width="1420" height="277"></image>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60" role="img" aria-label="NawaMart">
+  <!-- N mark -->
+  <path d="M8 10 L18 10 L34 32 L34 10 L44 10 L44 50 L34 50 L18 28 L18 50 L8 50 Z" fill="#0D1B2A"/>
+  <circle cx="44" cy="16" r="4.5" fill="#DC2626"/>
+  <!-- Text -->
+  <text x="58" y="38" font-family="'Cairo','Tahoma',sans-serif" font-size="28" font-weight="900" fill="#0D1B2A">نوامارت</text>
+  <text x="58" y="54" font-family="'Inter','Arial',sans-serif" font-size="11" font-weight="600" fill="#DC2626" letter-spacing="2">NAWAMART</text>
 </svg>

@@ -13,10 +13,14 @@ import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
 import CustomerRegister from '@/pages/auth/CustomerRegister'
+import ForgotPassword from '@/pages/auth/ForgotPassword'
+import ResetPassword from '@/pages/auth/ResetPassword'
 import OnboardingPage from '@/pages/OnboardingPage'
 import SubscribePage from '@/pages/subscribe/SubscribePage'
 
 import AdminLogin from '@/pages/admin/AdminLogin'
+import AdminForgotPassword from '@/pages/admin/AdminForgotPassword'
+import AdminResetPassword from '@/pages/admin/AdminResetPassword'
 import AdminLayout from '@/pages/admin/AdminLayout'
 import AdminOverview from '@/pages/admin/AdminOverview'
 import AdminSubscriptions from '@/pages/admin/AdminSubscriptions'
@@ -47,6 +51,7 @@ import CheckoutPage from '@/pages/storefront/CheckoutPage'
 import OrderConfirmationPage from '@/pages/storefront/OrderConfirmationPage'
 import OrderTrackingPage from '@/pages/storefront/OrderTrackingPage'
 import CustomerOrdersPage from '@/pages/storefront/CustomerOrdersPage'
+import CustomerChatPage from '@/pages/storefront/CustomerChatPage'
 
 function RouteLoader() {
   return (
@@ -197,8 +202,12 @@ export default function App() {
 
       <Route path="/merchant/login" element={<GuestRoute><MerchantLogin /></GuestRoute>} />
       <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
+      <Route path="/merchant/forgot-password" element={<ForgotPassword />} />
+      <Route path="/merchant/reset-password/:token" element={<ResetPassword />} />
       <Route path="/customer/login" element={<CustomerGuestRoute><CustomerLogin /></CustomerGuestRoute>} />
       <Route path="/customer/register" element={<CustomerGuestRoute><CustomerRegister /></CustomerGuestRoute>} />
+      <Route path="/customer/forgot-password" element={<ForgotPassword />} />
+      <Route path="/customer/reset-password/:token" element={<ResetPassword />} />
       <Route path="/onboarding" element={<PrivateRoute role="merchant"><OnboardingPage /></PrivateRoute>} />
       <Route path="/subscribe" element={<PrivateRoute role="merchant"><SubscribePage /></PrivateRoute>} />
 
@@ -226,9 +235,12 @@ export default function App() {
         <Route path="orders" element={<CustomerOrdersPage />} />
         <Route path="order/:orderId" element={<OrderConfirmationPage />} />
         <Route path="order/:orderId/track" element={<OrderTrackingPage />} />
+        <Route path="chat/:chatId" element={<CustomerChatPage />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminGuestRoute><AdminLogin /></AdminGuestRoute>} />
+      <Route path="/admin/forgot-password" element={<AdminForgotPassword />} />
+      <Route path="/admin/reset-password/:token" element={<AdminResetPassword />} />
       <Route path="/admin/dashboard" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<AdminOverview />} />
         <Route path="subscriptions" element={<AdminSubscriptions />} />

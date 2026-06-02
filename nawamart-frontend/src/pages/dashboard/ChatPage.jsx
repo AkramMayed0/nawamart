@@ -1,26 +1,17 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle, MessageSquare, MessageCircle, Send, Instagram, Phone, ChevronDown, ChevronUp, ArrowRight, Truck } from 'lucide-react'
+import { CheckCircle, MessageSquare, ArrowRight, Loader, Image as ImageIcon } from 'lucide-react'
 import clsx from 'clsx'
 
 import { useAuthStore } from '@/store/authStore'
 import { useChat }      from '@/hooks/useChat'
 import { getOrderById } from '@/api/orders'
+import api from '@/api/axios'
 import ChatHeader       from '@/components/chat/ChatHeader'
 import MessageBubble    from '@/components/chat/MessageBubble'
 import ChatInput        from '@/components/chat/ChatInput'
-
-const METHOD_META_FULL = {
-  whatsapp:  { label: 'واتساب',  icon: MessageCircle, cls: 'bg-green-500 hover:bg-green-600',     url: (h, p) => `https://wa.me/${(h || p).replace(/[^0-9]/g, '')}` },
-  telegram:  { label: 'تيليجرام', icon: Send,         cls: 'bg-sky-500 hover:bg-sky-600',         url: (h) => `https://t.me/${(h || '').replace('@', '')}` },
-  instagram: { label: 'انستقرام', icon: Instagram,    cls: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600', url: (h) => `https://www.instagram.com/direct/t/${(h || '').replace('@', '')}` },
-  phone:     { label: 'اتصال',    icon: Phone,        cls: 'bg-primary hover:bg-primary-700',      url: (h) => `tel:${h}` },
-}
-
-function filterMethodMeta(plan) {
-  const keys = plan === 'starter' ? ['whatsapp', 'instagram', 'phone'] : ['whatsapp', 'telegram', 'instagram', 'phone']
-  return Object.fromEntries(keys.map(k => [k, METHOD_META_FULL[k]]))
-}
+import ImageLightbox from '@/components/chat/ImageLightbox'
+import PhotoGallery from '@/components/chat/PhotoGallery'
 
 function MessageSkeleton() {
   return (
@@ -67,80 +58,6 @@ function ConfirmBanner({ onConfirm, confirmed }) {
   )
 }
 
-function ContactInfoPanel({ order, storeType, plan = 'starter' }) {
-  const [open, setOpen] = useState(true)
-  if (!order) return null
-
-  const isDigital = storeType === 'digital'
-  const method = order.contactMethod || 'whatsapp'
-  const mm = filterMethodMeta(plan)
-  const meta = mm[method] || mm.whatsapp
-  const Icon = meta.icon
-  const customerPhone = order.deliveryAddress?.phone || ''
-  const handle = order.contactHandle || customerPhone
-  const contactUrl = meta.url(handle, customerPhone)
-
-  return (
-    <div className="border-b border-border bg-white">
-      <button
-        onClick={() => setOpen(!open)}
-        className="flex items-center justify-between w-full px-4 py-3 text-sm font-cairo font-bold text-text hover:bg-bg/50 transition-colors"
-      >
-        <span className="flex items-center gap-2">
-          {isDigital ? <Icon size={16} className="text-accent-700" /> : <Phone size={15} className="text-primary" />}
-          {isDigital ? `توصيل عبر ${meta.label}` : 'بيانات العميل'}
-        </span>
-        {open ? <ChevronUp size={16} className="text-text-muted" /> : <ChevronDown size={16} className="text-text-muted" />}
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 flex flex-col gap-2.5 text-sm font-cairo">
-          <div className="flex justify-between">
-            <span className="text-text-muted">العميل</span>
-            <span className="font-semibold text-text">{order.deliveryAddress?.name || '—'}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-text-muted">الجوال</span>
-            <span className="font-inter font-semibold text-text dk-num" dir="ltr">{customerPhone}</span>
-          </div>
-          {isDigital && (
-            <div className="flex justify-between">
-              <span className="text-text-muted">طريقة التسليم</span>
-              <span className="font-semibold text-text flex items-center gap-1">
-                <Icon size={14} />
-                {meta.label}
-              </span>
-            </div>
-          )}
-          {!isDigital && (
-            <div className="flex justify-between">
-              <span className="text-text-muted">المدينة</span>
-              <span className="font-semibold text-text">{order.deliveryAddress?.city || '—'}</span>
-            </div>
-          )}
-
-          {plan === 'pro' ? (
-            <div className="mt-1 flex items-center justify-center gap-2 rounded-xl py-3 border border-border bg-bg text-text-muted text-sm font-cairo">
-              <Icon size={16} className="text-text-muted" />
-              {handle || customerPhone || '—'}
-            </div>
-          ) : contactUrl && (
-            <a
-              href={contactUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`mt-1 flex items-center justify-center gap-2 rounded-xl py-3 font-bold text-sm text-white transition-all active:scale-[0.97] ${meta.cls}`}
-            >
-              <Icon size={18} />
-              {isDigital ? `مراسلة عبر ${meta.label}` : 'مراسلة واتساب'}
-            </a>
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
-
 function OrderInfoBanner({ order }) {
   if (!order) return null
   const total = (order.totalAmount ?? 0).toLocaleString('en-US')
@@ -169,15 +86,14 @@ function OrderInfoBanner({ order }) {
   )
 }
 
-/* ── Order-only view (no chat, just contact info) ───────────── */
-function OrderDeliveryView({ order, goBack, hasMergedChat, plan = 'starter' }) {
+/* ── Order-only view (fallback when no chat can be created) ── */
+function OrderDeliveryView({ order, goBack }) {
   const isDigital = order.store?.type === 'digital'
   const customerName = order.deliveryAddress?.name || 'عميل'
   const shortId = String(order._id).slice(-8).toUpperCase()
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
-      {/* Header */}
       <header className="flex items-center gap-3 bg-white border-b border-border px-4 py-3 shrink-0">
         <button onClick={goBack} className="p-1.5 rounded-full hover:bg-bg-soft transition-colors text-text-muted" aria-label="رجوع">
           <ArrowRight size={20} className="icon-flip" />
@@ -193,20 +109,17 @@ function OrderDeliveryView({ order, goBack, hasMergedChat, plan = 'starter' }) {
 
       <OrderInfoBanner order={order} />
 
-      {/* Contact info — full screen */}
       <div className="flex-1 overflow-y-auto">
         <div className="px-4 py-8">
           <div className="bg-white border border-border rounded-2xl p-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-accent-50 flex items-center justify-center mx-auto mb-4">
-              {isDigital ? <MessageCircle size={28} className="text-accent-700" /> : <Truck size={28} className="text-primary" />}
+              <MessageSquare size={28} className="text-accent-700" />
             </div>
             <h2 className="font-cairo font-bold text-lg text-text mb-1">
               {isDigital ? 'توصيل الطلب الرقمي' : 'توصيل الطلب'}
             </h2>
             <p className="font-cairo text-sm text-text-muted mb-6">
-              {isDigital
-                ? 'تواصل مع العميل لتسليم المنتج الرقمي'
-                : 'قم بتسليم الطلب للعميل'}
+              {isDigital ? 'تواصل مع العميل لتسليم المنتج الرقمي' : 'قم بتسليم الطلب للعميل'}
             </p>
 
             <div className="bg-bg rounded-xl p-4 mb-6 space-y-3 text-right">
@@ -225,62 +138,6 @@ function OrderDeliveryView({ order, goBack, hasMergedChat, plan = 'starter' }) {
                 </div>
               )}
             </div>
-
-            {/* Contact button — Pro users see read-only info */}
-            {isDigital && (() => {
-              const method = order.contactMethod || 'whatsapp'
-              const mm = filterMethodMeta(plan)
-              const meta = mm[method] || mm.whatsapp
-              const Icon = meta.icon
-              const handle = order.contactHandle || order.deliveryAddress?.phone || ''
-              const contactUrl = meta.url(handle, order.deliveryAddress?.phone || '')
-              if (plan === 'pro') {
-                return (
-                  <div className="w-full rounded-xl py-3.5 px-4 bg-bg border border-border text-right">
-                    <p className="font-cairo text-xs text-text-muted mb-1">بيانات التواصل</p>
-                    <div className="flex items-center gap-2">
-                      <Icon size={18} className="text-text-muted" />
-                      <span className="font-cairo font-bold text-sm text-text" dir="ltr">{handle || '—'}</span>
-                    </div>
-                    <p className="font-cairo text-xs text-text-muted mt-2">متوفر في باقة Business — تواصل خارجي + محادثة مدمجة</p>
-                  </div>
-                )
-              }
-              return (
-                <a
-                  href={contactUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`inline-flex items-center justify-center gap-2 w-full rounded-xl py-3.5 font-bold text-sm text-white transition-all active:scale-[0.97] ${meta.cls}`}
-                >
-                  <Icon size={20} />
-                  مراسلة عبر {meta.label}
-                </a>
-              )
-            })()}
-
-            {/* Plan upgrade banner — only for non-Business */}
-            {!hasMergedChat && (
-              <div className="mt-4 bg-accent-50 border border-accent-200 rounded-xl p-4 text-right">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white shrink-0 mt-0.5">
-                    <MessageSquare size={16} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-cairo font-bold text-sm text-accent-800">المحادثة المدمجة</p>
-                    <p className="font-cairo text-xs text-accent-700/70 mt-0.5">
-                      خاص بباقة Business — محادثة داخل التطبيق مع العميل
-                    </p>
-                    <a
-                      href="/subscribe?plan=business"
-                      className="inline-flex items-center gap-1 mt-2 font-cairo font-bold text-xs text-accent-700 hover:text-accent-900 transition-colors"
-                    >
-                      ترقية الباقة ←
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -295,92 +152,195 @@ export default function ChatPage() {
   const user = useAuthStore(s => s.user)
   const store = useAuthStore(s => s.store)
   const isCustomer = user?.role === 'customer'
-  const hasMergedChat = store?.plan === 'business'
+  const hasDeliveryChat = true
 
   const isOrderMode = !!orderId
 
   const {
     messages, chatMeta, loading, sending, connected, confirmed,
-    sendText, sendFile, confirmReceipt,
+    typingName, replyTo, setReplyTo,
+    sendText, sendFile, confirmReceipt, emitTyping,
   } = useChat(isOrderMode ? null : chatId)
 
   const [orderData, setOrderData] = useState(null)
   const [orderLoading, setOrderLoading] = useState(false)
+  const [initChatLoading, setInitChatLoading] = useState(false)
 
-  // In order mode: load the order directly
+  // In order mode: load the order, then auto-find/create delivery chat
   useEffect(() => {
     if (!isOrderMode || !orderId) return
     setOrderLoading(true)
     getOrderById(orderId)
-      .then(r => setOrderData(r.data.data))
+      .then(r => {
+        const order = r.data.data
+        setOrderData(order)
+        if (order.chatId) {
+          navigate(`/dashboard/chat/${order.chatId}`, { replace: true })
+          return
+        }
+        if (['confirmed', 'shipped'].includes(order.status)) {
+          setInitChatLoading(true)
+          api.post('/chats/init-delivery', { orderId })
+            .then(res => {
+              const chat = res.data.data
+              navigate(`/dashboard/chat/${chat._id}`, { replace: true })
+            })
+            .catch(() => setInitChatLoading(false))
+        } else {
+          setInitChatLoading(false)
+        }
+      })
       .catch(() => {})
       .finally(() => setOrderLoading(false))
-  }, [isOrderMode, orderId])
+  }, [isOrderMode, orderId, navigate])
 
   const order = isOrderMode ? orderData : (chatMeta?.order ?? null)
   const storeType = isOrderMode ? order?.store?.type : chatMeta?.store?.type
 
   const bottomRef = useRef(null)
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages])
+  const scrollContainerRef = useRef(null)
+  const isNearBottomRef = useRef(true)
+
+  const isNearBottom = useCallback(() => {
+    const el = scrollContainerRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 120
+  }, [])
+
+  const handleScroll = useCallback(() => {
+    isNearBottomRef.current = isNearBottom()
+  }, [isNearBottom])
+
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
 
   const goBack = () => navigate(-1)
 
-  // ── Order-only mode (no chat) ──
-  if (isOrderMode) {
-    if (orderLoading) {
-      return (
-        <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
-          <div className="animate-pulse flex flex-col gap-3 p-4"><div className="h-10 bg-bg-soft rounded-xl" /><div className="h-48 bg-bg-soft rounded-xl" /><div className="h-32 bg-bg-soft rounded-xl" /></div>
-        </div>
-      )
-    }
-    if (!order) {
-      return <div className="flex h-full items-center justify-center text-text-muted font-cairo text-sm">لم يتم العثور على الطلب</div>
-    }
-    return <OrderDeliveryView order={order} goBack={goBack} hasMergedChat={hasMergedChat} plan={store?.plan} />
+  // ── Image lightbox ──
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [galleryOpen, setGalleryOpen] = useState(false)
+
+  const allImages = messages.filter(m => m.type === 'image' && !m._optimistic).map(m => m.content)
+
+  const openLightbox = (index) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
   }
 
-  // ── Chat mode (Business plan only — non-Business see contact-only view) ──
-  if (!hasMergedChat) {
-    if (loading) {
+  // ── Business plan check ──
+  const plan = store?.plan
+  const isBusiness = plan === 'business'
+
+  if (!isBusiness && !isOrderMode) {
+    return (
+      <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo items-center justify-center gap-4 px-8 py-16 text-center">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center">
+          <MessageSquare size={28} className="text-amber-600" />
+        </div>
+        <h2 className="font-cairo font-bold text-lg text-text">محادثة التسليم</h2>
+        <p className="text-sm text-text-muted leading-relaxed max-w-xs">
+          هذه الميزة متاحة فقط لباقة الأعمال. قم بترقية باقتك للتواصل مع العملاء عبر محادثة التسليم.
+        </p>
+      </div>
+    )
+  }
+
+  // ── Order-only mode (no chat yet) ──
+  if (isOrderMode) {
+    if (orderLoading || initChatLoading) {
       return (
         <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
-          <div className="animate-pulse flex flex-col gap-3 p-4"><div className="h-10 bg-bg-soft rounded-xl" /><div className="h-48 bg-bg-soft rounded-xl" /><div className="h-32 bg-bg-soft rounded-xl" /></div>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-8 py-16">
+            <Loader size={32} className="text-primary animate-spin" />
+            <p className="font-semibold text-text">جاري فتح محادثة التسليم...</p>
+          </div>
         </div>
       )
     }
     if (!order) {
       return <div className="flex h-full items-center justify-center text-text-muted font-cairo text-sm">لم يتم العثور على الطلب</div>
     }
-    return <OrderDeliveryView order={order} goBack={goBack} hasMergedChat={hasMergedChat} plan={store?.plan} />
+    return <OrderDeliveryView order={order} goBack={goBack} plan={store?.plan} />
   }
+
+  // ── Chat mode ──
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-bg font-cairo">
-      <ChatHeader chatMeta={chatMeta} connected={connected} onBack={goBack} />
+      <ChatHeader chatMeta={chatMeta} connected={connected} onBack={goBack} typingName={typingName} />
 
       {order && <OrderInfoBanner order={order} />}
 
-      {order && <ContactInfoPanel order={order} storeType={storeType} plan={store?.plan} />}
-
-      <div className="flex-1 overflow-y-auto py-4 space-y-1.5 overscroll-contain">
+      <div
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto py-4 space-y-1.5 overscroll-contain"
+      >
         {loading ? (
           <MessageSkeleton />
         ) : messages.length === 0 ? (
           <EmptyState customerName={chatMeta?.customer?.name} />
         ) : (
           messages.map(msg => (
-            <MessageBubble key={msg._id} msg={msg} currentUserId={user?._id} />
+            <MessageBubble
+              key={msg._id}
+              msg={msg}
+              currentUserId={user?._id}
+              onReply={(m) => setReplyTo(replyTo?._id === m._id ? null : m)}
+            />
           ))
         )}
         <div ref={bottomRef} />
       </div>
 
+      {/* Gallery button */}
+      {allImages.length > 0 && (
+        <div className="flex items-center justify-end gap-1 px-4 py-1 bg-white border-t border-border">
+          <button
+            onClick={() => setGalleryOpen(true)}
+            className="flex items-center gap-1 text-xs text-text-muted hover:text-primary transition-colors"
+          >
+            <ImageIcon size={14} />
+            <span>{allImages.length} صورة</span>
+          </button>
+        </div>
+      )}
+
       {isCustomer && (
         <ConfirmBanner onConfirm={confirmReceipt} confirmed={confirmed} />
       )}
 
-      <ChatInput onSendText={sendText} onSendFile={sendFile} sending={sending} disabled={confirmed && isCustomer} />
+      <ChatInput
+        onSendText={sendText}
+        onSendFile={sendFile}
+        sending={sending}
+        disabled={confirmed && isCustomer}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
+        onTyping={emitTyping}
+      />
+
+      {/* Image lightbox */}
+      {lightboxOpen && (
+        <ImageLightbox
+          images={allImages}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
+
+      {/* Photo gallery */}
+      {galleryOpen && (
+        <PhotoGallery
+          images={allImages}
+          onSelect={(i) => { setGalleryOpen(false); openLightbox(i) }}
+          onClose={() => setGalleryOpen(false)}
+        />
+      )}
     </div>
   )
 }

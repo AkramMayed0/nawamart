@@ -145,15 +145,14 @@ const getMerchantOrders = asyncHandler(async (req, res) => {
   const [orders, total] = await Promise.all([
     Order.find(query)
       .populate('customer', 'name phone')
-      .populate('store', 'name type')
+      .populate('store', 'name type plan')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
     Order.countDocuments(query),
   ]);
 
-  return res.status(200).json({
-    success: true,
+  return apiResponse(res, {
     message: 'تم جلب الطلبات بنجاح',
     data: orders,
     pagination: paginateResponse(total, page, limit),
@@ -162,30 +161,22 @@ const getMerchantOrders = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/orders/customer
-// List orders for the logged-in customer (paginated + filterable)
+// List orders for the logged-in customer (with store info)
 // ─────────────────────────────────────────────────────────────────────────────
 const getCustomerOrders = asyncHandler(async (req, res) => {
   const { limit, skip, page } = getPaginationParams(req);
-  const { status, storeId } = req.query;
-
-  // If customer is store-scoped, restrict to their store only
-  const query = { customer: req.user._id };
-  if (req.user.store) query.store = req.user.store;
-  if (status)  query.status = status;
-  if (storeId) query.store  = storeId;
 
   const [orders, total] = await Promise.all([
-    Order.find(query)
-      .populate('store', 'name type logo slug')
+    Order.find({ customer: req.user._id })
+      .populate('store', 'name type logo slug plan')
       .populate('items.product', 'name images')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
-    Order.countDocuments(query),
+    Order.countDocuments({ customer: req.user._id }),
   ]);
 
-  return res.status(200).json({
-    success: true,
+  return apiResponse(res, {
     message: 'تم جلب الطلبات بنجاح',
     data: orders,
     pagination: paginateResponse(total, page, limit),
@@ -194,13 +185,11 @@ const getCustomerOrders = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/orders/:id
-// Get a single order — accessible by the customer who placed it or the merchant
+// Get a single order by ID (public for tracking, full for owner)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
-    .populate('customer', 'name phone')
-    .populate('merchant', 'name')
-    .populate('store', 'name logo contactPhone type slug')
+    .populate('store', 'name logo contactPhone type slug plan')
     .populate('items.product', 'name images');
 
   if (!order) {
@@ -244,12 +233,12 @@ const confirmOrder = asyncHandler(async (req, res) => {
   order.status      = 'confirmed';
   order.confirmedAt = new Date();
 
-  // Auto-create chat for digital orders (Business plan only + customer must have an account)
-  const store = await Store.findById(order.store);
-  if (store?.type === 'digital' && store?.plan === 'business' && order.customer && !order.chatId) {
-    let existingChat = await Chat.findOne({ order: order._id });
-    if (!existingChat) {
-      existingChat = await Chat.create({
+  // Auto-create delivery chat only for business plan stores
+  const store = await Store.findById(order.store).select('plan');
+  if (order.customer && !order.chatId && store?.plan === 'business') {
+    let chat = await Chat.findOne({ order: order._id });
+    if (!chat) {
+      chat = await Chat.create({
         store:    order.store,
         merchant: order.merchant,
         customer: order.customer,
@@ -257,7 +246,7 @@ const confirmOrder = asyncHandler(async (req, res) => {
         messages: [],
       });
     }
-    order.chatId = existingChat._id;
+    order.chatId = chat._id;
   }
 
   await order.save();

@@ -145,34 +145,35 @@ export default function ChatListPage() {
 
   useEffect(() => {
     setLoading(true)
+
+    if (plan !== 'business') {
+      setItems([])
+      setLoading(false)
+      return
+    }
+
     Promise.all([
       getMerchantChats().then(r => r.data.data ?? []).catch(() => []),
       getMerchantOrders().then(r => r.data.data ?? []).catch(() => []),
     ]).then(([chats, orders]) => {
-      // Tag each item with its source type
-      // For non-Business plans, only show orders (no in-app chats)
-      const rawChatItems = chats.map(c => ({ ...c, _type: 'chat' }))
-      const chatItems = plan === 'business' ? rawChatItems : []
+      const chatItems = chats.map(c => ({ ...c, _type: 'chat' }))
 
-      // Orders needing delivery: confirmed digital + shipped physical
       const deliveryOrders = orders.filter(o =>
         (o.store?.type === 'digital' && o.status === 'confirmed') ||
         (o.store?.type !== 'digital' && o.status === 'shipped')
       )
-      // Exclude orders that already have a chat (Business only — non-Business show all orders)
-      const chatOrderIds = plan === 'business' ? new Set(chats.map(c => String(c.order?._id || c.order))) : new Set()
+      const chatOrderIds = new Set(chats.map(c => String(c.order?._id || c.order)))
       const orderItems = deliveryOrders
         .filter(o => !chatOrderIds.has(String(o._id)))
         .map(o => ({ ...o, _type: 'order' }))
 
-      // Merge: chats first (with recent activity), then orders sorted by confirmedAt
       const merged = [
         ...chatItems.sort((a, b) => new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)),
         ...orderItems.sort((a, b) => new Date(b.confirmedAt || 0) - new Date(a.confirmedAt || 0)),
       ]
       setItems(merged)
     }).finally(() => setLoading(false))
-  }, [])
+  }, [plan])
 
   const filtered = query.trim()
     ? items.filter(item => {
@@ -237,10 +238,10 @@ export default function ChatListPage() {
               <MessageSquare size={24} className="text-text-subtle" />
             </div>
             <p className="font-semibold text-text">
-              {query ? 'لا توجد نتائج' : 'لا توجد طلبات للتسليم'}
+              {query ? 'لا توجد نتائج' : plan !== 'business' ? 'محادثة التسليم متاحة لباقة الأعمال فقط' : 'لا توجد طلبات للتسليم'}
             </p>
             <p className="text-sm text-text-muted">
-              {query ? 'جرّب كلمة بحث مختلفة' : 'عند تأكيد طلب رقمي ستظهر هنا'}
+              {query ? 'جرّب كلمة بحث مختلفة' : plan !== 'business' ? 'قم بترقية باقتك للاستمتاع بميزة محادثة التسليم' : 'عند تأكيد طلب رقمي ستظهر هنا'}
             </p>
           </div>
         ) : (
@@ -259,28 +260,6 @@ export default function ChatListPage() {
                 }}
               />
             ))}
-            {/* Upgrade banner for non-Business */}
-            {plan !== 'business' && chatCount === 0 && (
-              <div className="px-4 py-4 border-t border-border">
-                <div className="bg-accent-50 border border-accent-200 rounded-xl p-4 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-accent flex items-center justify-center text-white shrink-0">
-                    <MessageSquare size={16} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-cairo font-bold text-sm text-accent-800">محادثة مدمجة</p>
-                    <p className="font-cairo text-xs text-accent-700/70 mt-0.5">
-                      باقة Business تتيح محادثة داخل التطبيق مع العملاء — ترقية الآن
-                    </p>
-                    <a
-                      href="/subscribe?plan=business"
-                      className="inline-flex items-center gap-1 mt-2 font-cairo font-bold text-xs text-accent-700 hover:text-accent-900 transition-colors"
-                    >
-                      ترقية الباقة ←
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>

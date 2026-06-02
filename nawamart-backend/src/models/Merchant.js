@@ -63,6 +63,14 @@ const merchantSchema = new mongoose.Schema(
       enum: ['email', 'google'],
       default: 'email',
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
     // Reference to stores owned by this merchant
     stores: [
       {

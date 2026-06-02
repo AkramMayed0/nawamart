@@ -63,6 +63,14 @@ const customerSchema = new mongoose.Schema(
       enum: ['email', 'google'],
       default: 'email',
     },
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
     store: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Store',

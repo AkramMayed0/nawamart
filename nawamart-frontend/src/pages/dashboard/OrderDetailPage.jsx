@@ -402,28 +402,22 @@ export default function OrderDetailPage() {
             </button>
           )}
 
-          {/* Digital confirmed — chat delivery */}
-          {isDigital && order.status === 'confirmed' && (
-            plan === 'business' && order.chatId ? (
-              <button onClick={() => navigate(`/dashboard/chat/${order.chatId}`)}
-                className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-4 py-2.5 rounded-lg bg-accent-50 text-accent-700 hover:bg-accent-100 transition-colors"
-              >
-                <MessageCircle size={16} />
-                تسليم عبر المحادثة
-              </button>
-            ) : plan === 'pro' ? (
-              <span className="inline-flex items-center gap-2 font-cairo text-sm px-4 py-2.5 rounded-lg bg-bg border border-border text-text-muted">
-                <cm.icon size={16} />
-                {handle || '—'}
-              </span>
-            ) : (
-              <a href={cm.url(handle, customerPhone)} target="_blank" rel="noopener noreferrer"
-                className={`inline-flex items-center gap-2 font-cairo font-bold text-sm px-4 py-2.5 rounded-lg transition-colors ${cm.cls}`}
-              >
-                <cm.icon size={16} />
-                {cm.label}
-              </a>
-            )
+          {/* Delivery chat — for business plan only */}
+          {plan === 'business' && (order.status === 'confirmed' || order.status === 'shipped') && order.chatId && (
+            <button onClick={() => navigate(`/dashboard/chat/${order.chatId}`)}
+              className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-4 py-2.5 rounded-lg bg-accent-50 text-accent-700 hover:bg-accent-100 transition-colors"
+            >
+              <MessageCircle size={16} />
+              {isDigital ? 'تسليم عبر المحادثة' : 'متابعة التسليم عبر المحادثة'}
+            </button>
+          )}
+          {plan === 'business' && (order.status === 'confirmed' || order.status === 'shipped') && !order.chatId && (
+            <button onClick={() => navigate(`/dashboard/chat/order/${order._id}`)}
+              className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-4 py-2.5 rounded-lg bg-accent-50 text-accent-700 hover:bg-accent-100 transition-colors"
+            >
+              <MessageCircle size={16} />
+              فتح محادثة التسليم
+            </button>
           )}
         </div>
 
@@ -531,17 +525,17 @@ function OrderTimeline({ order }) {
     color: isConfirmed ? 'success' : 'muted',
   })
 
-  const isDigital = order.store?.type === 'digital'
+  // Delivery chat step (available for all order types)
+  events.push({
+    id: 'chat-open',
+    label: order.chatId ? 'محادثة مفتوحة' : 'بانتظار المحادثة',
+    time: '',
+    done: isDelivered,
+    icon: isDelivered ? 'check' : 'clock',
+    color: isDelivered ? 'success' : 'muted',
+  })
 
-  if (isDigital) {
-    events.push({
-      id: 'chat-open',
-      label: order.chatId ? 'محادثة مفتوحة' : 'بانتظار المحادثة',
-      time: '',
-      done: isDelivered,
-      icon: isDelivered ? 'check' : 'clock',
-      color: isDelivered ? 'success' : 'muted',
-    })
+  if (order.store?.type === 'digital') {
     events.push({
       id: 'delivered',
       label: 'تم التسليم',

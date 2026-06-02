@@ -105,7 +105,7 @@ export default function CustomerLogin() {
 
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-md">
-          <img src="/logo.png" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
           <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
             تسجيل دخول العميل
@@ -137,6 +137,12 @@ export default function CustomerLogin() {
               error={errors.password}
               disabled={loading}
             />
+
+            <div className="flex justify-end -mt-2">
+              <Link to="/customer/forgot-password" className="font-cairo text-xs text-primary hover:underline font-semibold">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
 
             <Button
               type="submit"

@@ -1,9 +1,11 @@
 const express = require('express');
 const router  = express.Router();
+const crypto  = require('crypto');
 const jwt     = require('jsonwebtoken');
 const Admin   = require('../models/Admin');
 const { asyncHandler, apiResponse } = require('../utils/helpers');
 const { verifyAdmin } = require('../middleware/verifyAdmin');
+const { sendPasswordResetEmail } = require('../services/email');
 const {
   getStats,
   getMerchants,
@@ -82,6 +84,103 @@ router.post('/seed', asyncHandler(async (req, res) => {
     statusCode: 201,
     message: 'تم إنشاء حساب المشرف — قم بتغيير كلمة المرور فوراً',
     data: { email: admin.email },
+  });
+}));
+
+// POST /api/admin/forgot-password
+router.post('/forgot-password', asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ success: false, data: null, message: 'البريد الإلكتروني مطلوب' });
+  }
+
+  const admin = await Admin.findOne({ email: email.toLowerCase().trim() });
+
+  if (!admin) {
+    return res.status(200).json({
+      success: true,
+      data: null,
+      message: 'إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور',
+    });
+  }
+
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+
+  admin.resetPasswordToken = hashedToken;
+  admin.resetPasswordExpires = Date.now() + 3600000;
+  await admin.save({ validateBeforeSave: false });
+
+  const clientOrigin = (
+    process.env.CLIENT_URL?.split(',')[0]?.trim() ||
+    req.headers.referer?.replace(/\/+$/, '') ||
+    req.headers.origin ||
+    'http://localhost:5173'
+  );
+  const resetLink = `${clientOrigin}/admin/reset-password/${resetToken}`;
+
+  try {
+    await sendPasswordResetEmail({ to: admin.email, name: admin.name, resetLink });
+  } catch (emailError) {
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save({ validateBeforeSave: false });
+    return res.status(500).json({
+      success: false,
+      data: null,
+      message: 'فشل إرسال البريد الإلكتروني — يرجى المحاولة لاحقاً',
+    });
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: null,
+    message: 'إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور',
+  });
+}));
+
+// POST /api/admin/reset-password/:token
+router.post('/reset-password/:token', asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ success: false, data: null, message: 'كلمة المرور الجديدة مطلوبة' });
+  }
+
+  if (password.length < 8) {
+    return res.status(400).json({
+      success: false,
+      data: null,
+      message: 'كلمة المرور يجب أن تكون 8 أحرف على الأقل',
+    });
+  }
+
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+  const admin = await Admin.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  }).select('+password');
+
+  if (!admin) {
+    return res.status(400).json({
+      success: false,
+      data: null,
+      message: 'الرابط غير صالح أو منتهي الصلاحية',
+    });
+  }
+
+  admin.password = password;
+  admin.resetPasswordToken = undefined;
+  admin.resetPasswordExpires = undefined;
+  await admin.save();
+
+  return res.status(200).json({
+    success: true,
+    data: null,
+    message: 'تم إعادة تعيين كلمة المرور بنجاح — يمكنك تسجيل الدخول الآن',
   });
 }));
 

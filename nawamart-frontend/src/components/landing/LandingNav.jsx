@@ -26,7 +26,7 @@ export default function LandingNav() {
       <div className="max-w-[1240px] mx-auto px-4 sm:px-8 py-4 flex items-center gap-7">
         {/* Logo */}
         <Link to="/" className="flex-none">
-          <img src="/logo.png" alt="NawaMart" className="h-8" />
+          <img src="/logo.svg" alt="NawaMart" className="h-8" />
         </Link>
 
         {/* Desktop links */}

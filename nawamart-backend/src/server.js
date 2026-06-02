@@ -26,7 +26,7 @@ app.set('io', io);
 io.on('connection', (socket) => {
   console.log(`[Socket] connected: ${socket.id}`);
 
-  // Join a chat room (support both join_chat and frontend's joinRoom)
+  // ── Join / leave chat rooms ──
   socket.on('joinRoom', (chatId) => {
     socket.join(chatId);
     console.log(`[Chat] Socket ${socket.id} joined chat: ${chatId}`);
@@ -37,7 +37,6 @@ io.on('connection', (socket) => {
     console.log(`[Chat] Socket ${socket.id} joined chat (legacy): ${chatId}`);
   });
 
-  // Leave a chat room (support both leaveRoom and leave_chat)
   socket.on('leaveRoom', (chatId) => {
     socket.leave(chatId);
     console.log(`[Chat] Socket ${socket.id} left chat: ${chatId}`);
@@ -48,7 +47,32 @@ io.on('connection', (socket) => {
     console.log(`[Chat] Socket ${socket.id} left chat (legacy): ${chatId}`);
   });
 
-  // Client-to-Client socket sendMessage bypass (just in case they emit directly)
+  // ── Typing indicator ──
+  socket.on('typing', ({ chatId, name }) => {
+    socket.to(chatId).emit('userTyping', { name });
+  });
+
+  socket.on('stopTyping', ({ chatId }) => {
+    socket.to(chatId).emit('userStopTyping');
+  });
+
+  // ── Read receipts ──
+  socket.on('markAsRead', ({ chatId, userId }) => {
+    socket.to(chatId).emit('messagesRead', { userId });
+  });
+
+  // ── Message acknowledgement ──
+  socket.on('messageDelivered', ({ chatId, messageId }) => {
+    socket.to(chatId).emit('messageStatusUpdate', { messageId, status: 'delivered' });
+  });
+
+  // ── Request missing messages on reconnect ──
+  socket.on('requestMissing', ({ chatId, lastKnownId }) => {
+    // The client can re-fetch from API; we just acknowledge
+    socket.emit('missingAck', { chatId });
+  });
+
+  // ── Client-to-Client socket sendMessage bypass ──
   socket.on('sendMessage', (msgData) => {
     if (msgData && msgData.chatId) {
       io.to(msgData.chatId).emit('receiveMessage', msgData);

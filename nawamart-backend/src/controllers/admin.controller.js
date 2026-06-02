@@ -5,7 +5,6 @@ const Order        = require('../models/Order');
 const Subscription = require('../models/Subscription');
 const SubscriptionEvent = require('../models/SubscriptionEvent');
 const Product      = require('../models/Product');
-const BillingService = require('../services/BillingService');
 const { asyncHandler, apiResponse, getPaginationParams, paginateResponse } = require('../utils/helpers');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -223,25 +222,6 @@ const setStorePlan = asyncHandler(async (req, res) => {
   const store = await Store.findById(req.params.id);
   if (!store) {
     return res.status(404).json({ success: false, data: null, message: 'المتجر غير موجود' });
-  }
-
-  // Determine Free Trial status for upgrade validation
-  const lastApprovedSub = await Subscription.findOne({
-    store: store._id,
-    status: 'approved',
-    expiresAt: { $ne: null },
-  }).sort({ approvedAt: -1 });
-  const isFreeTrial = !lastApprovedSub && store.plan === 'starter';
-
-  // Block downgrades on admin set-plan too (but not for Free Trial)
-  try {
-    BillingService.validateUpgrade(store.plan, plan, isFreeTrial);
-  } catch (err) {
-    return res.status(400).json({
-      success: false,
-      data: null,
-      message: err.message,
-    });
   }
 
   const previousPlan = store.plan;

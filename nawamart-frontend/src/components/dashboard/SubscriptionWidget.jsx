@@ -1,20 +1,15 @@
-/**
- * SubscriptionWidget
- * Dashboard card showing current plan, expiry date, and upgrade button.
- *
- * Fetches subscription from API on mount.
- * Self-contained — drop it anywhere in the dashboard.
- */
 import { useEffect, useRef }  from 'react'
 import { useNavigate }         from 'react-router-dom'
 import { useQuery }            from '@tanstack/react-query'
-import { Crown, AlertCircle, Clock, RefreshCw, XCircle } from 'lucide-react'
+import { Crown, AlertCircle, Clock, RefreshCw, XCircle, Wallet, FileText, CreditCard } from 'lucide-react'
 import clsx                    from 'clsx'
 import toast                   from 'react-hot-toast'
 import PlanBadge               from '@/components/ui/PlanBadge'
 import { useAuthStore }        from '@/store/authStore'
 import { getMySubscription, PLANS } from '@/api/subscriptions'
 import { getMyStore }          from '@/api/stores'
+import { getWalletBalance }    from '@/api/wallet'
+import { getMyInvoices }       from '@/api/invoices'
 
 function daysUntil(isoDate) {
   if (!isoDate) return null
@@ -27,6 +22,10 @@ function formatDate(isoDate) {
   return new Date(isoDate).toLocaleDateString('ar-YE', {
     year: 'numeric', month: 'long', day: 'numeric',
   })
+}
+
+function formatPrice(value) {
+  return (value ?? 0).toLocaleString('en-US')
 }
 
 export default function SubscriptionWidget() {
@@ -57,9 +56,25 @@ export default function SubscriptionWidget() {
     retry: false,
   })
 
-  const loading = subsLoading || storeLoading
+  const { data: walletData } = useQuery({
+    queryKey: ['wallet-balance', storeData?._id],
+    queryFn: () => getWalletBalance().then(r => r.data.data),
+    staleTime: 30_000,
+    retry: false,
+    enabled: currentPlan !== 'starter',
+  })
 
-  // ── Toast notification for expiring soon (≤5 days) ──
+  const { data: invoicesData } = useQuery({
+    queryKey: ['my-invoices', storeData?._id],
+    queryFn: () => getMyInvoices().then(r => r.data.data ?? []),
+    staleTime: 30_000,
+    retry: false,
+    enabled: currentPlan !== 'starter',
+  })
+
+  const loading = subsLoading || storeLoading
+  const invoices = Array.isArray(invoicesData) ? invoicesData : []
+
   const notifiedUrgent = useRef(false)
   useEffect(() => {
     if (notifiedUrgent.current) return
@@ -70,7 +85,6 @@ export default function SubscriptionWidget() {
     notifiedUrgent.current = true
   }, [sub, storeData, freshStore])
 
-  // ── Loading skeleton ──
   if (loading) {
     return (
       <div className="bg-white border border-border rounded-2xl p-5 animate-pulse">
@@ -99,6 +113,12 @@ export default function SubscriptionWidget() {
   const isPending       = status === 'pending'
   const isRejected      = !!rejectedSub && (!sub || new Date(rejectedSub.createdAt) > new Date(sub.createdAt))
   const expiringSoon    = days !== null && days <= 7 && days > 0 && !isExpired
+  const isBusiness      = plan === 'business'
+  const isPaid          = !isStarter && !isOnTrial
+
+  const walletBalance = walletData?.balance ?? 0
+  const verifiedInvoices = invoices.filter(inv => inv.status === 'verified')
+  const lastInvoice = invoices[0] ?? null
 
   return (
     <div className={clsx(
@@ -126,6 +146,26 @@ export default function SubscriptionWidget() {
       {/* ── Info rows ── */}
       <div className="flex flex-col gap-1.5 text-sm font-cairo">
 
+        {/* Plan price for paid plans */}
+        {isPaid && (
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted">سعر الخطة</span>
+            <span className="font-semibold text-text">
+              {formatPrice(planMeta.price)} ر.ي / {sub?.billing === 'yearly' ? 'سنوياً' : 'شهرياً'}
+            </span>
+          </div>
+        )}
+
+        {/* Billing cycle */}
+        {isPaid && sub?.billing && (
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted">دورة الفوترة</span>
+            <span className="font-semibold text-text">
+              {sub.billing === 'yearly' ? 'سنوي' : 'شهري'}
+            </span>
+          </div>
+        )}
+
         {/* Expiry */}
         {expLabel && !isExpired && (
           <div className="flex items-center justify-between">
@@ -148,6 +188,45 @@ export default function SubscriptionWidget() {
               expiringSoon ? 'text-warning' : 'text-text'
             )}>
               {days} يوم
+            </span>
+          </div>
+        )}
+
+        {/* Wallet balance for paid plans */}
+        {isPaid && (
+          <div className="flex items-center justify-between pt-1 mt-1 border-t border-border">
+            <span className="text-text-muted flex items-center gap-1">
+              <Wallet size={13} className="text-text-subtle" />
+              رصيد المحفظة
+            </span>
+            <span className="font-inter font-bold text-sm text-success dk-num">
+              {formatPrice(walletBalance)} ر.ي
+            </span>
+          </div>
+        )}
+
+        {/* Invoice count */}
+        {isPaid && verifiedInvoices.length > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted flex items-center gap-1">
+              <FileText size={13} className="text-text-subtle" />
+              الفواتير المدفوعة
+            </span>
+            <span className="font-en font-bold text-text dk-num">
+              {verifiedInvoices.length}
+            </span>
+          </div>
+        )}
+
+        {/* Last payment */}
+        {isPaid && lastInvoice && (
+          <div className="flex items-center justify-between">
+            <span className="text-text-muted flex items-center gap-1">
+              <CreditCard size={13} className="text-text-subtle" />
+              آخر دفعة
+            </span>
+            <span className="font-inter font-bold text-sm text-text dk-num">
+              {formatPrice(lastInvoice.amountDue)} ر.ي
             </span>
           </div>
         )}

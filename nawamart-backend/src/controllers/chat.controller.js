@@ -92,7 +92,7 @@ const getChat = asyncHandler(async (req, res) => {
   const chat = await Chat.findById(req.params.chatId)
     .populate('customer', 'name')
     .populate('merchant', 'name')
-    .populate('store', 'name logo')
+    .populate('store', 'name logo plan')
     .populate('order');
 
   if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
@@ -138,8 +138,15 @@ const sendMessage = asyncHandler(async (req, res) => {
     type,
     content,
     isRead: false,
+    delivered: false,
     createdAt: new Date(),
   };
+
+  if (req.body.replyTo) {
+    newMessage.replyTo = req.body.replyTo;
+    newMessage.replyContent = req.body.replyContent || null;
+    newMessage.replyType = req.body.replyType || null;
+  }
 
   chat.messages.push(newMessage);
   chat.lastMessage = type === 'text' ? content : `[مرفق]`;
@@ -256,11 +263,149 @@ const confirmReceipt = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/chats/init-delivery
+ * Merchant initiates a delivery chat for a confirmed order
+ */
+const initDeliveryChat = asyncHandler(async (req, res) => {
+  const { orderId } = req.body;
+
+  if (!orderId) {
+    return res.status(400).json({ success: false, message: 'معرّف الطلب مطلوب', data: null });
+  }
+
+  const Order = require('../models/Order');
+  const Store = require('../models/Store');
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    return res.status(404).json({ success: false, message: 'الطلب غير موجود', data: null });
+  }
+
+  if (order.merchant.toString() !== req.user._id.toString()) {
+    return res.status(403).json({ success: false, message: 'لا تملك صلاحية الوصول لهذا الطلب', data: null });
+  }
+
+  // Only business plan stores can use delivery chat
+  const store = await Store.findById(order.store).select('plan');
+  if (!store || store.plan !== 'business') {
+    return res.status(403).json({
+      success: false,
+      message: 'محادثة التسليم متاحة فقط لباقة الأعمال. قم بترقية باقتك للمتابعة.',
+      data: null,
+    });
+  }
+
+  if (!['confirmed', 'shipped'].includes(order.status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'يمكن بدء محادثة التسليم للطلبات المؤكدة أو المشحونة فقط',
+      data: null,
+    });
+  }
+
+  let chat = await Chat.findOne({ order: order._id });
+
+  if (!chat) {
+    chat = await Chat.create({
+      store:    order.store,
+      merchant: order.merchant,
+      customer: order.customer,
+      order:    order._id,
+      messages: [],
+    });
+  }
+
+  order.chatId = chat._id;
+  await order.save();
+
+  return apiResponse(res, {
+    statusCode: 201,
+    message: 'تم فتح محادثة التسليم',
+    data: chat,
+  });
+});
+
+/**
+ * POST /api/chats/:chatId/read
+ * Mark all unread messages as read for the current user
+ */
+const markAsRead = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.chatId);
+
+  if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
+    return res.status(404).json({ success: false, message: 'المحادثة غير موجودة', data: null });
+  }
+
+  let updated = 0;
+  const now = new Date();
+  for (const msg of chat.messages) {
+    if (!msg.isRead && msg.sender.toString() !== req.user._id.toString()) {
+      msg.isRead = true;
+      msg.readAt = now;
+      msg.delivered = true;
+      updated++;
+    }
+  }
+
+  if (req.userRole === 'customer') {
+    chat.customerUnread = 0;
+  } else {
+    chat.merchantUnread = 0;
+  }
+
+  await chat.save();
+
+  const io = req.app.get('io');
+  if (io && updated > 0) {
+    io.to(chat._id.toString()).emit('messagesRead', { userId: req.user._id, at: now });
+  }
+
+  return apiResponse(res, {
+    message: updated > 0 ? 'تم تحديث حالة القراءة' : 'جميع الرسائل مقروءة بالفعل',
+    data: { updated },
+  });
+});
+
+/**
+ * POST /api/chats/:chatId/retry/:messageId
+ * Retry sending a specific message (for reliability)
+ */
+const retryMessage = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.chatId);
+  if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
+    return res.status(404).json({ success: false, message: 'المحادثة غير موجودة', data: null });
+  }
+
+  const msg = chat.messages.id(req.params.messageId);
+  if (!msg) {
+    return res.status(404).json({ success: false, message: 'الرسالة غير موجودة', data: null });
+  }
+
+  msg.delivered = false;
+  msg.isRead = false;
+  msg.readAt = null;
+  await chat.save();
+
+  const io = req.app.get('io');
+  if (io) {
+    io.to(chat._id.toString()).emit('retryMessage', msg);
+  }
+
+  return apiResponse(res, {
+    message: 'تم إعادة إرسال الرسالة',
+    data: msg,
+  });
+});
+
 module.exports = {
   getMyChats,
   initChat,
+  initDeliveryChat,
   getChat,
   sendMessage,
   uploadAttachment,
   confirmReceipt,
+  markAsRead,
+  retryMessage,
 };

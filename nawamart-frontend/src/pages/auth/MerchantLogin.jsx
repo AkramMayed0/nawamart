@@ -114,7 +114,7 @@ export default function MerchantLogin() {
         <div className="w-full max-w-md">
 
           {/* Logo — mobile only */}
-          <img src="/logo.png" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
           <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
             تسجيل دخول التاجر
@@ -146,6 +146,12 @@ export default function MerchantLogin() {
               error={errors.password}
               disabled={loading}
             />
+
+            <div className="flex justify-end -mt-2">
+              <Link to="/merchant/forgot-password" className="font-cairo text-xs text-primary hover:underline font-semibold">
+                نسيت كلمة المرور؟
+              </Link>
+            </div>
 
             <Button
               type="submit"

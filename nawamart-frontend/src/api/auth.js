@@ -25,6 +25,20 @@ export const merchantLoginGoogle = (data) =>
 export const customerLoginGoogle = (data) =>
   api.post('/auth/customer/google', data)
 
+// ── Password Reset ──
+export const forgotPassword = (role, email) =>
+  api.post(`/auth/${role}/forgot-password`, { email })
+
+export const resetPassword = (role, token, password) =>
+  api.post(`/auth/${role}/reset-password/${token}`, { password })
+
+// ── Admin Password Reset ──
+export const adminForgotPassword = (email) =>
+  api.post('/admin/forgot-password', { email })
+
+export const adminResetPassword = (token, password) =>
+  api.post(`/admin/reset-password/${token}`, { password })
+
 // ── Profile ──
 export const getProfile = () =>
   api.get('/auth/me')

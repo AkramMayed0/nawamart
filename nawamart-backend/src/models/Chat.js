@@ -5,7 +5,6 @@ const messageSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
-      // References either Merchant or Customer
     },
     senderRole: {
       type: String,
@@ -33,6 +32,26 @@ const messageSchema = new mongoose.Schema(
       default: null,
     },
     isRead: {
+      type: Boolean,
+      default: false,
+    },
+    readAt: {
+      type: Date,
+      default: null,
+    },
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      default: null,
+    },
+    replyContent: {
+      type: String,
+      default: null,
+    },
+    replyType: {
+      type: String,
+      default: null,
+    },
+    delivered: {
       type: Boolean,
       default: false,
     },

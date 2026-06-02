@@ -65,7 +65,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-bg flex flex-col items-center justify-center p-4" dir="rtl">
 
       {/* Logo */}
-      <img src="/logo.png" alt="نوامارت" className="h-9 mb-10" />
+      <img src="/logo.svg" alt="نوامارت" className="h-9 mb-10" />
 
       {/* Header */}
       <div className="text-center mb-8">

@@ -147,7 +147,7 @@ export default function MerchantRegister() {
         <div className="w-full max-w-md">
 
           {/* Logo — mobile only */}
-          <img src="/logo.png" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
           <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
             إنشاء حساب تاجر
