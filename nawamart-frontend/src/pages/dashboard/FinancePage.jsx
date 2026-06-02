@@ -152,6 +152,16 @@ export default function FinancePage() {
     })
   }, [subscriptions, dateFrom, dateTo])
 
+  const filteredOrders = useMemo(() => {
+    if (!dateFrom && !dateTo) return orders
+    const from = dateFrom ? new Date(dateFrom) : new Date(0)
+    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
+    return orders.filter(o => {
+      const d = new Date(o.createdAt)
+      return d >= from && d <= to
+    })
+  }, [orders, dateFrom, dateTo])
+
   if (isLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
@@ -171,16 +181,6 @@ export default function FinancePage() {
       </div>
     )
   }
-
-  const filteredOrders = useMemo(() => {
-    if (!dateFrom && !dateTo) return orders
-    const from = dateFrom ? new Date(dateFrom) : new Date(0)
-    const to = dateTo ? new Date(dateTo + 'T23:59:59') : new Date()
-    return orders.filter(o => {
-      const d = new Date(o.createdAt)
-      return d >= from && d <= to
-    })
-  }, [orders, dateFrom, dateTo])
 
   function handleExportOperations() {
     exportOperationsToExcel(filteredOrders, filteredInvoices, filteredLedger, filteredSubscriptions, `financial-operations-${dateFrom}-${dateTo}.xlsx`)

@@ -198,6 +198,7 @@ export default function ProfilePage() {
               label="كلمة المرور الحالية"
               type="password"
               placeholder="********"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               disabled={saving}
@@ -207,6 +208,7 @@ export default function ProfilePage() {
               label="كلمة المرور الجديدة"
               type="password"
               placeholder="********"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={saving}

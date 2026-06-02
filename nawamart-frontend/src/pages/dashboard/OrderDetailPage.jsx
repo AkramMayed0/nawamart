@@ -525,15 +525,17 @@ function OrderTimeline({ order }) {
     color: isConfirmed ? 'success' : 'muted',
   })
 
-  // Delivery chat step (available for all order types)
-  events.push({
-    id: 'chat-open',
-    label: order.chatId ? 'محادثة مفتوحة' : 'بانتظار المحادثة',
-    time: '',
-    done: isDelivered,
-    icon: isDelivered ? 'check' : 'clock',
-    color: isDelivered ? 'success' : 'muted',
-  })
+  // Delivery chat step (digital stores, or physical stores with an active chat)
+  if (order.store?.type === 'digital' || order.chatId) {
+    events.push({
+      id: 'chat-open',
+      label: order.chatId ? 'محادثة مفتوحة' : 'بانتظار المحادثة',
+      time: '',
+      done: isDelivered,
+      icon: isDelivered ? 'check' : 'clock',
+      color: isDelivered ? 'success' : 'muted',
+    })
+  }
 
   if (order.store?.type === 'digital') {
     events.push({

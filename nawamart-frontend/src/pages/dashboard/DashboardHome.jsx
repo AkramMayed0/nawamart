@@ -163,13 +163,6 @@ export default function DashboardHome() {
   const navigate = useNavigate()
   const prefs = usePreferencesStore()
 
-  // Redirect based on default view preference
-  useEffect(() => {
-    if (prefs.defaultView !== 'overview') {
-      navigate(`/dashboard/${prefs.defaultView}`, { replace: true })
-    }
-  }, [])
-
   const { data: orders = [], isLoading: loading } = useQuery({
     queryKey: ['merchant-orders'],
     queryFn:  () => getMerchantOrders().then(res => res.data.data ?? []),

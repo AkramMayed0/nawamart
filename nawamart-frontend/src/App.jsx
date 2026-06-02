@@ -77,7 +77,7 @@ function PrivateRoute({ children, role = 'merchant' }) {
     queryFn: () => getProfile().then((response) => response.data.data),
     enabled: !!token,
     retry: false,
-    staleTime: 0,
+    staleTime: 60_000,
   })
 
   useEffect(() => {
@@ -99,7 +99,7 @@ function PrivateRoute({ children, role = 'merchant' }) {
   }, [session.isError, logout])
 
   if (!token) return <Navigate to="/merchant/login" replace />
-  if (session.isLoading || session.isFetching) return <RouteLoader />
+  if (session.isLoading) return <RouteLoader />
   if (session.isError) return <Navigate to="/merchant/login" replace />
 
   const activeRole = session.data?.role ?? user?.role
@@ -128,7 +128,7 @@ function GuestRoute({ children }) {
   }, [session.isError, logout])
 
   if (!token || session.isError) return children
-  if (session.isLoading || session.isFetching) return <RouteLoader />
+  if (session.isLoading) return <RouteLoader />
 
   return <Navigate to={dashboardForRole(session.data?.role ?? user?.role)} replace />
 }
@@ -167,7 +167,7 @@ function AdminRoute({ children }) {
   }, [session.isError, logout])
 
   if (!token) return <Navigate to="/admin/login" replace />
-  if (session.isLoading || session.isFetching) return <RouteLoader />
+  if (session.isLoading) return <RouteLoader />
   if (session.isError) return <Navigate to="/admin/login" replace />
 
   return children
@@ -190,7 +190,7 @@ function AdminGuestRoute({ children }) {
   }, [session.isError, logout])
 
   if (!token || session.isError) return children
-  if (session.isLoading || session.isFetching) return <RouteLoader />
+  if (session.isLoading) return <RouteLoader />
 
   return <Navigate to="/admin/dashboard" replace />
 }

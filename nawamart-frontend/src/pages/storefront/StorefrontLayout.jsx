@@ -11,7 +11,7 @@ import { resolveAssetUrl } from '@/utils/assets'
 function StoreMark({ store, compact = false }) {
   return (
     <Link to={`/store/${store?.slug ?? ''}`} className="flex min-w-0 items-center gap-3">
-      <div className={`${compact ? 'h-10 w-10' : 'h-12 w-12'} overflow-hidden rounded-lg border border-border bg-white shadow-sm`}>
+      <div className={`${compact ? 'h-10 w-10' : 'h-12 w-12'} overflow-hidden rounded-lg bg-white shadow-sm`}>
         {store?.logo ? (
           <img src={resolveAssetUrl(store.logo)} alt={store.name} className="h-full w-full object-cover" />
         ) : (

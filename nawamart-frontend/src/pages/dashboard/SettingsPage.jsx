@@ -100,8 +100,6 @@ export default function SettingsPage() {
   const [showRecent, setShowRecent] = useState(prefs.showRecentOrders)
   const [showSub, setShowSub] = useState(prefs.showSubscriptionSummary)
   const [showFeatured, setShowFeatured] = useState(prefs.showFeaturedProducts)
-  const [defaultView, setDefaultView] = useState(prefs.defaultView)
-
   const [name, setName] = useState(store?.name || '')
   const [description, setDesc] = useState(store?.description || '')
   const [category, setCategory] = useState(store?.category || '')
@@ -185,7 +183,6 @@ export default function SettingsPage() {
       prefs.setShowRecentOrders(showRecent)
       prefs.setShowSubscriptionSummary(showSub)
       prefs.setShowFeaturedProducts(showFeatured)
-      prefs.setDefaultView(defaultView)
 
       toast.success('تم حفظ التغييرات')
     } catch (err) {
@@ -472,28 +469,6 @@ export default function SettingsPage() {
                 label="إظهار المنتجات المميزة في المتجر"
                 description="عرض قسم المنتجات المميزة في صفحة متجرك العامة."
               />
-            </div>
-
-            <div className="border-t border-border pt-4">
-              <label className="flex flex-col gap-1.5">
-                <span className="font-cairo text-sm font-semibold text-text flex items-center gap-2">
-                  <LayoutDashboard size={15} />
-                  العرض الافتراضي للوحة التحكم
-                </span>
-                <div className="relative max-w-xs">
-                  <select
-                    value={defaultView}
-                    onChange={e => setDefaultView(e.target.value)}
-                    className="h-10 w-full rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none transition-colors focus:border-primary appearance-none"
-                  >
-                    <option value="overview">نظرة عامة</option>
-                    <option value="orders">الطلبات</option>
-                    <option value="products">المنتجات</option>
-                    <option value="finance">المالية</option>
-                  </select>
-                  <ChevronDown size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                </div>
-              </label>
             </div>
 
             <div className="border-t border-border pt-4">
