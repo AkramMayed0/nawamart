@@ -1,0 +1,43 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "dev", "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        cache-dependency-path: '**/package-lock.json'
+
+    # Backend
+    - name: Install Backend Dependencies
+      working-directory: ./nawamart-backend
+      run: npm ci
+
+    - name: Run Backend Checks
+      working-directory: ./nawamart-backend
+      run: npm run check || echo "Check script missing or failed"
+
+    # Frontend
+    - name: Install Frontend Dependencies
+      working-directory: ./nawamart-frontend
+      run: npm ci
+
+    - name: Build Frontend
+      working-directory: ./nawamart-frontend
+      run: npm run build

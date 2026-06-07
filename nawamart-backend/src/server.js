@@ -9,6 +9,7 @@ const Chat = require('./models/Chat');
 const Merchant = require('./models/Merchant');
 const Customer = require('./models/Customer');
 const { validateEnv } = require('./config/env');
+const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
 const runtime = validateEnv();
@@ -140,7 +141,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log(`[Socket] disconnected: ${socket.id}`);
+    logger.info(`[Socket] disconnected: ${socket.id}`);
   });
 });
 
@@ -149,20 +150,16 @@ const start = async () => {
   await connectDB();
 
   httpServer.listen(PORT, () => {
-    console.log('');
-    console.log('[Startup] NawaMart API is running!');
-    console.log(`[Server]  : http://localhost:${PORT}`);
-    console.log(`[Env]     : ${process.env.NODE_ENV || 'development'}`);
-    console.log(`[Health]  : http://localhost:${PORT}/api/health`);
-    console.log('');
+    logger.info(`[Startup] NawaMart API is running on port ${PORT}`);
+    logger.info(`[Env]     : ${process.env.NODE_ENV || 'development'}`);
   });
 };
 
 // ─── Graceful Shutdown ────────────────────────────────────────────────────────
 const shutdown = (signal) => {
-  console.log(`\n[Shutdown] ${signal} received — shutting down gracefully...`);
+  logger.warn(`\n[Shutdown] ${signal} received — shutting down gracefully...`);
   httpServer.close(() => {
-    console.log('[Server] HTTP server closed');
+    logger.info('[Server] HTTP server closed');
     process.exit(0);
   });
 };
@@ -172,7 +169,7 @@ process.on('SIGINT', () => shutdown('SIGINT'));
 
 // Unhandled rejection safety net
 process.on('unhandledRejection', (reason) => {
-  console.error('[Error] Unhandled Rejection:', reason);
+  logger.error(`[Error] Unhandled Rejection: ${reason.stack || reason}`);
   shutdown('unhandledRejection');
 });
 

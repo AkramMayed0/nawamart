@@ -1,18 +1,20 @@
+const logger = require('../utils/logger');
+
 /**
  * Global error handling middleware.
  * Must be registered LAST in Express (after all routes).
  */
 const errorHandler = (err, req, res, next) => {
   if (process.env.NODE_ENV === 'development') {
-    console.error('[Error]', err);
+    logger.error(`[Error] ${err.stack || err.message}`);
   } else {
-    console.error('[Error]', {
+    logger.error(`[Error] ${err.message}`, {
       requestId: req.id,
       method: req.method,
       path: req.originalUrl,
       statusCode: err.statusCode || 500,
       name: err.name,
-      message: err.message,
+      stack: err.stack,
     });
   }
 

@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 const mongoose = require('mongoose');
 const path = require('path');
 
@@ -10,6 +12,7 @@ const authRoutes = require('./routes/auth.routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 const { requestId, sanitizeRequest } = require('./middleware/security');
 const { validateEnv } = require('./config/env');
+const logger = require('./utils/logger');
 
 const app = express();
 const runtime = validateEnv();
@@ -17,11 +20,19 @@ const runtime = validateEnv();
 app.set('trust proxy', 1);
 app.use(requestId);
 
-// ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
   contentSecurityPolicy: runtime.isProduction ? undefined : false,
 }));
+
+// Data Sanitization against NoSQL query injection
+app.use(mongoSanitize());
+
+// Data Sanitization against XSS
+app.use(xss());
+
+// ─── Logging ──────────────────────────────────────────────────────────────────
+app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = runtime.allowedOrigins;
@@ -66,8 +77,8 @@ const authLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// ─── Body Parsing ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+// ─── Body Parser ───────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: process.env.FORM_BODY_LIMIT || '1mb' }));
 app.use(sanitizeRequest);
 
