@@ -16,7 +16,7 @@ export default function Input({
   return (
     <div className={clsx('flex flex-col gap-1.5', className)}>
       {label && (
-        <label htmlFor={inputId} className="text-sm font-semibold text-text font-cairo">
+        <label htmlFor={inputId} className="text-sm font-bold text-text font-cairo">
           {label}
         </label>
       )}
@@ -31,15 +31,15 @@ export default function Input({
         <input
           id={inputId}
           className={clsx(
-            'w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border bg-white text-text',
+            'w-full font-cairo text-[15px] h-12 px-4 rounded-xl border bg-white text-text',
             'placeholder:text-text-subtle outline-none',
-            'transition-[border-color,box-shadow] duration-default',
-            'focus:border-primary focus:shadow-focus',
+            'transition-all duration-default',
+            'focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)]',
             error
-              ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(231,76,60,0.18)]'
-              : 'border-border',
-            prefix && 'pe-9',
-            suffix && 'ps-9',
+              ? 'border-danger focus:border-danger focus:shadow-[0_0_0_3px_rgba(231,76,60,0.12)]'
+              : 'border-border hover:border-border-strong',
+            prefix && 'pe-10',
+            suffix && 'ps-10',
             inputClassName,
           )}
           {...props}
@@ -53,7 +53,7 @@ export default function Input({
       </div>
 
       {error && (
-        <p className="text-xs text-danger font-cairo">{error}</p>
+        <p className="text-xs text-danger font-cairo font-semibold">{error}</p>
       )}
       {hint && !error && (
         <p className="text-xs text-text-subtle font-cairo">{hint}</p>
@@ -66,20 +66,20 @@ export function Textarea({ label, hint, error, className = '', ...props }) {
   return (
     <div className={clsx('flex flex-col gap-1.5', className)}>
       {label && (
-        <label className="text-sm font-semibold text-text font-cairo">{label}</label>
+        <label className="text-sm font-bold text-text font-cairo">{label}</label>
       )}
       <textarea
         className={clsx(
-          'w-full font-cairo text-[15px] px-3.5 py-2.5 rounded border bg-white text-text',
+          'w-full font-cairo text-[15px] px-4 py-3 rounded-xl border bg-white text-text',
           'placeholder:text-text-subtle outline-none resize-none',
-          'transition-[border-color,box-shadow] duration-default',
-          'focus:border-primary focus:shadow-focus',
-          error ? 'border-danger' : 'border-border',
+          'transition-all duration-default',
+          'focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)]',
+          error ? 'border-danger' : 'border-border hover:border-border-strong',
         )}
         rows={4}
         {...props}
       />
-      {error && <p className="text-xs text-danger font-cairo">{error}</p>}
+      {error && <p className="text-xs text-danger font-cairo font-semibold">{error}</p>}
       {hint && !error && <p className="text-xs text-text-subtle font-cairo">{hint}</p>}
     </div>
   )

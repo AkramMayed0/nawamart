@@ -107,13 +107,13 @@ export default function AdminSubscriptions() {
           return (
             <TableRow key={subscription._id} columns={SUBSCRIPTION_COLUMNS}>
               <div className="min-w-0">
-                <p className="truncate font-cairo text-sm font-bold text-text">{subscription.merchant?.name ?? '—'}</p>
-                <p className="truncate font-inter text-xs text-text-subtle">{subscription.merchant?.email ?? '—'}</p>
+                <p className="truncate font-cairo text-sm font-bold text-white">{subscription.merchant?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{subscription.merchant?.email ?? '—'}</p>
               </div>
 
               <div className="min-w-0">
-                <p className="truncate font-cairo text-sm font-semibold text-text">{subscription.store?.name ?? '—'}</p>
-                <p className="truncate font-inter text-xs text-text-subtle">/{subscription.store?.slug ?? 'store'}</p>
+                <p className="truncate font-cairo text-sm font-semibold text-white">{subscription.store?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>/{subscription.store?.slug ?? 'store'}</p>
               </div>
 
               <div className="flex flex-col gap-1">
@@ -129,22 +129,22 @@ export default function AdminSubscriptions() {
                   </span>
                 )}
                 {subscription.billing && (
-                  <span className="font-cairo text-[10px] font-bold text-text-subtle">
+                  <span className="font-cairo text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.4)' }}>
                     {subscription.billing === 'yearly' ? 'سنوي' : 'شهري'}
                   </span>
                 )}
                 {subscription.creditApplied > 0 && (
-                  <span className="font-cairo text-[10px] text-success-dark">
+                  <span className="font-cairo text-[10px]" style={{ color: '#4dd68a' }}>
                     خصم {subscription.creditApplied.toLocaleString('en-US')} ر.ي
                   </span>
                 )}
                 {subscription.walletCreditGenerated > 0 && (
-                  <span className="font-cairo text-[10px] text-success-dark">
+                  <span className="font-cairo text-[10px]" style={{ color: '#4dd68a' }}>
                     +{subscription.walletCreditGenerated.toLocaleString('en-US')} ر.ي للمحفظة
                   </span>
                 )}
                 {subscription.amountDue > 0 && (
-                  <span className="font-cairo text-[10px] font-bold text-primary">
+                  <span className="font-cairo text-[10px] font-bold" style={{ color: '#7aa2d4' }}>
                     المطلوب: {subscription.amountDue.toLocaleString('en-US')} ر.ي
                   </span>
                 )}
@@ -173,19 +173,19 @@ export default function AdminSubscriptions() {
                 <StatusBadge label={status.label} tone={status.tone} />
                 {subscription.status === 'approved' && subscription.expiresAt ? (
                   <>
-                    <p className="mt-1 font-cairo text-[11px] text-text-subtle">
+                    <p className="mt-1 font-cairo text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
                       ينتهي {formatDate(subscription.expiresAt)}
                     </p>
-                    <p className="font-cairo text-[11px] font-bold text-text">
+                    <p className="font-cairo text-[11px] font-bold text-white">
                       {Math.ceil((new Date(subscription.expiresAt).getTime() - Date.now()) / (1000*60*60*24))} يوم متبقي
                     </p>
                   </>
                 ) : subscription.status === 'pending' ? (
-                  <p className="mt-1 font-cairo text-[11px] text-text-subtle">
+                  <p className="mt-1 font-cairo text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>
                     منذ {formatDate(subscription.createdAt)}
                   </p>
                 ) : (
-                  <p className="mt-1 font-cairo text-[11px] text-text-subtle">{formatDate(subscription.createdAt)}</p>
+                  <p className="mt-1 font-cairo text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>{formatDate(subscription.createdAt)}</p>
                 )}
               </div>
 
@@ -212,7 +212,7 @@ export default function AdminSubscriptions() {
                     </ActionButton>
                   </>
                 ) : (
-                  <span className="font-cairo text-xs text-text-subtle">تمت المراجعة</span>
+                  <span className="font-cairo text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>تمت المراجعة</span>
                 )}
               </div>
             </TableRow>
@@ -246,7 +246,8 @@ export default function AdminSubscriptions() {
             onChange={(event) => setRejectReason(event.target.value)}
             placeholder="اكتب سبب الرفض..."
             rows={4}
-            className="w-full resize-none rounded-lg border border-border px-3.5 py-2.5 font-cairo text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-danger"
+            className="w-full resize-none rounded-xl px-4 py-3 font-cairo text-sm text-white outline-none transition-colors"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
           />
         </Modal>
       )}

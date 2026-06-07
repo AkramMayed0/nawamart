@@ -21,12 +21,12 @@ import { Store, Tag, Package, Crown } from 'lucide-react'
 function EmptyProducts({ onAdd }) {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="w-16 h-16 rounded-2xl bg-bg-soft border border-border flex items-center justify-center mb-4">
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-bg-soft to-bg border border-border flex items-center justify-center mb-4 shadow-sm">
         <Package size={28} className="text-text-subtle" />
       </div>
       <h3 className="font-cairo font-bold text-text mb-1">لا توجد منتجات بعد</h3>
       <p className="font-cairo text-sm text-text-muted mb-5">أضف أول منتج لبدء البيع.</p>
-      <Button variant="primary" size="md" onClick={onAdd}>
+      <Button variant="accent" size="md" onClick={onAdd}>
         <Icon name="plus" size={16} />
         أضف أول منتج
       </Button>
@@ -39,8 +39,8 @@ function ProductRow({ product, onEdit, onDelete }) {
   const effectivePrice = hasSale ? product.salePrice : product.price
 
   return (
-    <div className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0 hover:bg-bg transition-colors">
-      <div className="w-12 h-12 rounded-lg bg-bg-soft border border-border overflow-hidden shrink-0">
+    <div className="flex items-center gap-4 px-4 py-3 border-b border-border last:border-0 hover:bg-accent-50/30 transition-all border-r-3 border-r-transparent hover:border-r-accent">
+      <div className="w-12 h-12 rounded-xl bg-bg-soft border border-border overflow-hidden shrink-0 shadow-sm">
         {product.images?.[0]
           ? <img src={resolveAssetUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
           : <div className="w-full h-full flex items-center justify-center"><Icon name="image" size={18} className="text-border-strong" /></div>
@@ -51,7 +51,7 @@ function ProductRow({ product, onEdit, onDelete }) {
         <p className="font-cairo font-semibold text-sm text-text truncate">{product.name}</p>
         <div className="flex items-center gap-2 mt-0.5">
           {product.category && (
-            <span className="inline-flex items-center gap-1 font-cairo text-[11px] text-text-muted bg-bg-soft px-1.5 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 font-cairo text-[11px] text-text-muted bg-gradient-to-r from-bg-soft to-bg px-2 py-0.5 rounded-xl">
               <Tag size={10} />
               {product.category}
             </span>
@@ -74,7 +74,7 @@ function ProductRow({ product, onEdit, onDelete }) {
         )}
       </div>
 
-      <span className={`font-cairo text-xs font-semibold px-2 py-0.5 rounded-pill whitespace-nowrap ${
+      <span className={`font-cairo text-xs font-semibold px-2.5 py-1 rounded-xl whitespace-nowrap ${
         product.unlimitedStock ? 'bg-info-100 text-info' :
         product.stock > 0 ? 'bg-success-100 text-success-dark' : 'bg-danger-100 text-danger'
       }`}>
@@ -84,13 +84,13 @@ function ProductRow({ product, onEdit, onDelete }) {
       <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={() => onEdit(product)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-primary-50 hover:text-primary transition-colors"
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted hover:bg-primary-50 hover:text-primary transition-all hover:scale-110"
         >
           <Icon name="edit" size={15} />
         </button>
         <button
           onClick={() => onDelete(product)}
-          className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-danger-100 hover:text-danger transition-colors"
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted hover:bg-danger-100 hover:text-danger transition-all hover:scale-110"
         >
           <Icon name="trash" size={15} />
         </button>
@@ -180,27 +180,32 @@ export default function ProductsPage() {
     <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
 
       <div className="flex items-center justify-between mb-6 gap-4">
-        <div>
-          <h1 className="font-cairo font-extrabold text-2xl text-text mb-0.5">المنتجات</h1>
-          <p className="font-cairo text-sm text-text-muted">أضف وأدر منتجات متجرك.</p>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent-50 to-accent-100 flex items-center justify-center shadow-sm">
+            <Package size={20} className="text-accent-700" />
+          </div>
+          <div>
+            <h1 className="font-cairo font-extrabold text-2xl text-text mb-0.5">المنتجات</h1>
+            <p className="font-cairo text-sm text-text-muted">أضف وأدر منتجات متجرك.</p>
+          </div>
         </div>
         {atLimit ? (
           <a
             href="/subscribe?plan=pro"
-            className="inline-flex items-center gap-1.5 font-cairo font-bold text-sm px-4 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-700 active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 font-cairo font-bold text-sm px-5 py-3 rounded-2xl bg-accent text-white hover:bg-accent-700 active:scale-95 transition-all shadow-md shadow-accent/20"
           >
             <Crown size={15} />
             ترقية لـ Pro
           </a>
         ) : (
-          <Button variant="primary" size="md" onClick={openAdd}>
+          <Button variant="accent" size="md" onClick={openAdd}>
             <Icon name="plus" size={16} />
             إضافة منتج
           </Button>
         )}
       </div>
 
-      <div className="bg-white border border-border rounded-xl overflow-hidden">
+      <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
         {isLoading && Array.from({ length: 5 }).map((_, i) => <ProductRowSkeleton key={i} />)}
         {!isLoading && products.length === 0 && <EmptyProducts onAdd={openAdd} />}
         {!isLoading && products.map(p => (

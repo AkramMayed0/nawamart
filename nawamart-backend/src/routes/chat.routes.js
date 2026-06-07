@@ -10,7 +10,9 @@ const {
   confirmReceipt,
   markAsRead,
   retryMessage,
+  sendProductCard,
 } = require('../controllers/chat.controller');
+
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
 const { uploadChatFile } = require('../utils/cloudinary');
 
@@ -44,4 +46,8 @@ router.post('/:chatId/read', markAsRead);
 // POST /api/chats/:chatId/retry/:messageId - Retry sending a message
 router.post('/:chatId/retry/:messageId', retryMessage);
 
+// POST /api/chats/:chatId/product-card - Merchant sends a product card
+router.post('/:chatId/product-card', requireRole('merchant'), sendProductCard);
+
 module.exports = router;
+

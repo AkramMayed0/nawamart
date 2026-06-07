@@ -42,6 +42,7 @@ import FinancePage from '@/pages/dashboard/FinancePage'
 import ReportsPage from '@/pages/dashboard/ReportsPage'
 import ProfilePage from '@/pages/dashboard/ProfilePage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
+import AntiFraudPage from '@/pages/dashboard/AntiFraudPage'
 
 import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
 import StorePage from '@/pages/storefront/StorePage'
@@ -225,6 +226,7 @@ export default function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="anti-fraud" element={<AntiFraudPage />} />
       </Route>
 
       <Route path="/store/:slug" element={<StorefrontLayout />}>

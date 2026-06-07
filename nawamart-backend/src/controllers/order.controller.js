@@ -2,12 +2,19 @@ const Order   = require('../models/Order');
 const Product = require('../models/Product');
 const Store   = require('../models/Store');
 const Chat    = require('../models/Chat');
+const { deliverOrderDigitalItems } = require('../services/DigitalDeliveryService');
 const {
   apiResponse,
   asyncHandler,
   getPaginationParams,
   paginateResponse,
 } = require('../utils/helpers');
+
+function matchesId(value, expected) {
+  if (!value || !expected) return false;
+  const id = value._id ? value._id : value;
+  return id.toString() === expected.toString();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /api/orders
@@ -56,7 +63,8 @@ const createOrder = asyncHandler(async (req, res) => {
 
   // Fetch products, verify availability, snapshot prices
   for (const item of items) {
-    if (!item.product || !item.quantity || item.quantity < 1) {
+    const quantity = Number(item.quantity);
+    if (!item.product || !Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
       return res.status(400).json({ success: false, message: 'بيانات المنتج غير صالحة', data: null });
     }
 
@@ -69,7 +77,15 @@ const createOrder = asyncHandler(async (req, res) => {
       });
     }
 
-    if (!product.unlimitedStock && product.stock < item.quantity) {
+    if (product.store.toString() !== storeId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product does not belong to this store',
+        data: null,
+      });
+    }
+
+    if (!product.unlimitedStock && product.stock < quantity) {
       return res.status(400).json({
         success: false,
         message: `الكمية المطلوبة غير متوفرة للمنتج: ${product.name}`,
@@ -78,19 +94,19 @@ const createOrder = asyncHandler(async (req, res) => {
     }
 
     const unitPrice = product.salePrice ?? product.price;
-    totalAmount += unitPrice * item.quantity;
+    totalAmount += unitPrice * quantity;
 
     processedItems.push({
       product:  product._id,
       name:     product.name,
       price:    unitPrice,
-      quantity: item.quantity,
+      quantity,
       image:    product.images?.[0] ?? null,
     });
 
     // Deduct stock (skip if unlimited)
     if (!product.unlimitedStock) {
-      product.stock -= item.quantity;
+      product.stock -= quantity;
       if (product.stock === 0) product.isActive = false;
       await product.save();
     }
@@ -114,6 +130,10 @@ const createOrder = asyncHandler(async (req, res) => {
     paymentWasl: paymentWasl ?? null,
     notes:       notes ?? null,
     status:      initialStatus,
+    digitalDelivery: {
+      status: store.type === 'digital' ? 'pending' : 'not_applicable',
+      items: [],
+    },
     contactMethod: contactMethod || deliveryAddress?.contactMethod || 'whatsapp',
     contactHandle: contactHandle || deliveryAddress?.phone || null,
   });
@@ -185,7 +205,7 @@ const getCustomerOrders = asyncHandler(async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GET /api/orders/:id
-// Get a single order by ID (public for tracking, full for owner)
+// Get a single order by ID (owner only)
 // ─────────────────────────────────────────────────────────────────────────────
 const getOrderById = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
@@ -197,12 +217,12 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 
   if (!req.user) {
-    return apiResponse(res, { message: 'تم جلب الطلب بنجاح', data: order });
+    return res.status(401).json({ success: false, message: 'Authentication required', data: null });
   }
 
   const userId = req.user._id.toString();
-  const isCustomer = req.userRole === 'customer' && order.customer?._id?.toString() === userId;
-  const isMerchant = req.userRole === 'merchant' && order.merchant._id?.toString() === userId;
+  const isCustomer = req.userRole === 'customer' && matchesId(order.customer, userId);
+  const isMerchant = req.userRole === 'merchant' && matchesId(order.merchant, userId);
 
   if (!isCustomer && !isMerchant) {
     return res.status(403).json({ success: false, message: 'لا تملك صلاحية الوصول لهذا الطلب', data: null });
@@ -234,7 +254,7 @@ const confirmOrder = asyncHandler(async (req, res) => {
   order.confirmedAt = new Date();
 
   // Auto-create delivery chat only for business plan stores
-  const store = await Store.findById(order.store).select('plan');
+  const store = await Store.findById(order.store).select('plan type');
   if (order.customer && !order.chatId && store?.plan === 'business') {
     let chat = await Chat.findOne({ order: order._id });
     if (!chat) {
@@ -247,6 +267,10 @@ const confirmOrder = asyncHandler(async (req, res) => {
       });
     }
     order.chatId = chat._id;
+  }
+
+  if (store?.type === 'digital') {
+    await deliverOrderDigitalItems(order, store);
   }
 
   await order.save();

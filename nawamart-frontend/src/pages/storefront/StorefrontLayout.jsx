@@ -7,6 +7,7 @@ import { getStoreBySlug } from '@/api/stores'
 import { useCartStore } from '@/store/cartStore'
 import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import { resolveAssetUrl } from '@/utils/assets'
+import FloatingChatButton from '@/components/chat/FloatingChatButton'
 
 function StoreMark({ store, compact = false }) {
   return (
@@ -254,6 +255,11 @@ export default function StorefrontLayout() {
       <main>
         <Outlet />
       </main>
+
+      {/* ── Multi-Tenant Live Chat widget (Pro/Business plan) ── */}
+      {store?._id && ['pro', 'business'].includes(store?.subscription?.plan) && (
+        <FloatingChatButton storeId={store._id} />
+      )}
 
       <footer className="border-t border-border bg-white">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 py-8 md:grid-cols-[1fr_auto] md:items-center">

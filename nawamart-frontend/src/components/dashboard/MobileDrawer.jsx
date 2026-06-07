@@ -41,13 +41,16 @@ export default function MobileDrawer({ open, onClose }) {
 
       {/* ── Drawer panel (slides from right / RTL end) ── */}
       <div
-        className="relative w-72 max-w-[85vw] h-full bg-white shadow-2xl flex flex-col"
+        className="relative w-72 max-w-[85vw] h-full bg-white rounded-l-3xl shadow-2xl flex flex-col overflow-hidden"
         style={{ animation: 'slideInRight 220ms cubic-bezier(.4,0,.2,1)' }}
       >
+        {/* Thin accent line at top */}
+        <div className="h-0.5 w-full bg-gradient-to-l from-accent via-primary to-accent shrink-0" />
+
         {/* Close button */}
         <button
           onClick={onClose}
-          className="absolute top-3 left-3 w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:bg-bg-soft transition-colors z-10"
+          className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center rounded-xl bg-bg-soft text-text-muted hover:bg-border hover:text-text transition-colors z-10"
           aria-label="إغلاق القائمة"
         >
           <X size={18} />

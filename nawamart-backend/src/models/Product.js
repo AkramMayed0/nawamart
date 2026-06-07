@@ -96,6 +96,25 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    digitalDelivery: {
+      enabled: { type: Boolean, default: false },
+      type: {
+        type: String,
+        enum: ['file', 'url', 'code'],
+        default: 'url',
+      },
+      fileUrl: { type: String, trim: true, default: null },
+      externalUrl: { type: String, trim: true, default: null },
+      instructions: { type: String, trim: true, maxlength: 1000, default: null },
+      serialCodes: [
+        {
+          code: { type: String, required: true, trim: true },
+          isClaimed: { type: Boolean, default: false },
+          claimedAt: { type: Date, default: null },
+          order: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
+        },
+      ],
+    },
   },
   {
     timestamps: true,
@@ -115,5 +134,6 @@ productSchema.virtual('effectivePrice').get(function () {
 productSchema.index({ store: 1, isDeleted: 1 });
 productSchema.index({ merchant: 1 });
 productSchema.index({ name: 'text', description: 'text' }); // Full-text search
+productSchema.index({ store: 1, 'digitalDelivery.enabled': 1 });
 
 module.exports = mongoose.model('Product', productSchema);

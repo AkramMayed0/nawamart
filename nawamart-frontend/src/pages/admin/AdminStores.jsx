@@ -137,10 +137,10 @@ export default function AdminStores() {
           return (
             <TableRow key={store._id} columns={STORE_COLUMNS}>
               <div className="min-w-0">
-                <p className="truncate font-cairo text-sm font-bold text-text">{store.name ?? '—'}</p>
-                <p className="truncate font-inter text-xs text-text-subtle">/{store.slug ?? 'store'}</p>
+                <p className="truncate font-cairo text-sm font-bold text-white">{store.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>/{store.slug ?? 'store'}</p>
               </div>
-              <p className="truncate font-cairo text-sm text-text-muted">{store.merchant?.name ?? '—'}</p>
+              <p className="truncate font-cairo text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{store.merchant?.name ?? '—'}</p>
               <StatusBadge
                 label={store.type === 'digital' ? 'رقمي' : 'مادي'}
                 tone={store.type === 'digital' ? 'info' : 'neutral'}
@@ -148,7 +148,7 @@ export default function AdminStores() {
               <div>
                 <StatusBadge label={plan.label} tone={plan.tone} />
                 {store.planExpiresAt && (
-                  <p className="mt-1 font-cairo text-[11px] text-text-subtle">ينتهي {formatDate(store.planExpiresAt)}</p>
+                  <p className="mt-1 font-cairo text-[11px]" style={{ color: 'rgba(255,255,255,0.4)' }}>ينتهي {formatDate(store.planExpiresAt)}</p>
                 )}
               </div>
               <ActiveBadge isActive={store.isActive} />
@@ -192,37 +192,23 @@ export default function AdminStores() {
           }
         >
           <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="suspendType"
-                checked={suspendDays === 0}
-                onChange={() => setSuspendDays(0)}
-                className="w-4 h-4 text-primary"
-              />
-              <span className="font-cairo text-sm text-text">إيقاف دائم</span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="suspendType" checked={suspendDays === 0} onChange={() => setSuspendDays(0)} className="w-4 h-4 accent-accent" />
+              <span className="font-cairo text-sm text-white">إيقاف دائم</span>
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="suspendType"
-                checked={suspendDays > 0}
-                onChange={() => setSuspendDays(7)}
-                className="w-4 h-4 text-primary"
-              />
-              <span className="font-cairo text-sm text-text">إيقاف لمدة</span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="suspendType" checked={suspendDays > 0} onChange={() => setSuspendDays(7)} className="w-4 h-4 accent-accent" />
+              <span className="font-cairo text-sm text-white">إيقاف لمدة</span>
             </label>
             {suspendDays > 0 && (
               <div className="flex items-center gap-2 mr-6">
                 <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={suspendDays}
+                  type="number" min={1} max={365} value={suspendDays}
                   onChange={(e) => setSuspendDays(Number(e.target.value))}
-                  className="h-9 w-20 rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none focus:border-primary"
+                  className="h-9 w-20 rounded-lg px-3 font-inter text-sm text-white outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
-                <span className="font-cairo text-sm text-text-muted">يوم</span>
+                <span className="font-cairo text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>يوم</span>
               </div>
             )}
           </div>
@@ -252,27 +238,25 @@ export default function AdminStores() {
         >
           <div className="grid gap-4">
             <label className="block">
-              <span className="mb-1.5 block font-cairo text-sm font-bold text-text">الخطة</span>
+              <span className="mb-1.5 block font-cairo text-sm font-bold text-white">الخطة</span>
               <select
                 value={newPlan}
                 onChange={(event) => setNewPlan(event.target.value)}
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none transition-colors focus:border-primary"
+                className="h-10 w-full rounded-xl px-3 font-cairo text-sm text-white outline-none transition-colors"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
               >
-                <option value="starter">مبتدئ</option>
-                <option value="pro">Pro</option>
-                <option value="business">Business</option>
+                <option value="starter" style={{ background: '#1c2333' }}>مبتدئ</option>
+                <option value="pro" style={{ background: '#1c2333' }}>Pro</option>
+                <option value="business" style={{ background: '#1c2333' }}>Business</option>
               </select>
             </label>
-
             <label className="block">
-              <span className="mb-1.5 block font-cairo text-sm font-bold text-text">المدة بالأيام</span>
+              <span className="mb-1.5 block font-cairo text-sm font-bold text-white">المدة بالأيام</span>
               <input
-                type="number"
-                min={1}
-                max={365}
-                value={newDays}
+                type="number" min={1} max={365} value={newDays}
                 onChange={(event) => setNewDays(Number(event.target.value))}
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none transition-colors focus:border-primary"
+                className="h-10 w-full rounded-xl px-3 font-inter text-sm text-white outline-none transition-colors"
+                style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
               />
             </label>
           </div>

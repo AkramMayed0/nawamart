@@ -1,126 +1,217 @@
 import { useNavigate } from 'react-router-dom'
-import Icon from '@/components/ui/Icon'
+import { ArrowLeft, Bot, CheckCircle2, MessageSquareText, ShieldCheck, Truck, WalletCards, Zap, Sparkles, TrendingUp } from 'lucide-react'
 import Button from '@/components/ui/Button'
+import heroPhone from '@/assets/hero-phone.png'
 
-function HeroMockCards() {
+const CAPABILITIES = [
+  { icon: WalletCards, label: 'إيصالات المحافظ', tone: 'bg-amber-100 text-amber-700', glow: 'icon-glow-amber' },
+  { icon: MessageSquareText, label: 'شات مباشر', tone: 'bg-teal-100 text-teal-700', glow: 'icon-glow-teal' },
+  { icon: Zap, label: 'تسليم رقمي فوري', tone: 'bg-violet-100 text-violet-700', glow: 'icon-glow-violet' },
+  { icon: Truck, label: 'مندوب محلي', tone: 'bg-primary-100 text-primary-700', glow: '' },
+]
+
+const STATS = [
+  { value: '+500', label: 'تاجر نشط' },
+  { value: '3G', label: 'محسّن لشبكات' },
+  { value: '15', label: 'دقيقة للإعداد' },
+]
+
+function FloatingCard({ className, children, delay = 0 }) {
   return (
-    <div className="relative h-[480px]">
-      {/* Storefront preview card */}
-      <div className="absolute top-[30px] start-0 w-[360px] bg-white border border-border rounded-[18px] shadow-lg overflow-hidden">
-        <div className="flex items-center gap-2 px-3.5 py-3 border-b border-border bg-white">
-          <span className="w-2 h-2 rounded-full bg-bg-soft" />
-          <span className="w-2 h-2 rounded-full bg-bg-soft" />
-          <span className="w-2 h-2 rounded-full bg-bg-soft" />
-          <span className="ms-auto font-inter text-[11px] text-text-subtle">almukhtar.nawa.shop</span>
-        </div>
-        <div className="p-4">
-          <div className="mb-3">
-            <strong className="font-cairo font-bold text-base text-text block mb-0.5">متجر المختار</strong>
-            <span className="font-cairo text-[13px] text-text-subtle">منتجات يمنية · توصيل لكل المحافظات</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="aspect-square rounded-lg bg-gradient-to-br from-[#EAEDF1] to-[#DFE3EA] relative">
-                <span className="absolute top-1.5 start-1.5 w-4 h-4 bg-primary rounded" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Order tracking card */}
-      <div className="absolute bottom-5 end-0 w-[290px] bg-white border border-border rounded-[18px] shadow-lg overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
-          <strong className="font-cairo font-bold text-sm">تتبع الطلب</strong>
-          <span className="font-inter text-[11px] text-primary font-bold">NM-2840-19</span>
-        </div>
-        <div className="px-4 py-3.5 flex flex-col gap-2.5">
-          {[
-            { label: 'تم استلام الوصل', state: 'done' },
-            { label: 'تأكيد الدفع',     state: 'done' },
-            { label: 'قيد الشحن',       state: 'active' },
-            { label: 'تم التسليم',      state: 'todo' },
-          ].map((step, i) => (
-            <div key={i} className="flex items-center gap-2.5 font-cairo text-[13px]">
-              <span className={`w-5 h-5 rounded-full flex-none flex items-center justify-center text-white text-[10px] font-bold font-inter
-                ${step.state === 'done'   ? 'bg-success' :
-                  step.state === 'active' ? 'bg-warning' :
-                  'bg-bg-soft text-text-subtle'}`}>
-                {step.state === 'done' ? <Icon name="check" size={11} strokeWidth={3} /> : i + 1}
-              </span>
-              <span className={step.state === 'todo' ? 'text-text-subtle' : 'text-text'}>{step.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Accent stripe */}
-      <div className="absolute end-[-20px] top-1/2 w-[90px] h-2 bg-accent rounded-full" />
+    <div
+      className={`nm-card absolute rounded-2xl ${className}`}
+      style={{ animationDelay: `${delay}s` }}
+    >
+      {children}
     </div>
   )
 }
 
-function HeroStats() {
-  const stats = [
-    { num: '1,200+', label: 'تاجر يستخدم المنصة' },
-    { num: '٤٫٨',   label: 'تقييم التجار' },
-    { num: '15د',   label: 'متوسط فتح المتجر' },
-  ]
+function CommercePreview() {
   return (
-    <div className="flex gap-10 pt-7 border-t border-border">
-      {stats.map(s => (
-        <div key={s.num} className="flex flex-col gap-0.5">
-          <span className="font-inter font-extrabold text-[26px] text-primary dk-num">{s.num}</span>
-          <small className="font-cairo text-[12.5px] text-text-muted">{s.label}</small>
+    <div className="relative min-h-[480px] md:min-h-[580px] flex items-center justify-center">
+      {/* Glow blob behind phone */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-[360px] h-[360px] rounded-full bg-accent/8 blur-[80px] animate-pulse" style={{ animationDuration: '4s' }} />
+      </div>
+
+      {/* Main phone image */}
+      <img
+        src={heroPhone}
+        alt="واجهة متجر نوا مارت على الهاتف"
+        className="hero-media-shadow hero-float relative z-10 w-[240px] md:w-[300px] lg:w-[340px]"
+        loading="eager"
+      />
+
+      {/* Safe payment card */}
+      <FloatingCard className="right-0 top-16 hidden w-[250px] p-4 md:block pop-in" delay={0.3}>
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 icon-glow-teal">
+            <ShieldCheck size={18} />
+          </div>
+          <div>
+            <p className="font-cairo text-sm font-extrabold text-text">طلب آمن ✓</p>
+            <p className="font-cairo text-xs text-text-muted">تم قبول وصل الدفع</p>
+          </div>
         </div>
-      ))}
+        <div className="grid grid-cols-3 gap-1.5">
+          {['وصل', 'دفع', 'تأكيد'].map((item, i) => (
+            <div key={item} className={`rounded-lg px-2 py-2 text-center font-cairo text-[11px] font-bold ${i === 1 ? 'bg-teal-100 text-teal-700' : 'bg-bg text-text-muted'}`}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </FloatingCard>
+
+      {/* Store status card */}
+      <FloatingCard className="bottom-14 left-0 hidden w-[270px] p-4 lg:block pop-in" delay={0.5}>
+        <div className="mb-3 flex items-center justify-between">
+          <p className="font-cairo text-sm font-extrabold text-text">تشغيل المتجر</p>
+          <span className="flex items-center gap-1.5 rounded-full bg-success-100 px-2.5 py-1 font-cairo text-[11px] font-extrabold text-success-dark">
+            <span className="w-1.5 h-1.5 rounded-full bg-success-dark animate-pulse" />
+            جاهز
+          </span>
+        </div>
+        <div className="space-y-2.5">
+          {[
+            { label: 'منتجات', pct: 76, color: 'bg-teal-700' },
+            { label: 'طلبات', pct: 62, color: 'bg-accent' },
+            { label: 'واتساب', pct: 48, color: 'bg-amber-700' },
+          ].map(({ label, pct, color }) => (
+            <div key={label} className="flex items-center gap-2">
+              <CheckCircle2 size={13} className="text-teal-700 shrink-0" />
+              <span className="font-cairo text-xs font-bold text-text-muted w-12 shrink-0">{label}</span>
+              <div className="h-1.5 flex-1 rounded-full bg-bg-soft overflow-hidden">
+                <div className={`h-full rounded-full ${color} transition-all duration-1000`} style={{ width: `${pct}%` }} />
+              </div>
+              <span className="font-cairo text-[10px] font-bold text-text-subtle dk-num">{pct}%</span>
+            </div>
+          ))}
+        </div>
+      </FloatingCard>
+
+      {/* WhatsApp bot card */}
+      <FloatingCard className="bottom-0 right-4 w-[200px] p-3 md:right-10 pop-in" delay={0.7}>
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 text-accent-700 icon-glow-accent shrink-0">
+            <Bot size={16} />
+          </div>
+          <div>
+            <p className="font-cairo text-xs font-extrabold text-text">بوت واتساب</p>
+            <p className="font-cairo text-[11px] text-text-muted leading-tight">يسترجع السلات بهدوء</p>
+          </div>
+        </div>
+        <div className="mt-2.5 flex items-center gap-1.5">
+          <TrendingUp size={11} className="text-success" />
+          <span className="font-cairo text-[10px] font-bold text-success">+38% استرجاع</span>
+        </div>
+      </FloatingCard>
+
+      {/* Sparkle decorations */}
+      <div className="absolute top-8 left-8 text-accent/30 hero-float" style={{ animationDelay: '1s', animationDuration: '6s' }}>
+        <Sparkles size={18} />
+      </div>
+      <div className="absolute top-1/3 right-4 text-teal-700/20 hero-float" style={{ animationDelay: '2.5s', animationDuration: '8s' }}>
+        <Sparkles size={14} />
+      </div>
     </div>
   )
 }
 
 export default function LandingHero() {
   const navigate = useNavigate()
+
   return (
-    <section className="relative px-8 pt-[72px] pb-20 overflow-hidden lp-hero-gradient">
-      <div className="max-w-[1240px] mx-auto grid grid-cols-[1.05fr_1fr] gap-12 items-center">
+    <section className="relative overflow-hidden border-b border-border">
+      {/* Aurora background blobs */}
+      <div className="aurora-blob aurora-blob-1" />
+      <div className="aurora-blob aurora-blob-2" />
+      <div className="aurora-blob aurora-blob-3" />
 
-        {/* ── Left: Copy ── */}
-        <div>
-          {/* Eyebrow pill */}
-          <span className="inline-flex items-center gap-2 bg-primary-50 text-primary font-cairo text-[13px] font-semibold px-3.5 py-1.5 rounded-pill mb-[18px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-            منصة يمنية · للتجار اليمنيين
-          </span>
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 hero-grid-pattern opacity-60 pointer-events-none" />
 
-          {/* Headline */}
-          <h1 className="font-cairo font-extrabold text-[64px] leading-[1.1] tracking-[-0.015em] text-text mb-5">
-            أنشئ متجرك<br />
-            في <span className="text-accent">دقائق</span>،<br />
-            بِع لأي مكان.
-          </h1>
-
-          {/* Sub */}
-          <p className="font-cairo text-lg leading-[1.65] text-text-muted max-w-[520px] mb-8">
-            منصة متكاملة لإنشاء متجرك الإلكتروني — منتجات مادية أو رقمية — مع نظام دفع محلي، تأكيد الوصل، وقناة محادثة مباشرة بين التاجر والعميل.
-          </p>
-
-          {/* CTA buttons */}
-          <div className="flex items-center gap-3 mb-9">
-            <Button variant="accent" size="lg" onClick={() => navigate('/merchant/register')}>
-              ابدأ مجاناً
-              <Icon name="arrow-left" size={18} />
-            </Button>
-            <Button variant="secondary" size="lg" onClick={() => navigate('/store/demo')}>
-              <Icon name="eye" size={16} />
-              شاهد متجراً تجريبياً
-            </Button>
+      {/* Content */}
+      <div className="relative nm-container grid min-h-[calc(100vh-72px)] items-center gap-10 py-12 lg:grid-cols-[1fr_1fr] lg:py-16">
+        {/* Left: Copy */}
+        <div className="max-w-2xl">
+          {/* Kicker badge */}
+          <div className="hero-fade-in mb-6">
+            <span className="nm-kicker-center">
+              <Zap size={11} />
+              تجارة يمنية أسرع وأوضح
+            </span>
           </div>
 
-          <HeroStats />
+          {/* Headline */}
+          <h1 className="hero-fade-in hero-fade-in-delay-1 font-cairo leading-[1.05]">
+            <span className="block text-[52px] font-extrabold text-text sm:text-[64px] lg:text-[72px] tracking-tight">
+              Nawa<span className="shimmer-text">Mart</span>
+            </span>
+            <span className="mt-2 block text-[28px] font-extrabold leading-[1.25] text-text-muted sm:text-[36px] lg:text-[42px]">
+              متجر خفيف للدفع المحلي،{' '}
+              <span className="relative inline-block text-text">
+                الشات
+                <svg className="absolute -bottom-1 left-0 right-0 w-full" height="6" viewBox="0 0 100 6" preserveAspectRatio="none">
+                  <path d="M0 5 Q50 0 100 5" stroke="url(#acc)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                  <defs><linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#C93F2B"/><stop offset="100%" stopColor="#E87961"/></linearGradient></defs>
+                </svg>
+              </span>
+              {', '}والتسليم.
+            </span>
+          </h1>
+
+          {/* Description */}
+          <p className="hero-fade-in hero-fade-in-delay-2 mt-6 max-w-xl font-cairo text-base leading-8 text-text-muted sm:text-lg">
+            واجهة متجر محسّنة لشبكات اليمن، إدارة طلبات واضحة، رفع إيصالات المحافظ، وتسليم رقمي أو مادي بدون تعقيد.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="hero-fade-in hero-fade-in-delay-3 mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() => navigate('/merchant/register')}
+              className="group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-accent px-8 py-4 font-cairo text-base font-extrabold text-white shadow-lg shadow-accent/30 transition-all duration-200 hover:shadow-accent/50 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+            >
+              <span className="relative z-10">ابدأ متجرك</span>
+              <ArrowLeft size={18} className="relative z-10 transition-transform group-hover:-translate-x-1" />
+              <div className="absolute inset-0 bg-gradient-to-l from-accent-700 to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+            </button>
+            <button
+              onClick={() => navigate('/merchant/login')}
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white/80 px-8 py-4 font-cairo text-base font-extrabold text-text backdrop-blur-sm transition-all duration-200 hover:bg-white hover:border-border-strong hover:shadow-md hover:-translate-y-0.5"
+            >
+              دخول التجار
+            </button>
+          </div>
+
+          {/* Stats row */}
+          <div className="hero-fade-in hero-fade-in-delay-4 mt-8 flex items-center gap-6 border-t border-border pt-6">
+            {STATS.map(({ value, label }, i) => (
+              <div key={label} className={`${i > 0 ? 'border-r border-border pr-6' : ''}`}>
+                <p className="font-cairo text-2xl font-extrabold text-text dk-num">{value}</p>
+                <p className="font-cairo text-xs text-text-muted mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Feature chips */}
+          <div className="hero-fade-in hero-fade-in-delay-5 mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {CAPABILITIES.map(({ icon: Icon, label, tone, glow }) => (
+              <div
+                key={label}
+                className={`nm-pressable flex flex-col gap-2 rounded-xl border border-border bg-white/70 p-3 backdrop-blur-sm hover:bg-white hover:border-border-strong hover:shadow-sm`}
+              >
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${tone} ${glow}`}>
+                  <Icon size={15} />
+                </div>
+                <p className="font-cairo text-xs font-extrabold text-text leading-tight">{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* ── Right: Mock UI ── */}
-        <HeroMockCards />
+        {/* Right: Visual preview */}
+        <CommercePreview />
       </div>
     </section>
   )

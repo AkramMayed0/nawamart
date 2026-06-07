@@ -15,8 +15,8 @@ function formatPrice(value) {
 
 function StatCard({ icon: Icon, label, value, sub, iconBg }) {
   return (
-    <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-2">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+    <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
         <Icon size={18} />
       </div>
       <p className="font-inter font-extrabold text-2xl text-text dk-num leading-none">
@@ -190,14 +190,19 @@ export default function FinancePage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
-      <div className="mb-6">
-        <h1 className="font-cairo font-extrabold text-2xl text-text">المالية</h1>
-        <p className="font-cairo text-sm text-text-muted mt-0.5">العمليات المالية والفواتير.</p>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-success-100 to-success-100/60 flex items-center justify-center shadow-sm">
+          <Banknote size={20} className="text-success" />
+        </div>
+        <div>
+          <h1 className="font-cairo font-extrabold text-2xl text-text">المالية</h1>
+          <p className="font-cairo text-sm text-text-muted mt-0.5">العمليات المالية والفواتير.</p>
+        </div>
       </div>
 
       {/* Date filter bar */}
       {isPaid && (
-        <div className="bg-white border border-border rounded-2xl p-4 mb-6">
+        <div className="bg-white border border-border rounded-2xl p-4 mb-6 shadow-sm">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-cairo text-xs font-semibold text-text-muted">من تاريخ</label>
@@ -205,7 +210,7 @@ export default function FinancePage() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="h-10 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary transition-colors"
+                className="h-11 rounded-xl border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -214,21 +219,21 @@ export default function FinancePage() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="h-10 rounded-lg border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary transition-colors"
+                className="h-11 rounded-xl border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
               />
             </div>
             {hasFilters && (
               <button
                 type="button"
                 onClick={() => { setDateFrom(thirtyDaysAgo); setDateTo(today) }}
-                className="h-10 rounded-lg border border-border bg-bg px-4 font-cairo text-sm font-semibold text-text-muted hover:bg-bg-soft transition-colors"
+                className="h-11 rounded-xl border border-border bg-bg px-4 font-cairo text-sm font-semibold text-text-muted hover:bg-bg-soft transition-all"
               >
                 إعادة تعيين
               </button>
             )}
             <button
               onClick={handleExportOperations}
-              className="flex items-center gap-1.5 h-10 rounded-lg bg-primary text-white px-4 font-cairo text-xs font-bold hover:bg-primary-700 transition-colors shrink-0"
+              className="flex items-center gap-1.5 h-11 rounded-xl bg-accent text-white px-4 font-cairo text-xs font-bold hover:bg-accent-700 transition-all shadow-sm shrink-0"
             >
               <FileDown size={14} />
               تصدير ({filteredOrders.length + filteredInvoices.length + filteredLedger.length + filteredSubscriptions.length})
@@ -325,7 +330,7 @@ export default function FinancePage() {
         </div>
       )}
 
-      <div className="bg-white border border-border rounded-2xl overflow-hidden">
+      <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -346,7 +351,7 @@ export default function FinancePage() {
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[500px]">
-              <div className="grid grid-cols-[1fr_1.5fr_1fr_1fr] gap-3 px-5 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
+              <div className="grid grid-cols-[1fr_1.5fr_1fr_1fr] gap-3 px-5 py-3 bg-bg/60 border-b border-border text-xs font-bold font-cairo text-text-muted">
                 <span>رقم الطلب</span>
                 <span>العميل</span>
                 <span>المبلغ</span>
@@ -358,7 +363,7 @@ export default function FinancePage() {
                   const customer = order.deliveryAddress?.name ?? order.customer?.name ?? '—'
                   const date = new Date(order.createdAt).toLocaleDateString('ar-YE', { month: 'short', day: 'numeric' })
                   return (
-                    <div key={order._id} className="grid grid-cols-[1fr_1.5fr_1fr_1fr] gap-3 px-5 py-3.5 items-center hover:bg-bg/50 transition-colors">
+                    <div key={order._id} className="grid grid-cols-[1fr_1.5fr_1fr_1fr] gap-3 px-5 py-3.5 items-center hover:bg-accent-50/30 transition-all border-r-3 border-r-transparent hover:border-r-accent">
                       <span className="font-inter font-bold text-xs text-primary dk-num">#{shortId}</span>
                       <div>
                         <p className="font-cairo text-sm text-text truncate">{customer}</p>

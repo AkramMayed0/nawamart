@@ -87,9 +87,9 @@ export default function AdminMerchants() {
       >
         {merchants.map((merchant) => (
           <TableRow key={merchant._id} columns={MERCHANT_COLUMNS}>
-            <p className="truncate font-cairo text-sm font-bold text-text">{merchant.name ?? '—'}</p>
-            <p className="truncate font-inter text-sm text-text-muted">{merchant.email ?? '—'}</p>
-            <p className="font-inter text-sm text-text-muted">{merchant.phone ?? '—'}</p>
+            <p className="truncate font-cairo text-sm font-bold text-white">{merchant.name ?? '—'}</p>
+            <p className="truncate font-inter text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{merchant.email ?? '—'}</p>
+            <p className="font-inter text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>{merchant.phone ?? '—'}</p>
             <ActiveBadge isActive={merchant.isActive} />
             <ActionButton
               tone={merchant.isActive ? 'danger' : 'success'}
@@ -125,37 +125,23 @@ export default function AdminMerchants() {
           }
         >
           <div className="flex flex-col gap-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="suspendType"
-                checked={suspendDays === 0}
-                onChange={() => setSuspendDays(0)}
-                className="w-4 h-4 text-primary"
-              />
-              <span className="font-cairo text-sm text-text">تعليق دائم</span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="suspendType" checked={suspendDays === 0} onChange={() => setSuspendDays(0)} className="w-4 h-4 accent-accent" />
+              <span className="font-cairo text-sm text-white">تعليق دائم</span>
             </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="suspendType"
-                checked={suspendDays > 0}
-                onChange={() => setSuspendDays(7)}
-                className="w-4 h-4 text-primary"
-              />
-              <span className="font-cairo text-sm text-text">تعليق لمدة</span>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" name="suspendType" checked={suspendDays > 0} onChange={() => setSuspendDays(7)} className="w-4 h-4 accent-accent" />
+              <span className="font-cairo text-sm text-white">تعليق لمدة</span>
             </label>
             {suspendDays > 0 && (
               <div className="flex items-center gap-2 mr-6">
                 <input
-                  type="number"
-                  min={1}
-                  max={365}
-                  value={suspendDays}
+                  type="number" min={1} max={365} value={suspendDays}
                   onChange={(e) => setSuspendDays(Number(e.target.value))}
-                  className="h-9 w-20 rounded-lg border border-border bg-white px-3 font-inter text-sm text-text outline-none focus:border-primary"
+                  className="h-9 w-20 rounded-lg px-3 font-inter text-sm text-white outline-none"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)' }}
                 />
-                <span className="font-cairo text-sm text-text-muted">يوم</span>
+                <span className="font-cairo text-sm" style={{ color: 'rgba(255,255,255,0.5)' }}>يوم</span>
               </div>
             )}
           </div>

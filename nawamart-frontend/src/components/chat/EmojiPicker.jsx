@@ -1,19 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
 import { Smile } from 'lucide-react'
 
-const EMOJIS = [
-  '😊','😂','❤️','👍','🙏','😍','🤩','😎',
-  '🔥','💯','🎉','🥳','😢','😡','👏','🙌',
-  '💪','🤝','✅','❌','⭐','👀','💀','🤣',
-  '🥺','😅','😁','😤','🤔','🙄','😴','🤗',
-  '🫡','🫠','🥹','😇','🤯','🥶','🤬','🫶',
-  '👋','✋','🤚','🖐️','✌️','🤞','👌','🤌',
-  '💀','☠️','👻','🎃','💩','👑','🐶','🐱',
-  '🦋','🌸','🌺','🌻','🍕','🍔','🌮','☕',
-]
+const EMOJI_CATEGORIES = {
+  '😊': ['😊','😂','❤️','👍','🙏','😍','🤩','😎','🔥','💯','🎉','🥳','😢','😡','👏','🙌','💪','🤝','✅','❌','⭐','👀','🤣','🥺'],
+  '👋': ['👋','✋','🤚','🖐️','✌️','🤞','👌','🤌','👊','🤛','🤜','🤙','💅','🖖','🤟'],
+  '🐶': ['🐶','🐱','🦋','🌸','🌺','🌻','🍕','🍔','🌮','☕','🍩','🍰','🎂','🍫','🎁'],
+  '😴': ['😴','🤔','🙄','😤','🤯','🥶','🤬','🫶','🫡','🫠','🥹','😇','😅','😁','😆'],
+}
+
+const CATEGORY_ICONS = { '😊': '😊', '👋': '👋', '🐶': '🐶', '😴': '😴' }
 
 export default function EmojiPicker({ onEmojiSelect }) {
   const [open, setOpen] = useState(false)
+  const [activeCategory, setActiveCategory] = useState('😊')
   const ref = useRef(null)
 
   useEffect(() => {
@@ -29,22 +28,39 @@ export default function EmojiPicker({ onEmojiSelect }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-text-muted hover:bg-bg-soft transition-colors"
-        title="إضافة رمز تعبيري"
+        className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full text-[#9298A3] hover:text-[#C93F2B] hover:bg-[#FFF4F1] transition-all duration-150"
+        title="رمز تعبيري"
         aria-label="إيموجي"
       >
         <Smile size={18} />
       </button>
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-2 bg-white border border-border rounded-2xl shadow-lg p-3 z-50">
-          <div className="grid grid-cols-8 gap-1 max-h-[200px] overflow-y-auto">
-            {EMOJIS.map((emoji) => (
+        <div className="emoji-picker-popup">
+          {/* Category tabs */}
+          <div className="flex border-b border-[#E1DED8] px-1 pt-1">
+            {Object.keys(EMOJI_CATEGORIES).map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`flex-1 py-1.5 text-lg rounded-t-lg transition-all duration-150 ${
+                  activeCategory === cat
+                    ? 'bg-[#FFF4F1]'
+                    : 'hover:bg-[#F6F3EE]'
+                }`}
+              >
+                {CATEGORY_ICONS[cat]}
+              </button>
+            ))}
+          </div>
+          {/* Emoji grid */}
+          <div className="grid grid-cols-8 gap-0.5 p-2 max-h-[180px] overflow-y-auto">
+            {EMOJI_CATEGORIES[activeCategory].map((emoji) => (
               <button
                 key={emoji}
                 type="button"
                 onClick={() => { onEmojiSelect(emoji); setOpen(false) }}
-                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-bg-soft rounded-lg transition-colors"
+                className="w-8 h-8 flex items-center justify-center text-lg hover:bg-[#F6F3EE] rounded-lg transition-colors duration-100 active:scale-90"
               >
                 {emoji}
               </button>

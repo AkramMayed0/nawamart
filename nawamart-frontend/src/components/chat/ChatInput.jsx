@@ -1,12 +1,12 @@
 import { useRef, useState, useCallback } from 'react'
-import { Paperclip, Send, X } from 'lucide-react'
+import { Paperclip, Send, X, ShoppingBag } from 'lucide-react'
 import clsx from 'clsx'
 import EmojiPicker from './EmojiPicker'
 
 const MAX_ROWS = 5
 const LINE_HEIGHT = 24
 
-export default function ChatInput({ onSendText, onSendFile, sending = false, disabled = false, replyTo, onCancelReply, onTyping }) {
+export default function ChatInput({ onSendText, onSendFile, onSendProductCard, sending = false, disabled = false, replyTo, onCancelReply, onTyping }) {
   const [text, setText] = useState('')
   const textareaRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -53,45 +53,40 @@ export default function ChatInput({ onSendText, onSendFile, sending = false, dis
   const canSend = text.trim().length > 0 && !sending && !disabled
 
   return (
-    <div
-      className={clsx(
-        'bg-white border-t border-border shrink-0',
-        'pb-[max(0.5rem,env(safe-area-inset-bottom))]'
-      )}
-    >
-      {/* Reply preview bar */}
+    <div className="chat-input-wrapper shrink-0">
+      {/* Reply preview */}
       {replyTo && (
-        <div className="flex items-center gap-2 px-3 py-2 bg-accent-50 border-b border-accent/20">
+        <div className="chat-reply-bar">
+          <div className="chat-reply-bar-accent" />
           <div className="flex-1 min-w-0">
-            <p className="text-[11px] font-cairo font-semibold text-accent-700">
-              الرد على {replyTo.senderRole === 'merchant' ? 'التاجر' : 'العميل'}
+            <p className="text-[11px] font-bold text-[#C93F2B] mb-0.5">
+              رداً على {replyTo.senderRole === 'merchant' ? 'التاجر' : 'العميل'}
             </p>
-            <p className="text-xs text-text-muted truncate">
-              {replyTo.type === 'image' ? '[صورة]' : replyTo.type === 'file' ? '[ملف]' : replyTo.content}
+            <p className="text-xs text-[#5F6673] truncate">
+              {replyTo.type === 'image' ? '📷 صورة' : replyTo.type === 'file' ? '📎 ملف' : replyTo.content}
             </p>
           </div>
           <button
             onClick={onCancelReply}
-            className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center hover:bg-accent/10 text-text-muted"
+            className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center hover:bg-[#E1DED8] text-[#9298A3] transition-colors"
           >
-            <X size={14} />
+            <X size={13} />
           </button>
         </div>
       )}
 
-      <div className="flex items-end gap-2 px-3 pt-2">
-        {/* Attachment button */}
+      <div className="flex items-end gap-2 px-3 py-2.5">
+        {/* Attachment */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled}
           className={clsx(
-            'shrink-0 w-9 h-9 flex items-center justify-center rounded-full',
-            'text-text-muted hover:bg-bg-soft transition-colors',
-            disabled && 'opacity-40 cursor-not-allowed'
+            'shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150',
+            'text-[#9298A3] hover:text-[#C93F2B] hover:bg-[#FFF4F1]',
+            disabled && 'opacity-30 cursor-not-allowed'
           )}
           title="إرفاق ملف أو صورة"
-          aria-label="إرفاق ملف"
         >
           <Paperclip size={18} />
         </button>
@@ -104,8 +99,20 @@ export default function ChatInput({ onSendText, onSendFile, sending = false, dis
           onChange={handleFileChange}
         />
 
-        {/* Emoji picker */}
+        {/* Emoji */}
         {!disabled && <EmojiPicker onEmojiSelect={handleEmojiSelect} />}
+
+        {/* Product card picker (merchant only) */}
+        {onSendProductCard && !disabled && (
+          <button
+            type="button"
+            onClick={onSendProductCard}
+            className="shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all duration-150 text-[#9298A3] hover:text-[#6750A4] hover:bg-[#ECE7F8]"
+            title="إرسال بطاقة منتج"
+          >
+            <ShoppingBag size={18} />
+          </button>
+        )}
 
         {/* Textarea */}
         <textarea
@@ -115,32 +122,32 @@ export default function ChatInput({ onSendText, onSendFile, sending = false, dis
           onKeyDown={handleKeyDown}
           disabled={disabled}
           rows={1}
-          placeholder={disabled ? 'تم تأكيد الاستلام' : 'اكتب رسالة…'}
+          placeholder={disabled ? 'تم تأكيد الاستلام ✓' : 'اكتب رسالة…'}
           className={clsx(
-            'flex-1 resize-none rounded-xl border border-border bg-bg px-3 py-2',
-            'text-sm leading-6 text-text placeholder:text-text-subtle',
-            'focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10',
-            'transition-all overflow-hidden',
+            'chat-textarea',
             disabled && 'opacity-50 cursor-not-allowed'
           )}
           style={{ minHeight: '40px' }}
         />
 
-        {/* Send button */}
+        {/* Send / mic button */}
         <button
           type="button"
           onClick={handleSend}
-          disabled={!canSend}
+          disabled={!canSend && !sending}
           className={clsx(
-            'shrink-0 w-9 h-9 flex items-center justify-center rounded-full transition-all',
+            'shrink-0 w-10 h-10 flex items-center justify-center rounded-full transition-all duration-200',
             canSend
-              ? 'bg-primary text-white hover:bg-primary-700 active:scale-95'
-              : 'bg-bg-soft text-text-subtle cursor-not-allowed'
+              ? 'chat-send-btn-active'
+              : 'bg-[#ECE8E1] text-[#9298A3] cursor-not-allowed'
           )}
           title="إرسال"
-          aria-label="إرسال الرسالة"
         >
-          <Send size={16} className="icon-flip" />
+          {sending ? (
+            <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+          ) : (
+            <Send size={16} className={clsx('icon-flip', canSend ? 'text-white' : '')} />
+          )}
         </button>
       </div>
     </div>

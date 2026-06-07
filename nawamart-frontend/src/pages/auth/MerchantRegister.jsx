@@ -109,14 +109,22 @@ export default function MerchantRegister() {
     <div className="min-h-screen bg-bg flex" dir="rtl">
 
       {/* ── Brand panel (hidden on mobile) ── */}
-      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary p-10">
-        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert" />
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-gradient-to-b from-primary via-primary/90 to-primary/80 p-10 relative overflow-hidden">
+        {/* Grid pattern overlay */}
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
-        <div>
+        {/* Floating decorative shapes */}
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-20 -right-8 w-32 h-32 rounded-full bg-accent/20 blur-2xl" />
+        <div className="absolute top-1/2 left-6 w-20 h-20 rounded-2xl bg-white/5 rotate-12" />
+
+        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert relative z-10" />
+
+        <div className="relative z-10">
           <h2 className="font-cairo font-extrabold text-3xl text-white leading-snug mb-4">
-            ابدأ البيع اليوم
+            ابدأ رحلتك التجارية
             <br />
-            <span className="text-accent">مجاناً تماماً</span>
+            <span className="text-accent">مع نوامارت</span>
           </h2>
           <ul className="space-y-3">
             {[
@@ -137,109 +145,117 @@ export default function MerchantRegister() {
           </ul>
         </div>
 
-        <p className="font-cairo text-xs text-white/40">
+        <p className="font-cairo text-xs text-white/40 relative z-10">
           © {new Date().getFullYear()} نوامارت — منصة التجارة الإلكترونية اليمنية
         </p>
       </div>
 
       {/* ── Form panel ── */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-white to-bg">
         <div className="w-full max-w-md">
 
-          {/* Logo — mobile only */}
-          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          {/* Card wrapper */}
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
+            {/* Accent bar at top */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-primary via-accent to-primary" />
 
-          <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
-            إنشاء حساب تاجر
-          </h1>
-          <p className="font-cairo text-sm text-text-muted mb-7">
-            أنشئ حسابك وابدأ البيع اليوم — مجاناً
-          </p>
+            {/* Logo — mobile only */}
+            <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
-          <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-            <Input
-              label="الاسم الكامل"
-              placeholder="محمد أحمد"
-              autoComplete="name"
-              value={fields.name}
-              onChange={e => set('name', e.target.value)}
-              error={errors.name}
-              disabled={loading}
-            />
+            <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
+              إنشاء حساب تاجر
+            </h1>
+            <p className="font-cairo text-sm text-text-muted mb-7">
+              أنشئ حسابك وابدأ البيع اليوم — مجاناً
+            </p>
 
-            <Input
-              label="البريد الإلكتروني"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
-              inputClassName="font-en"
-              value={fields.email}
-              onChange={e => set('email', e.target.value)}
-              error={errors.email}
-              disabled={loading}
-            />
+            <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+              <Input
+                label="الاسم الكامل"
+                placeholder="محمد أحمد"
+                autoComplete="name"
+                inputClassName="rounded-xl"
+                value={fields.name}
+                onChange={e => set('name', e.target.value)}
+                error={errors.name}
+                disabled={loading}
+              />
 
-            <Input
-              label="رقم الهاتف"
-              type="tel"
-              placeholder="7xxxxxxxx"
-              autoComplete="tel"
-              inputClassName="font-en"
-              dir="ltr"
-              value={fields.phone}
-              onChange={e => set('phone', e.target.value)}
-              error={errors.phone}
-              disabled={loading}
-            />
+              <Input
+                label="البريد الإلكتروني"
+                type="email"
+                placeholder="you@example.com"
+                autoComplete="email"
+                inputClassName="font-en rounded-xl"
+                value={fields.email}
+                onChange={e => set('email', e.target.value)}
+                error={errors.email}
+                disabled={loading}
+              />
 
-            <Input
-              label="كلمة المرور"
-              type="password"
-              placeholder="٦ أحرف على الأقل"
-              autoComplete="new-password"
-              value={fields.password}
-              onChange={e => set('password', e.target.value)}
-              error={errors.password}
-              disabled={loading}
-            />
+              <Input
+                label="رقم الهاتف"
+                type="tel"
+                placeholder="7xxxxxxxx"
+                autoComplete="tel"
+                inputClassName="font-en rounded-xl"
+                dir="ltr"
+                value={fields.phone}
+                onChange={e => set('phone', e.target.value)}
+                error={errors.phone}
+                disabled={loading}
+              />
+
+              <Input
+                label="كلمة المرور"
+                type="password"
+                placeholder="٦ أحرف على الأقل"
+                autoComplete="new-password"
+                inputClassName="rounded-xl"
+                value={fields.password}
+                onChange={e => set('password', e.target.value)}
+                error={errors.password}
+                disabled={loading}
+              />
 
 
-            <Button
-              type="submit"
-              variant="accent"
-              size="lg"
-              className="w-full justify-center mt-1"
-              loading={loading}
-              disabled={loading}
-            >
-              {loading ? 'جاري إنشاء الحساب…' : 'ابدأ مجاناً'}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                variant="accent"
+                size="lg"
+                className="w-full justify-center mt-1 rounded-2xl shadow-lg"
+                loading={loading}
+                disabled={loading}
+              >
+                {loading ? 'جاري إنشاء الحساب…' : 'ابدأ مجاناً'}
+              </Button>
+            </form>
 
-          <>
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-3 font-cairo text-text-muted">أو</span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-3 font-cairo text-text-muted">أو</span>
-              </div>
-            </div>
 
-            <GoogleSignInButton
-              onSuccess={handleGoogleSuccess}
-              onError={() => toast.error('فشل التسجيل بحساب Google')}
-              text="signup_with"
-              loading={loading}
-            />
-          </>
+              <GoogleSignInButton
+                onSuccess={handleGoogleSuccess}
+                onError={() => toast.error('فشل التسجيل بحساب Google')}
+                text="signup_with"
+                loading={loading}
+              />
+            </>
 
-          <p className="font-cairo text-sm text-center text-text-muted mt-6">
-            لديك حساب؟{' '}
-            <Link to="/merchant/login" className="text-primary font-semibold hover:underline">
-              سجّل دخولك
-            </Link>
-          </p>
+            <p className="font-cairo text-sm text-center text-text-muted mt-6">
+              لديك حساب؟{' '}
+              <Link to="/merchant/login" className="text-primary font-semibold hover:underline">
+                سجّل دخولك
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

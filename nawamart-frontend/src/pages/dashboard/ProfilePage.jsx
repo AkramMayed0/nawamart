@@ -107,9 +107,14 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8" dir="rtl">
-      <div className="mb-6">
-        <h1 className="font-cairo font-extrabold text-2xl text-text">الملف الشخصي</h1>
-        <p className="font-cairo text-sm text-text-muted mt-0.5">عدّل بيانات حسابك الشخصية وكلمة المرور.</p>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center shadow-sm">
+          <User size={20} className="text-primary" />
+        </div>
+        <div>
+          <h1 className="font-cairo font-extrabold text-2xl text-text">الملف الشخصي</h1>
+          <p className="font-cairo text-sm text-text-muted mt-0.5">عدّل بيانات حسابك الشخصية وكلمة المرور.</p>
+        </div>
       </div>
 
       <form onSubmit={handleSave} className="flex flex-col gap-6">

@@ -123,6 +123,26 @@ const orderSchema = new mongoose.Schema(
       ref: 'Chat',
       default: null,
     },
+    digitalDelivery: {
+      status: {
+        type: String,
+        enum: ['not_applicable', 'pending', 'delivered', 'failed'],
+        default: 'not_applicable',
+      },
+      deliveredAt: { type: Date, default: null },
+      items: [
+        {
+          product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+          name: { type: String, default: null },
+          type: { type: String, enum: ['file', 'url', 'code'], default: 'url' },
+          fileUrl: { type: String, default: null },
+          externalUrl: { type: String, default: null },
+          codes: { type: [String], default: [] },
+          instructions: { type: String, default: null },
+        },
+      ],
+      error: { type: String, default: null },
+    },
     // Timestamps for each status transition
     confirmedAt:  { type: Date, default: null },
     rejectedAt:   { type: Date, default: null },

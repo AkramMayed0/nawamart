@@ -13,6 +13,43 @@ function bodyArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
+function parseMaybeJSON(value, fallback = undefined) {
+  if (value === undefined) return fallback;
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function buildDigitalDelivery(body, existing = {}) {
+  const raw = parseMaybeJSON(body.digitalDelivery, null);
+  const source = raw && typeof raw === 'object' ? raw : body;
+  const serialCodes = parseMaybeJSON(source.serialCodes, undefined);
+
+  const next = { ...existing };
+  if (source.digitalDeliveryEnabled !== undefined || source.enabled !== undefined) {
+    next.enabled = source.digitalDeliveryEnabled === 'true' || source.digitalDeliveryEnabled === true || source.enabled === true;
+  }
+  if (source.deliveryType || source.type) next.type = source.deliveryType || source.type;
+  if (source.fileUrl !== undefined) next.fileUrl = source.fileUrl || null;
+  if (source.externalUrl !== undefined) next.externalUrl = source.externalUrl || null;
+  if (source.instructions !== undefined) next.instructions = source.instructions || null;
+  if (Array.isArray(serialCodes)) {
+    next.serialCodes = serialCodes
+      .map((code) => (typeof code === 'string' ? { code } : code))
+      .filter((item) => item?.code)
+      .map((item) => ({
+        code: String(item.code).trim(),
+        isClaimed: Boolean(item.isClaimed),
+        claimedAt: item.claimedAt || null,
+        order: item.order || null,
+      }));
+  }
+  return next;
+}
+
 /**
  * POST /api/products
  * Create a new product (Merchant only)
@@ -48,6 +85,7 @@ const createProduct = asyncHandler(async (req, res) => {
     barcode: barcode || undefined,
     isFeatured: isFeatured === 'true' || isFeatured === true,
     images,
+    digitalDelivery: store.type === 'digital' ? buildDigitalDelivery(req.body) : undefined,
   });
 
   return apiResponse(res, {
@@ -85,7 +123,11 @@ const getProductsByStore = asyncHandler(async (req, res) => {
   }
 
   const [products, total] = await Promise.all([
-    Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Product.find(query)
+      .select('-digitalDelivery.fileUrl -digitalDelivery.externalUrl -digitalDelivery.serialCodes')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
     Product.countDocuments(query),
   ]);
 
@@ -106,7 +148,9 @@ const getProductById = asyncHandler(async (req, res) => {
     _id: req.params.id,
     isDeleted: false,
     isActive: true,
-  }).populate('store', 'name slug type isActive');
+  })
+    .select('-digitalDelivery.fileUrl -digitalDelivery.externalUrl -digitalDelivery.serialCodes')
+    .populate('store', 'name slug type isActive');
 
   if (!product || !product.store?.isActive) {
     return res.status(404).json({
@@ -179,6 +223,15 @@ const updateProduct = asyncHandler(async (req, res) => {
   if (brand !== undefined) product.brand = brand || null;
   if (barcode !== undefined) product.barcode = barcode || null;
   if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
+  if (
+    product.store?.type === 'digital' ||
+    req.body.digitalDelivery !== undefined ||
+    req.body.digitalDeliveryEnabled !== undefined ||
+    req.body.deliveryType !== undefined ||
+    req.body.serialCodes !== undefined
+  ) {
+    product.digitalDelivery = buildDigitalDelivery(req.body, product.digitalDelivery?.toObject?.() || product.digitalDelivery || {});
+  }
   if (existingImages.length > 0 || newImages.length > 0) {
     product.images = images;
   }

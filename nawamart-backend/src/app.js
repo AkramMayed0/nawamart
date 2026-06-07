@@ -3,31 +3,36 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
+const path = require('path');
 
 const authRoutes = require('./routes/auth.routes');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { requestId, sanitizeRequest } = require('./middleware/security');
+const { validateEnv } = require('./config/env');
 
 const app = express();
+const runtime = validateEnv();
+
+app.set('trust proxy', 1);
+app.use(requestId);
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
-app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: runtime.isProduction ? undefined : false,
+}));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
-const allowedOrigins = (
-  process.env.CLIENT_URL || 'http://localhost:3000,http://localhost:5173'
-)
-  .split(',')
-  .map((o) => o.trim());
+const allowedOrigins = runtime.allowedOrigins;
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
-      // Always allow Vite dev server (5173) regardless of .env configuration
-      if (!origin || allowedOrigins.includes(origin) || origin === 'http://localhost:5173') {
+      if (!origin || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      callback(new Error(`CORS: Origin ${origin} غير مسموح`));
+      callback(new Error(`CORS: Origin ${origin} is not allowed`));
     },
     credentials: true,
   })
@@ -36,7 +41,7 @@ app.use(
 // ─── Rate Limiting ─────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 600,
+  max: Number(process.env.RATE_LIMIT_MAX || 600),
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -48,9 +53,10 @@ const globalLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 60, // Stricter for auth routes
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX || 20),
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: {
     success: false,
     data: null,
@@ -61,16 +67,21 @@ const authLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ─── Body Parsing ─────────────────────────────────────────────────────────────
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: process.env.JSON_BODY_LIMIT || '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: process.env.FORM_BODY_LIMIT || '1mb' }));
+app.use(sanitizeRequest);
 
 // ─── Static Files (Uploads) ───────────────────────────────────────────────────
-const path = require('path');
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
+  etag: true,
+  immutable: true,
+  maxAge: runtime.isProduction ? '7d' : 0,
+}));
 
 // ─── HTTP Logging ─────────────────────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
-  app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
+  morgan.token('id', (req) => req.id);
+  app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : ':id :remote-addr :method :url :status :res[content-length] - :response-time ms'));
 }
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
@@ -84,6 +95,19 @@ app.get('/api/health', (req, res) => {
       uptime: Math.floor(process.uptime()) + 's',
     },
     message: 'الخادم يعمل بشكل طبيعي',
+  });
+});
+
+app.get('/api/ready', (req, res) => {
+  const ready = mongoose.connection.readyState === 1;
+  res.status(ready ? 200 : 503).json({
+    success: ready,
+    data: {
+      status: ready ? 'ready' : 'not_ready',
+      database: mongoose.STATES[mongoose.connection.readyState] || 'unknown',
+      timestamp: new Date().toISOString(),
+    },
+    message: ready ? 'Ready' : 'Database is not connected',
   });
 });
 
@@ -106,6 +130,10 @@ const subscriptionRoutes = require('./routes/subscription.routes');
 const walletRoutes = require('./routes/wallet.routes');
 const invoiceRoutes = require('./routes/invoice.routes');
 const adminRoutes = require('./routes/admin.routes');
+const featureRoutes = require('./routes/feature.routes');
+const antiFraudRoutes = require('./routes/antiFraud.routes');
+const courierRoutes = require('./routes/courier.routes');
+const whatsappRoutes = require('./routes/whatsapp.routes');
 
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
@@ -116,6 +144,10 @@ app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/features', featureRoutes);
+app.use('/api/anti-fraud', antiFraudRoutes);
+app.use('/api/courier', courierRoutes);
+app.use('/api/whatsapp', whatsappRoutes);
 
 // ─── 404 & Global Error Handler ──────────────────────────────────────────────
 app.use(notFound);

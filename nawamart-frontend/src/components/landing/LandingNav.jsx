@@ -1,92 +1,126 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { Menu, X, Sparkles } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
 const NAV_LINKS = [
-  { label: 'المنصة',           href: '#platform' },
-  { label: 'المتاجر المادية',  href: '#physical'  },
-  { label: 'المتاجر الرقمية', href: '#digital'   },
-  { label: 'الأسعار',          href: '#pricing'   },
-  { label: 'تواصل معنا',       href: '#contact'   },
+  { label: 'المنصة', href: '#platform' },
+  { label: 'المتاجر المادية', href: '#physical' },
+  { label: 'المتاجر الرقمية', href: '#digital' },
+  { label: 'الأسعار', href: '#pricing' },
 ]
 
 export default function LandingNav() {
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   function scrollTo(href) {
     setMenuOpen(false)
-    const id = href.replace('#', '')
-    const el = document.getElementById(id)
+    const el = document.getElementById(href.replace('#', ''))
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   return (
-    <nav className="bg-white border-b border-border sticky top-0 z-20">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 py-4 flex items-center gap-7">
+    <nav className={`sticky top-0 z-40 transition-all duration-300 ${
+      scrolled
+        ? 'bg-white/90 backdrop-blur-2xl shadow-sm border-b border-border/60'
+        : 'bg-white/70 backdrop-blur-xl border-b border-transparent'
+    }`}>
+      {/* Top accent line */}
+      <div className="h-[2.5px] w-full bg-gradient-to-l from-transparent via-accent to-transparent opacity-70" />
+
+      <div className="nm-container flex h-[68px] items-center gap-6">
         {/* Logo */}
-        <Link to="/" className="flex-none">
-          <img src="/logo.svg" alt="NawaMart" className="h-8" />
+        <Link to="/" className="flex shrink-0 items-center gap-2.5 group">
+          <img src="/logo.svg" alt="NawaMart" className="h-8 transition-transform group-hover:scale-105 duration-200" />
         </Link>
 
-        {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-7 flex-1">
-          {NAV_LINKS.map(link => (
+        {/* Desktop nav links */}
+        <div className="hidden flex-1 items-center gap-0.5 md:flex">
+          {NAV_LINKS.map((link) => (
             <a
               key={link.label}
               href={link.href}
-              onClick={(e) => { e.preventDefault(); scrollTo(link.href) }}
-              className="font-cairo text-[14.5px] font-medium text-text hover:text-primary transition-colors"
+              onClick={(event) => {
+                event.preventDefault()
+                scrollTo(link.href)
+              }}
+              className="relative rounded-lg px-4 py-2 font-cairo text-sm font-bold text-text-muted transition-colors hover:text-text group"
             >
               {link.label}
+              <span className="absolute bottom-1 right-4 left-4 h-0.5 rounded-full bg-accent scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-center" />
             </a>
           ))}
         </div>
 
-        {/* Actions */}
-        <div className="hidden md:flex items-center gap-2.5 ms-auto">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/merchant/login')}>
-            تسجيل الدخول
-          </Button>
-          <Button variant="accent" size="sm" onClick={() => navigate('/merchant/register')}>
-            ابدأ مجاناً
-          </Button>
+        {/* CTA actions */}
+        <div className="hidden items-center gap-2 md:flex">
+          <button
+            onClick={() => navigate('/merchant/login')}
+            className="rounded-lg px-4 py-2 font-cairo text-sm font-bold text-text-muted hover:text-text transition-colors"
+          >
+            دخول
+          </button>
+          <button
+            onClick={() => navigate('/merchant/register')}
+            className="group relative inline-flex items-center gap-2 overflow-hidden rounded-xl bg-accent px-5 py-2.5 font-cairo text-sm font-extrabold text-white shadow-md shadow-accent/25 transition-all duration-200 hover:shadow-accent/40 hover:shadow-lg hover:-translate-y-px"
+          >
+            <Sparkles size={13} className="opacity-80" />
+            <span className="relative z-10">ابدأ الآن</span>
+            <div className="absolute inset-0 bg-gradient-to-l from-accent-700 to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          </button>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Mobile burger */}
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="md:hidden ms-auto flex h-9 w-9 items-center justify-center rounded-xl bg-bg-soft text-text-muted hover:bg-border hover:text-text transition-colors"
+          type="button"
+          onClick={() => setMenuOpen((v) => !v)}
+          className="ms-auto flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-text transition-colors hover:bg-bg md:hidden"
           aria-label="فتح القائمة"
         >
-          {menuOpen ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 12h18"/><path d="M3 6h18"/><path d="M3 18h18"/></svg>
-          )}
+          {menuOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
       </div>
 
-      {/* Mobile menu panel */}
+      {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-border bg-white px-4 py-4 flex flex-col gap-2 animate-[fadeIn_180ms_ease]">
-          {NAV_LINKS.map(link => (
-            <a
-              key={link.label}
-              href={link.href}
-              onClick={(e) => { e.preventDefault(); scrollTo(link.href) }}
-              className="font-cairo text-[14.5px] font-semibold text-text hover:text-primary transition-colors px-3 py-2.5 rounded-xl hover:bg-bg-soft"
+        <div className="border-t border-border bg-white/95 backdrop-blur-xl px-4 py-4 md:hidden shadow-lg">
+          <div className="flex flex-col gap-0.5">
+            {NAV_LINKS.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                onClick={(event) => {
+                  event.preventDefault()
+                  scrollTo(link.href)
+                }}
+                className="rounded-xl px-4 py-3 font-cairo text-sm font-bold text-text hover:bg-bg transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              className="rounded-xl border border-border bg-bg py-3 font-cairo text-sm font-extrabold text-text text-center transition-colors hover:bg-bg-soft"
+              onClick={() => { setMenuOpen(false); navigate('/merchant/login') }}
             >
-              {link.label}
-            </a>
-          ))}
-          <hr className="border-border my-2" />
-          <Button variant="ghost" size="md" className="w-full justify-center" onClick={() => { setMenuOpen(false); navigate('/merchant/login') }}>
-            تسجيل الدخول
-          </Button>
-          <Button variant="accent" size="md" className="w-full justify-center" onClick={() => { setMenuOpen(false); navigate('/merchant/register') }}>
-            ابدأ مجاناً
-          </Button>
+              دخول
+            </button>
+            <button
+              className="rounded-xl bg-accent py-3 font-cairo text-sm font-extrabold text-white text-center shadow-md shadow-accent/30 transition-all hover:bg-accent-700"
+              onClick={() => { setMenuOpen(false); navigate('/merchant/register') }}
+            >
+              ابدأ
+            </button>
+          </div>
         </div>
       )}
     </nav>

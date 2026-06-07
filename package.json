@@ -1,4 +1,9 @@
 {
+  "scripts": {
+    "ci": "npm --prefix nawamart-backend ci && npm --prefix nawamart-backend test && npm --prefix nawamart-frontend ci && npm --prefix nawamart-frontend run build",
+    "build:frontend": "npm --prefix nawamart-frontend run build",
+    "test:backend": "npm --prefix nawamart-backend test"
+  },
   "dependencies": {
     "google-auth-library": "^10.6.2"
   }

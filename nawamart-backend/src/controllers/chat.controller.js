@@ -1,6 +1,8 @@
 const Chat = require('../models/Chat');
+const Product = require('../models/Product');
 const Store = require('../models/Store');
 const { apiResponse, asyncHandler, getPaginationParams, paginateResponse } = require('../utils/helpers');
+
 
 /**
  * Helper to check access
@@ -398,6 +400,75 @@ const retryMessage = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * POST /api/chats/:chatId/product-card
+ * Merchant sends a product card message inside a chat
+ */
+const sendProductCard = asyncHandler(async (req, res) => {
+  const chat = await Chat.findById(req.params.chatId);
+  if (!chat || !hasChatAccess(chat, req.user._id, req.userRole)) {
+    return res.status(404).json({ success: false, message: 'المحادثة غير موجودة أو لا تملك صلاحية الوصول', data: null });
+  }
+
+  if (req.userRole !== 'merchant') {
+    return res.status(403).json({ success: false, message: 'إرسال بطاقات المنتجات مسموح للتاجر فقط', data: null });
+  }
+
+  const { productId } = req.body;
+  if (!productId) {
+    return res.status(400).json({ success: false, message: 'productId مطلوب', data: null });
+  }
+
+  const product = await Product.findById(productId).select('name price salePrice images digitalDelivery isActive store');
+  if (!product || !product.isActive) {
+    return res.status(404).json({ success: false, message: 'المنتج غير موجود', data: null });
+  }
+
+  // Fetch store slug for the product page link
+  const store = await Store.findById(product.store).select('slug');
+
+  const snapshot = {
+    productId: product._id,
+    name:      product.name,
+    price:     product.price,
+    salePrice: product.salePrice || null,
+    image:     product.images?.[0] || null,
+    isDigital: product.digitalDelivery?.enabled === true,
+    storeSlug: store?.slug || null,
+    currency:  'YER',
+  };
+
+  const newMessage = {
+    sender:      req.user._id,
+    senderRole:  req.userRole,
+    senderType:  req.userRole,
+    type:        'product_card',
+    content:     product.name,        // fallback text for notifications
+    productCard: snapshot,
+    isRead:      false,
+    delivered:   false,
+    createdAt:   new Date(),
+  };
+
+  chat.messages.push(newMessage);
+  chat.lastMessage  = `[بطاقة منتج: ${product.name}]`;
+  chat.lastMessageAt = new Date();
+  chat.customerUnread += 1;
+
+  await chat.save();
+
+  const io = req.app.get('io');
+  if (io) {
+    io.to(chat._id.toString()).emit('receiveMessage', newMessage);
+  }
+
+  return apiResponse(res, {
+    statusCode: 201,
+    message:    'تم إرسال بطاقة المنتج',
+    data:       newMessage,
+  });
+});
+
 module.exports = {
   getMyChats,
   initChat,
@@ -408,4 +479,6 @@ module.exports = {
   confirmReceipt,
   markAsRead,
   retryMessage,
+  sendProductCard,
 };
+

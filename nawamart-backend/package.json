@@ -7,7 +7,8 @@
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "test": "node test-proration.js",
-    "test:integration": "node test-subscription-limits.js"
+    "test:integration": "node test-subscription-limits.js",
+    "check": "node --check src/server.js && node --check src/app.js"
   },
   "keywords": [
     "nawamart",

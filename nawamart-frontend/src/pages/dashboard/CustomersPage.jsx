@@ -64,16 +64,16 @@ export default function CustomersPage() {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
         <div className="mb-6">
-          <div className="h-8 w-32 bg-bg-soft rounded mb-2 animate-pulse" />
-          <div className="h-4 w-56 bg-bg-soft rounded animate-pulse" />
+          <div className="h-8 w-32 bg-bg-soft rounded-lg mb-2 animate-pulse" />
+          <div className="h-4 w-56 bg-bg-soft rounded-lg animate-pulse" />
         </div>
-        <div className="bg-white border border-border rounded-xl overflow-hidden">
+        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-3 px-5 py-3.5 items-center animate-pulse border-b border-border">
-              <div className="h-4 bg-bg-soft rounded w-32" />
-              <div className="h-4 bg-bg-soft rounded w-24" />
-              <div className="h-4 bg-bg-soft rounded w-16" />
-              <div className="h-4 bg-bg-soft rounded w-20" />
+            <div key={i} className="grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-3 px-5 py-3.5 items-center animate-pulse border-b border-border/50">
+              <div className="h-4 bg-bg-soft rounded-lg w-32" />
+              <div className="h-4 bg-bg-soft rounded-lg w-24" />
+              <div className="h-4 bg-bg-soft rounded-lg w-16" />
+              <div className="h-4 bg-bg-soft rounded-lg w-20" />
             </div>
           ))}
         </div>
@@ -84,28 +84,33 @@ export default function CustomersPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8" dir="rtl">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="font-cairo font-extrabold text-2xl text-text">العملاء</h1>
-          <p className="font-cairo text-sm text-text-muted mt-0.5">
-            {customers.length} عميل — {orders.length} طلب
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
+            <Users size={20} className="text-accent" />
+          </div>
+          <div>
+            <h1 className="font-cairo font-extrabold text-2xl text-text">العملاء</h1>
+            <p className="font-cairo text-sm text-text-muted mt-0.5">
+              <span className="inline-flex items-center gap-1 bg-primary-50 text-primary font-bold px-2 py-0.5 rounded-lg text-xs mr-1">{customers.length}</span> عميل — {orders.length} طلب
+            </p>
+          </div>
         </div>
 
         <div className="relative max-w-xs w-full">
-          <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-subtle pointer-events-none" />
+          <Search size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-subtle pointer-events-none" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="ابحث باسم العميل أو رقم الهاتف..."
-            className="h-10 w-full rounded-lg border border-border bg-white pr-9 pl-3 font-cairo text-sm text-text outline-none transition-colors placeholder:text-text-subtle focus:border-primary"
+            className="h-11 w-full rounded-2xl border border-border bg-white pr-10 pl-4 font-cairo text-sm text-text outline-none transition-all placeholder:text-text-subtle focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)]"
           />
         </div>
       </div>
 
       {customers.length === 0 ? (
-        <div className="bg-white border border-border rounded-2xl flex flex-col items-center justify-center py-20 text-center px-6">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+        <div className="bg-white border border-border rounded-2xl flex flex-col items-center justify-center py-20 text-center px-6 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center mb-4 shadow-sm">
             <Users size={28} className="text-primary" />
           </div>
           <h3 className="font-cairo font-bold text-text text-lg mb-1">لا يوجد عملاء بعد</h3>
@@ -114,22 +119,24 @@ export default function CustomersPage() {
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-border rounded-xl overflow-hidden">
+        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <div className="min-w-[550px]">
-              <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-5 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
+              <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-5 py-3 bg-bg/60 border-b border-border text-xs font-bold font-cairo text-text-muted">
                 <span>العميل</span>
                 <span>الجوال</span>
                 <span>المحافظة</span>
                 <span>الطلبات</span>
                 <span>إجمالي المشتريات</span>
               </div>
-              <div className="divide-y divide-border">
+              <div className="divide-y divide-border/50">
                 {filtered.map(c => (
-                  <div key={c.id} className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-5 py-3.5 items-center hover:bg-bg/50 transition-colors">
+                  <div key={c.id} className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-3 px-5 py-3.5 items-center hover:bg-accent-50/30 transition-all border-r-3 border-r-transparent hover:border-r-accent">
                     <div className="min-w-0">
                       <p className="font-cairo font-semibold text-sm text-text truncate flex items-center gap-2">
-                        <ShoppingBag size={14} className="text-text-subtle shrink-0" />
+                        <span className="w-7 h-7 rounded-lg bg-accent/8 flex items-center justify-center shrink-0">
+                          <ShoppingBag size={13} className="text-accent" />
+                        </span>
                         {c.name}
                       </p>
                     </div>
@@ -140,7 +147,9 @@ export default function CustomersPage() {
                       <span className="font-cairo text-xs text-text-muted mr-1">طلبات</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Banknote size={14} className="text-text-subtle shrink-0" />
+                      <span className="w-6 h-6 rounded-lg bg-success-100 flex items-center justify-center shrink-0">
+                        <Banknote size={12} className="text-success-dark" />
+                      </span>
                       <span className="font-inter font-bold text-sm text-text dk-num">{formatPrice(c.totalSpent)}</span>
                       <span className="font-cairo text-xs text-text-muted">ر.ي</span>
                     </div>

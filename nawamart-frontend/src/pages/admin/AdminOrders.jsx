@@ -82,19 +82,19 @@ export default function AdminOrders() {
           return (
             <TableRow key={order._id} columns={ORDER_COLUMNS}>
               <div>
-                <p className="font-inter text-xs font-extrabold uppercase text-text">#{String(order._id).slice(-8)}</p>
-                <p className="mt-1 font-cairo text-[11px] text-text-subtle">{formatDate(order.createdAt)}</p>
+                <p className="font-inter text-xs font-extrabold uppercase text-white">#{String(order._id).slice(-8)}</p>
+                <p className="mt-1 font-cairo text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{formatDate(order.createdAt)}</p>
               </div>
               <div className="min-w-0">
-                <p className="truncate font-cairo text-sm font-semibold text-text">{order.customer?.name ?? '—'}</p>
-                <p className="truncate font-inter text-xs text-text-subtle">{order.customer?.phone ?? order.customer?.email ?? '—'}</p>
+                <p className="truncate font-cairo text-sm font-semibold text-white">{order.customer?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>{order.customer?.phone ?? order.customer?.email ?? '—'}</p>
               </div>
-              <p className="truncate font-cairo text-sm text-text-muted">{order.merchant?.name ?? '—'}</p>
+              <p className="truncate font-cairo text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{order.merchant?.name ?? '—'}</p>
               <div className="min-w-0">
-                <p className="truncate font-cairo text-sm text-text-muted">{order.store?.name ?? '—'}</p>
-                <p className="truncate font-inter text-xs text-text-subtle">/{order.store?.slug ?? 'store'}</p>
+                <p className="truncate font-cairo text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>{order.store?.name ?? '—'}</p>
+                <p className="truncate font-inter text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>/{order.store?.slug ?? 'store'}</p>
               </div>
-              <p className="font-inter text-sm font-extrabold text-text">{formatCurrency(order.totalAmount)}</p>
+              <p className="font-inter text-sm font-extrabold text-white dk-num">{formatCurrency(order.totalAmount)}</p>
               <StatusBadge label={status.label} tone={status.tone} />
             </TableRow>
           )

@@ -4,7 +4,7 @@ import { getMerchantOrders } from '@/api/orders'
 import { resolveAssetUrl } from '@/utils/assets'
 import usePageTitle from '@/hooks/usePageTitle'
 import Icon, { StatusBadge } from '@/components/ui/Icon'
-import { Phone } from 'lucide-react'
+import { Phone, ShoppingBag } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 const PAGE_SIZE = 10
@@ -38,11 +38,16 @@ export default function OrdersPage() {
     <div className="p-6 max-w-6xl mx-auto" dir="rtl">
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="font-cairo font-extrabold text-2xl text-text">الطلبات</h1>
-          <p className="font-cairo text-sm text-text-muted mt-0.5">
-            {isLoading ? '…' : `${orders.length} طلب إجمالاً`}
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-accent/10 to-accent/5 flex items-center justify-center">
+            <ShoppingBag size={20} className="text-accent" />
+          </div>
+          <div>
+            <h1 className="font-cairo font-extrabold text-2xl text-text">الطلبات</h1>
+            <p className="font-cairo text-sm text-text-muted mt-0.5">
+              {isLoading ? '…' : <><span className="inline-flex items-center gap-1 bg-accent-50 text-accent-700 font-bold px-2 py-0.5 rounded-lg text-xs mr-1">{orders.length}</span> طلب إجمالاً</>}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -50,11 +55,11 @@ export default function OrdersPage() {
       <FilterBar orders={orders} filter={filter} setFilter={f => { setFilter(f); setPage(1) }} />
 
       {/* Table */}
-      <div className="bg-white border border-border rounded-xl overflow-hidden">
+      <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <div className="min-w-[700px]">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr] gap-3 px-4 py-3 bg-bg border-b border-border text-xs font-semibold font-cairo text-text-muted">
+            <div className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr] gap-3 px-4 py-3 bg-bg/60 border-b border-border text-xs font-bold font-cairo text-text-muted">
               <span>رقم الطلب</span>
               <span>العميل</span>
               <span>المبلغ</span>
@@ -109,17 +114,17 @@ export default function OrdersPage() {
 /* ── Skeleton ──────────────────────────────────────────────── */
 function SkeletonRow() {
   return (
-    <div className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr_80px] gap-3 px-4 py-3.5 items-center animate-pulse">
-      <div className="h-3.5 bg-bg-soft rounded w-20" />
+    <div className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr_80px] gap-3 px-5 py-3.5 items-center animate-pulse">
+      <div className="h-3.5 bg-bg-soft rounded-lg w-20" />
       <div className="flex flex-col gap-1.5">
-        <div className="h-3.5 bg-bg-soft rounded w-28" />
-        <div className="h-2.5 bg-bg-soft rounded w-16" />
+        <div className="h-3.5 bg-bg-soft rounded-lg w-28" />
+        <div className="h-2.5 bg-bg-soft rounded-lg w-16" />
       </div>
-      <div className="h-3.5 bg-bg-soft rounded w-20" />
-      <div className="h-3.5 bg-bg-soft rounded w-24" />
-      <div className="w-11 h-11 bg-bg-soft rounded-lg" />
-      <div className="h-6 bg-bg-soft rounded-full w-20" />
-      <div className="h-8 w-16 bg-bg-soft rounded-lg" />
+      <div className="h-3.5 bg-bg-soft rounded-lg w-20" />
+      <div className="h-3.5 bg-bg-soft rounded-lg w-24" />
+      <div className="w-11 h-11 bg-bg-soft rounded-xl" />
+      <div className="h-6 bg-bg-soft rounded-xl w-20" />
+      <div className="h-8 w-16 bg-bg-soft rounded-xl" />
     </div>
   )
 }
@@ -161,13 +166,10 @@ function OrderRow({ order, onViewWasl, navigate }) {
   return (
     <div
       onClick={() => navigate(`/dashboard/orders/${order._id}`)}
-      className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr] gap-3 px-4 py-3 items-center hover:bg-bg/50 transition-colors cursor-pointer"
+      className="grid grid-cols-[1fr_1.2fr_1fr_1fr_56px_1fr] gap-3 px-4 py-3.5 items-center hover:bg-accent-50/40 transition-all cursor-pointer group border-r-3 border-transparent hover:border-accent"
     >
+      <span className="font-inter font-bold text-sm text-accent-700 dk-num">#{shortId}</span>
 
-      {/* Order ID */}
-      <span className="font-inter font-bold text-sm text-primary dk-num">#{shortId}</span>
-
-      {/* Customer */}
       <div className="min-w-0">
         <p className="font-cairo font-semibold text-sm text-text truncate">{customer}</p>
         {phone && (
@@ -178,19 +180,16 @@ function OrderRow({ order, onViewWasl, navigate }) {
         )}
       </div>
 
-      {/* Amount */}
       <span className="font-inter font-bold text-sm text-text dk-num">
         {total.toLocaleString('en-US')}
         <span className="font-cairo font-normal text-xs text-text-muted mr-1">ر.ي</span>
       </span>
 
-      {/* Date */}
       <span className="font-cairo text-xs text-text-muted">{date}</span>
 
-      {/* Wasl thumbnail */}
       <button
         onClick={(e) => { e.stopPropagation(); order.paymentWasl && onViewWasl(order.paymentWasl) }}
-        className="w-11 h-11 rounded-lg overflow-hidden border border-border bg-bg-soft flex items-center justify-center hover:opacity-80 transition-opacity"
+        className="w-11 h-11 rounded-xl overflow-hidden border border-border bg-bg-soft flex items-center justify-center hover:opacity-80 transition-opacity shadow-sm"
         title="عرض الوصل"
       >
         {order.paymentWasl ? (
@@ -200,7 +199,6 @@ function OrderRow({ order, onViewWasl, navigate }) {
         )}
       </button>
 
-      {/* Status */}
       <StatusBadge status={order.status} />
     </div>
   )
@@ -209,16 +207,16 @@ function OrderRow({ order, onViewWasl, navigate }) {
 /* ── Wasl modal ────────────────────────────────────────────── */
 function WaslModal({ url, onClose }) {
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="relative max-w-lg w-full bg-white rounded-2xl overflow-hidden shadow-lg" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="relative max-w-lg w-full bg-white rounded-3xl overflow-hidden shadow-2xl" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <h3 className="font-cairo font-bold text-base text-text">صورة الوصل</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center text-text-muted hover:bg-bg">
+          <button onClick={onClose} className="w-8 h-8 rounded-xl flex items-center justify-center text-text-muted hover:bg-bg-soft transition-colors">
             <Icon name="x" size={18} />
           </button>
         </div>
         <img src={resolveAssetUrl(url)} alt="وصل الدفع" className="w-full object-contain max-h-[70vh]" />
-        <div className="px-4 py-3 border-t border-border flex justify-end">
+        <div className="px-5 py-4 border-t border-border flex justify-end">
           <a href={resolveAssetUrl(url)} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 font-cairo text-sm font-semibold text-primary hover:underline"
           >
@@ -243,8 +241,8 @@ const EMPTY_LABELS = {
 function EmptyState({ filter }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-      <div className="w-14 h-14 rounded-2xl bg-bg-soft border border-border flex items-center justify-center">
-        <Icon name="package" size={24} className="text-text-subtle" />
+      <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-bg-soft to-bg border border-border flex items-center justify-center shadow-sm">
+        <Icon name="package" size={26} className="text-text-subtle" />
       </div>
       <p className="font-cairo font-bold text-text">{EMPTY_LABELS[filter] ?? 'لا توجد طلبات'}</p>
       <p className="font-cairo text-sm text-text-muted">ستظهر الطلبات هنا فور وصولها.</p>
@@ -263,7 +261,7 @@ function FilterBar({ orders, filter, setFilter }) {
   }
 
   return (
-    <div className="flex items-center gap-2 flex-wrap mb-5 border-b border-border pb-4">
+    <div className="flex items-center gap-2 flex-wrap mb-5 pb-4">
       {FILTERS.map(f => {
         const n = count(f.id)
         const active = filter === f.id
@@ -271,15 +269,15 @@ function FilterBar({ orders, filter, setFilter }) {
           <button
             key={f.id}
             onClick={() => setFilter(f.id)}
-            className={`inline-flex items-center gap-1.5 font-cairo text-sm font-semibold px-3.5 py-1.5 rounded-lg transition-colors ${
+            className={`inline-flex items-center gap-1.5 font-cairo text-sm font-semibold px-4 py-2 rounded-2xl transition-all duration-150 ${
               active
-                ? 'bg-primary text-white'
-                : 'bg-white border border-border text-text-muted hover:border-primary hover:text-primary'
+                ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                : 'bg-white border border-border text-text-muted hover:border-accent/40 hover:text-accent-700'
             }`}
           >
             {f.label}
             {n > 0 && (
-              <span className={`text-[11px] font-inter font-bold px-1.5 py-0.5 rounded-pill ${
+              <span className={`text-[11px] font-inter font-bold px-1.5 py-0.5 rounded-xl ${
                 active ? 'bg-white/20 text-white' : 'bg-bg-soft text-text-muted'
               }`}>
                 {n}
@@ -298,7 +296,7 @@ function Pagination({ page, total, pageSize, onChange }) {
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between mt-4 px-1">
+    <div className="flex items-center justify-between mt-5 px-1">
       <p className="font-cairo text-sm text-text-muted">
         عرض{' '}
         <span className="font-semibold text-text">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, total)}</span>
@@ -306,17 +304,17 @@ function Pagination({ page, total, pageSize, onChange }) {
         <span className="font-semibold text-text">{total}</span>
       </p>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
         <button onClick={() => onChange(page - 1)} disabled={page === 1}
-          className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-text-muted hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-9 h-9 rounded-xl flex items-center justify-center border border-border text-text-muted hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
         >
           <Icon name="chevron" size={16} />
         </button>
 
         {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
           <button key={p} onClick={() => onChange(p)}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center font-cairo text-sm font-semibold transition-colors ${
-              p === page ? 'bg-primary text-white' : 'border border-border text-text-muted hover:bg-bg'
+            className={`w-9 h-9 rounded-xl flex items-center justify-center font-cairo text-sm font-semibold transition-all duration-200 ${
+              p === page ? 'bg-accent text-white shadow-sm shadow-accent/20' : 'border border-border text-text-muted hover:bg-bg'
             }`}
           >
             {p}
@@ -324,7 +322,7 @@ function Pagination({ page, total, pageSize, onChange }) {
         ))}
 
         <button onClick={() => onChange(page + 1)} disabled={page === totalPages}
-          className="w-8 h-8 rounded-lg flex items-center justify-center border border-border text-text-muted hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="w-9 h-9 rounded-xl flex items-center justify-center border border-border text-text-muted hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
         >
           <Icon name="chevron" size={16} className="icon-flip" />
         </button>

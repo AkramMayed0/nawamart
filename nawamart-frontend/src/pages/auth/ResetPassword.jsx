@@ -60,9 +60,14 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">
-      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary p-10">
-        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert" />
-        <div>
+      {/* ── Brand panel ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-gradient-to-b from-primary via-primary/90 to-primary/80 p-10 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-20 -right-8 w-32 h-32 rounded-full bg-accent/20 blur-2xl" />
+
+        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert relative z-10" />
+        <div className="relative z-10">
           <h2 className="font-cairo font-extrabold text-3xl text-white leading-snug mb-4">
             إعادة تعيين
             <br />
@@ -72,81 +77,86 @@ export default function ResetPassword() {
             أدخل كلمة المرور الجديدة لحسابك.
           </p>
         </div>
-        <p className="font-cairo text-xs text-white/40">
+        <p className="font-cairo text-xs text-white/40 relative z-10">
           © {new Date().getFullYear()} نوامارت — منصة التجارة الإلكترونية اليمنية
         </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      {/* ── Form panel ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-white to-bg">
         <div className="w-full max-w-md">
-          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-primary via-accent to-primary" />
 
-          {done ? (
-            <>
-              <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">تم بنجاح!</h1>
-              <p className="font-cairo text-sm text-text-muted mb-7">
-                تم إعادة تعيين كلمة المرور الخاصة بحساب {title}.
-              </p>
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center"
-                onClick={() => navigate(loginLink)}
-              >
-                تسجيل الدخول الآن
-              </Button>
-            </>
-          ) : (
-            <>
-              <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
-                إعادة تعيين كلمة المرور
-              </h1>
-              <p className="font-cairo text-sm text-text-muted mb-7">
-                أدخل كلمة المرور الجديدة لحساب {title}
-              </p>
+            <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
-              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-                <Input
-                  label="كلمة المرور الجديدة"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: '' })) }}
-                  error={errors.password}
-                  disabled={loading}
-                />
-
-                <Input
-                  label="تأكيد كلمة المرور"
-                  type="password"
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                  value={confirmPassword}
-                  onChange={(e) => { setConfirmPassword(e.target.value); setErrors((prev) => ({ ...prev, confirmPassword: '' })) }}
-                  error={errors.confirmPassword}
-                  disabled={loading}
-                />
-
+            {done ? (
+              <>
+                <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">تم بنجاح!</h1>
+                <p className="font-cairo text-sm text-text-muted mb-7">
+                  تم إعادة تعيين كلمة المرور الخاصة بحساب {title}.
+                </p>
                 <Button
-                  type="submit"
                   variant="primary"
                   size="lg"
-                  className="w-full justify-center mt-1"
-                  loading={loading}
-                  disabled={loading}
+                  className="w-full justify-center"
+                  onClick={() => navigate(loginLink)}
                 >
-                  {loading ? 'جاري الحفظ…' : 'إعادة تعيين كلمة المرور'}
+                  تسجيل الدخول الآن
                 </Button>
-              </form>
+              </>
+            ) : (
+              <>
+                <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
+                  إعادة تعيين كلمة المرور
+                </h1>
+                <p className="font-cairo text-sm text-text-muted mb-7">
+                  أدخل كلمة المرور الجديدة لحساب {title}
+                </p>
 
-              <div className="mt-6 text-center">
-                <Link to={loginLink} className="font-cairo text-sm text-primary font-semibold hover:underline">
-                  العودة إلى تسجيل الدخول
-                </Link>
-              </div>
-            </>
-          )}
+                <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+                  <Input
+                    label="كلمة المرور الجديدة"
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setErrors((prev) => ({ ...prev, password: '' })) }}
+                    error={errors.password}
+                    disabled={loading}
+                  />
+
+                  <Input
+                    label="تأكيد كلمة المرور"
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    value={confirmPassword}
+                    onChange={(e) => { setConfirmPassword(e.target.value); setErrors((prev) => ({ ...prev, confirmPassword: '' })) }}
+                    error={errors.confirmPassword}
+                    disabled={loading}
+                  />
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    className="w-full justify-center mt-1"
+                    loading={loading}
+                    disabled={loading}
+                  >
+                    {loading ? 'جاري الحفظ…' : 'إعادة تعيين كلمة المرور'}
+                  </Button>
+                </form>
+
+                <div className="mt-6 text-center">
+                  <Link to={loginLink} className="font-cairo text-sm text-primary font-semibold hover:underline">
+                    العودة إلى تسجيل الدخول
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

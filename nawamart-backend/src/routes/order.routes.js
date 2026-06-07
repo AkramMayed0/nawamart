@@ -12,6 +12,7 @@ const {
 } = require('../controllers/order.controller');
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
 const { enforceOrderLimit } = require('../middleware/planLimits');
+const { validateObjectId } = require('../middleware/security');
 
 // Customer checkout — requires authentication
 router.post('/', verifyToken, requireRole('customer'), enforceOrderLimit, createOrder);
@@ -23,6 +24,6 @@ router.put('/:id/reject', verifyToken, requireRole('merchant'), rejectOrder);
 router.put('/:id/ship', verifyToken, requireRole('merchant'), shipOrder);
 router.put('/:id/deliver', verifyToken, requireRole('merchant'), deliverOrder);
 
-router.get('/:id', getOrderById);
+router.get('/:id', validateObjectId('id'), verifyToken, getOrderById);
 
 module.exports = router;

@@ -7,11 +7,9 @@ const {
 const { verifyToken } = require('../middleware/verifyToken');
 const { uploadWasl: multerWasl, uploadChatFile: multerChat } = require('../utils/cloudinary');
 
-// Public checkout uploads the receipt before the order exists.
-router.post('/wasl', multerWasl.single('wasl'), uploadWaslController);
-
 router.use(verifyToken);
 
+router.post('/wasl', multerWasl.single('wasl'), uploadWaslController);
 router.post('/chat-file', multerChat.single('file'), uploadChatFileController);
 
 module.exports = router;

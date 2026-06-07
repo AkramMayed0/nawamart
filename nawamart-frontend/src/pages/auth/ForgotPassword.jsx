@@ -21,15 +21,8 @@ export default function ForgotPassword() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-
-    if (!email.trim()) {
-      setError('البريد الإلكتروني مطلوب')
-      return
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setError('صيغة البريد الإلكتروني غير صحيحة')
-      return
-    }
+    if (!email.trim()) { setError('البريد الإلكتروني مطلوب'); return }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setError('صيغة البريد الإلكتروني غير صحيحة'); return }
 
     setError('')
     setLoading(true)
@@ -51,9 +44,14 @@ export default function ForgotPassword() {
 
   return (
     <div className="min-h-screen bg-bg flex" dir="rtl">
-      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-primary p-10">
-        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert" />
-        <div>
+      {/* ── Brand panel ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[420px] shrink-0 bg-gradient-to-b from-primary via-primary/90 to-primary/80 p-10 relative overflow-hidden">
+        <div className="absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute bottom-20 -right-8 w-32 h-32 rounded-full bg-accent/20 blur-2xl" />
+
+        <img src="/logo.svg" alt="نوامارت" className="h-9 brightness-0 invert relative z-10" />
+        <div className="relative z-10">
           <h2 className="font-cairo font-extrabold text-3xl text-white leading-snug mb-4">
             نسيت كلمة المرور؟
             <br />
@@ -63,83 +61,65 @@ export default function ForgotPassword() {
             أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.
           </p>
         </div>
-        <p className="font-cairo text-xs text-white/40">
+        <p className="font-cairo text-xs text-white/40 relative z-10">
           © {new Date().getFullYear()} نوامارت — منصة التجارة الإلكترونية اليمنية
         </p>
       </div>
 
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+      {/* ── Form panel ── */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-white to-bg">
         <div className="w-full max-w-md">
-          <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
+          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-primary via-accent to-primary" />
 
-          {sent ? (
-            <>
-              <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">تم الإرسال!</h1>
-              <p className="font-cairo text-sm text-text-muted mb-7">
-                إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور خلال دقائق.
-              </p>
-              <p className="font-cairo text-sm text-text-muted mb-7">
-                تحقق من صندوق الوارد والبريد المزعج (Spam).
-              </p>
-              {devLink && (
-                <div className="mb-7 rounded-xl bg-accent-50 border border-accent/30 p-4">
-                  <p className="font-cairo text-xs font-bold text-accent-700 mb-2">⚠️ وضع التطوير — رابط إعادة التعيين</p>
-                  <a href={devLink} className="font-cairo text-sm text-primary underline break-all">{devLink}</a>
-                </div>
-              )}
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full justify-center"
-                onClick={() => navigate(loginLink)}
-              >
-                العودة إلى تسجيل الدخول
-              </Button>
-            </>
-          ) : (
-            <>
-              <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
-                نسيت كلمة المرور
-              </h1>
-              <p className="font-cairo text-sm text-text-muted mb-7">
-                أدخل بريدك الإلكتروني المسجل لحساب {title}
-              </p>
+            <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />
 
-              <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-                <Input
-                  label="البريد الإلكتروني"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  inputClassName="font-en"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); if (error) setError('') }}
-                  error={error}
-                  disabled={loading}
-                />
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="lg"
-                  className="w-full justify-center mt-1"
-                  loading={loading}
-                  disabled={loading}
-                >
-                  {loading ? 'جاري الإرسال…' : 'إرسال رابط إعادة التعيين'}
+            {sent ? (
+              <>
+                <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">تم الإرسال!</h1>
+                <p className="font-cairo text-sm text-text-muted mb-4">
+                  إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة تعيين كلمة المرور خلال دقائق.
+                </p>
+                <p className="font-cairo text-sm text-text-muted mb-7">
+                  تحقق من صندوق الوارد والبريد المزعج (Spam).
+                </p>
+                {devLink && (
+                  <div className="mb-7 rounded-2xl bg-accent-50 border border-accent/30 p-4">
+                    <p className="font-cairo text-xs font-bold text-accent-700 mb-2">⚠️ وضع التطوير — رابط إعادة التعيين</p>
+                    <a href={devLink} className="font-cairo text-sm text-primary underline break-all">{devLink}</a>
+                  </div>
+                )}
+                <Button variant="primary" size="lg" className="w-full justify-center" onClick={() => navigate(loginLink)}>
+                  العودة إلى تسجيل الدخول
                 </Button>
-              </form>
+              </>
+            ) : (
+              <>
+                <h1 className="font-cairo font-extrabold text-2xl text-text mb-1">
+                  نسيت كلمة المرور
+                </h1>
+                <p className="font-cairo text-sm text-text-muted mb-7">
+                  أدخل بريدك الإلكتروني المسجل لحساب {title}
+                </p>
 
-              <div className="mt-6 flex flex-col items-center gap-3">
-                <Link to={loginLink} className="font-cairo text-sm text-primary font-semibold hover:underline">
-                  تذكرت كلمة المرور؟ سجّل دخول
-                </Link>
-                <Link to={registerLink} className="font-cairo text-sm text-text-muted hover:underline">
-                  ليس لديك حساب؟ سجّل الآن
-                </Link>
-              </div>
-            </>
-          )}
+                <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+                  <Input label="البريد الإلكتروني" type="email" placeholder="you@example.com" autoComplete="email" inputClassName="font-en" value={email} onChange={(e) => { setEmail(e.target.value); if (error) setError('') }} error={error} disabled={loading} />
+                  <Button type="submit" variant="primary" size="lg" className="w-full justify-center mt-1" loading={loading} disabled={loading}>
+                    {loading ? 'جاري الإرسال…' : 'إرسال رابط إعادة التعيين'}
+                  </Button>
+                </form>
+
+                <div className="mt-6 flex flex-col items-center gap-3">
+                  <Link to={loginLink} className="font-cairo text-sm text-primary font-semibold hover:underline">
+                    تذكرت كلمة المرور؟ سجّل دخول
+                  </Link>
+                  <Link to={registerLink} className="font-cairo text-sm text-text-muted hover:underline">
+                    ليس لديك حساب؟ سجّل الآن
+                  </Link>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>

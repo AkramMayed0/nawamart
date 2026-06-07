@@ -20,11 +20,11 @@ function todayLabel() {
 }
 
 // ── Single stat card ──────────────────────────────────────────────────────
-function StatCard({ icon: Icon, label, value, sub, iconBg, loading }) {
+function StatCard({ icon: Icon, label, value, sub, iconBg, accentBorder, loading }) {
   if (loading) {
     return (
       <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 animate-pulse">
-        <div className="w-9 h-9 rounded-xl bg-bg-soft" />
+        <div className="w-10 h-10 rounded-xl bg-bg-soft" />
         <div className="h-7 w-16 bg-bg-soft rounded" />
         <div className="h-3 w-24 bg-bg-soft rounded" />
       </div>
@@ -32,9 +32,9 @@ function StatCard({ icon: Icon, label, value, sub, iconBg, loading }) {
   }
 
   return (
-    <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-2">
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
-        <Icon size={18} />
+    <div className={`bg-white border border-border rounded-2xl p-5 flex flex-col gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 border-r-4 ${accentBorder}`}>
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
+        <Icon size={19} />
       </div>
       <p className="font-inter font-extrabold text-2xl text-text dk-num leading-none">
         {value ?? '—'}
@@ -78,11 +78,14 @@ function RecentOrders({ orders, loading }) {
     .slice(0, 5)
 
   return (
-    <div className="bg-white border border-border rounded-2xl overflow-hidden">
+    <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
 
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-        <h2 className="font-cairo font-bold text-base text-text">آخر الطلبات</h2>
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-accent" />
+          <h2 className="font-cairo font-bold text-base text-text">آخر الطلبات</h2>
+        </div>
         <button
           onClick={() => navigate('/dashboard/orders')}
           className="font-cairo text-xs font-semibold text-primary hover:underline"
@@ -121,8 +124,11 @@ function RecentOrders({ orders, loading }) {
               <button
                 key={order._id}
                 onClick={() => navigate('/dashboard/orders')}
-                className="flex items-center gap-3 px-5 py-3.5 hover:bg-bg-soft transition-colors text-right w-full"
+                className="group relative flex items-center gap-3 px-5 py-3.5 hover:bg-bg-soft transition-colors text-right w-full"
               >
+                {/* Hover left border indicator */}
+                <span className="absolute right-0 top-1 bottom-1 w-0.5 rounded-full bg-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+
                 {/* Order ID */}
                 <span className="font-en font-bold text-xs text-text-muted shrink-0 dk-num">
                   #{(order.orderNumber ?? order._id?.slice(-5))?.toUpperCase()}
@@ -178,61 +184,71 @@ export default function DashboardHome() {
       label:   'طلبات اليوم',
       value:   stats.ordersToday.toLocaleString('en-US'),
       sub:     'طلب جديد اليوم',
-      iconBg:  'bg-primary/10 text-primary',
+      iconBg:  'bg-gradient-to-br from-primary-50 to-primary-100 text-primary',
+      accentBorder: 'border-r-primary',
     },
     {
       icon:    Clock,
       label:   'بانتظار الوصل',
       value:   stats.pendingWasl.toLocaleString('en-US'),
       sub:     'يحتاج مراجعة',
-      iconBg:  'bg-warning-100 text-warning',
+      iconBg:  'bg-gradient-to-br from-warning-100 to-yellow-100 text-warning',
+      accentBorder: 'border-r-warning',
     },
     {
       icon:    Banknote,
       label:   'المبيعات',
       value:   stats.totalSales.toLocaleString('en-US'),
       sub:     'ر.ي إجمالي مؤكد',
-      iconBg:  'bg-success-100 text-success',
+      iconBg:  'bg-gradient-to-br from-success-100 to-green-100 text-success',
+      accentBorder: 'border-r-success',
     },
     {
       icon:    MessageSquare,
       label:   'محادثات نشطة',
       value:   stats.activeChats.toLocaleString('en-US'),
       sub:     isDigital ? 'في انتظار الرد' : 'غير متاح للمتاجر المادية',
-      iconBg:  'bg-info-100 text-info',
+      iconBg:  'bg-gradient-to-br from-info-100 to-blue-100 text-info',
+      accentBorder: 'border-r-info',
     },
   ]
 
   usePageTitle('لوحة التحكم')
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 font-cairo" dir="rtl">
+    <div className="max-w-6xl mx-auto px-4 py-8 font-cairo" dir="rtl">
 
-      {/* ── Greeting header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-3 mb-8">
-        <div>
-          <p className="text-sm text-text-muted mb-1">{todayLabel()}</p>
-          <h1 className="font-extrabold text-2xl text-text leading-tight">
-            مرحباً، {user?.name ?? 'التاجر'}
-          </h1>
-          {store?.name && (
-            <p className="text-sm text-text-muted mt-0.5">{store.name}</p>
+      {/* ── Greeting welcome card ── */}
+      <div className="relative bg-gradient-to-l from-primary-50 via-white to-accent-50 rounded-3xl p-6 mb-8 overflow-hidden border border-border/50">
+        {/* Decorative shapes */}
+        <div className="absolute top-0 left-0 w-32 h-32 bg-accent/5 rounded-full -translate-x-10 -translate-y-10" />
+        <div className="absolute bottom-0 right-0 w-24 h-24 bg-primary/5 rounded-full translate-x-8 translate-y-8" />
+
+        <div className="relative flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-sm text-text-muted mb-1">{todayLabel()}</p>
+            <h1 className="font-extrabold text-2xl text-text leading-tight">
+              مرحباً، {user?.name ?? 'التاجر'}
+            </h1>
+            {store?.name && (
+              <p className="text-sm text-text-muted mt-0.5">{store.name}</p>
+            )}
+          </div>
+          {store?.type && (
+            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
+              isDigital
+                ? 'bg-accent-50 text-accent-700 border-accent-100'
+                : 'bg-primary-50 text-primary border-primary-100'
+            }`}>
+              {isDigital ? <Zap size={14} /> : <Truck size={14} />}
+              {isDigital ? 'متجر رقمي' : 'متجر مادي'}
+            </span>
           )}
         </div>
-        {store?.type && (
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${
-            isDigital
-              ? 'bg-accent-50 text-accent-700 border-accent-100'
-              : 'bg-primary-50 text-primary border-primary-100'
-          }`}>
-            {isDigital ? <Zap size={14} /> : <Truck size={14} />}
-            {isDigital ? 'متجر رقمي' : 'متجر مادي'}
-          </span>
-        )}
       </div>
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
         {CARDS.map(c => (
           <StatCard key={c.label} {...c} loading={loading} />
         ))}
@@ -245,10 +261,10 @@ export default function DashboardHome() {
         <button
           type="button"
           onClick={() => navigate('/dashboard/reports')}
-          className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 hover:shadow-md transition-shadow text-right w-full"
+          className="bg-gradient-to-br from-accent-50 to-white border border-border rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-all duration-200 text-right w-full"
         >
-          <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">
-            <BarChart3 size={18} />
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-50 to-accent-100 text-accent-700 flex items-center justify-center">
+            <BarChart3 size={19} />
           </div>
           <p className="font-cairo font-extrabold text-lg text-text">التقارير</p>
           <p className="font-cairo text-xs text-text-muted">تقارير المشتريات والمبيعات مع إمكانية التصدير إلى PDF.</p>
