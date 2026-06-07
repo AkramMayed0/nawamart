@@ -78,7 +78,7 @@ export default function CourierDispatcherPage() {
     toast.success('تم نسخ الرابط الخفيف')
   }
 
-  if (store?.type !== 'physical' || store?.subscription?.plan !== 'business') {
+  if (store?.type !== 'physical' || store?.plan !== 'business') {
     return (
       <div className="p-8 font-cairo h-full flex flex-col items-center justify-center text-center">
         <Navigation size={64} className="text-[#E1DED8] mb-4" />

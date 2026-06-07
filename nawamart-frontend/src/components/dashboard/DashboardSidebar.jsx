@@ -90,7 +90,7 @@ export default function DashboardSidebar({ onNavClick }) {
           </NavLink>
         ))}
 
-        {store?.type === 'physical' && store?.subscription?.plan === 'business' && (
+        {store?.type === 'physical' && store?.plan === 'business' && (
           <NavLink
             to="/dashboard/anti-fraud"
             onClick={onNavClick}
@@ -136,7 +136,7 @@ export default function DashboardSidebar({ onNavClick }) {
           )}
         </NavLink>
 
-        {store?.type === 'physical' && store?.subscription?.plan === 'business' && (
+        {store?.type === 'physical' && store?.plan === 'business' && (
           <NavLink
             to="/dashboard/couriers"
             onClick={onNavClick}
