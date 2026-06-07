@@ -19,10 +19,10 @@ function CategoryChip({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`h-10 rounded-full border px-4 font-cairo text-sm font-bold transition-colors ${
+      className={`h-11 rounded-pill border px-5 font-cairo text-sm font-extrabold transition-all duration-300 ${
         active
-          ? 'border-primary bg-primary text-white'
-          : 'border-border bg-white text-text-muted hover:border-primary hover:text-primary'
+          ? 'border-transparent bg-primary text-white shadow-md shadow-primary/20 scale-105'
+          : 'border-border/50 bg-bg-soft/50 text-text-muted hover:border-primary/30 hover:bg-white hover:text-primary hover:shadow-sm'
       }`}
     >
       {children}
@@ -111,66 +111,53 @@ export default function StorePage() {
       <StoreHero store={store} productCount={products.length} isDigital={isDigital} />
 
       {/* ── Feature grid ── */}
-      <section className="bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-16 md:py-20">
-          <h2 className="font-cairo text-2xl font-extrabold text-text text-center mb-3">
+      <section className="bg-bg-soft/30">
+        <div className="mx-auto max-w-7xl px-4 py-16 md:py-24">
+          <h2 className="font-cairo text-3xl font-extrabold text-primary text-center mb-4">
             لماذا {store.name}؟
           </h2>
-          <p className="font-cairo text-sm text-text-muted text-center mb-10 max-w-lg mx-auto">
-            نقدم لك تجربة تسوق مريحة وآمنة من البداية إلى النهاية.
+          <p className="font-cairo text-base text-text-muted text-center mb-12 max-w-lg mx-auto leading-relaxed">
+            نقدم لك تجربة تسوق مريحة وآمنة من البداية إلى النهاية، لأن راحتك هي أولويتنا.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                  <CreditCard size={22} />
-                </div>
-                <div>
-                  <h3 className="font-cairo text-sm font-extrabold text-text">دفع موثوق</h3>
-                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
-                    ادفع بأمان وتابع حالة طلبك بسهولة.
-                  </p>
-                </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="group rounded-2xl border border-border/50 bg-white p-6 shadow-sm hover-lift hover:border-primary/10 hover:shadow-glass-hover text-center md:text-right">
+              <div className="mx-auto md:mx-0 mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:-translate-y-1">
+                <CreditCard size={26} />
               </div>
+              <h3 className="font-cairo text-lg font-extrabold text-primary">دفع موثوق</h3>
+              <p className="mt-2 font-cairo text-sm leading-relaxed text-text-muted">
+                ادفع بأمان وتابع حالة طلبك بسهولة من لوحة تحكمك الخاصة.
+              </p>
             </div>
-            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                  <Truck size={22} />
-                </div>
-                <div>
-                  <h3 className="font-cairo text-sm font-extrabold text-text">توصيل للمنازل</h3>
-                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
-                    استلم طلباتك بسرعة إلى باب المنزل.
-                  </p>
-                </div>
+            
+            <div className="group rounded-2xl border border-border/50 bg-white p-6 shadow-sm hover-lift hover:border-primary/10 hover:shadow-glass-hover text-center md:text-right">
+              <div className="mx-auto md:mx-0 mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:-translate-y-1">
+                <Truck size={26} />
               </div>
+              <h3 className="font-cairo text-lg font-extrabold text-primary">توصيل للمنازل</h3>
+              <p className="mt-2 font-cairo text-sm leading-relaxed text-text-muted">
+                استلم طلباتك بسرعة إلى باب المنزل مع فريق توصيل محترف.
+              </p>
             </div>
-            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                  <ShoppingBag size={22} />
-                </div>
-                <div>
-                  <h3 className="font-cairo text-sm font-extrabold text-text">سلة ذكية</h3>
-                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
-                    احفظ مشترياتك وأكمل الطلب في أي وقت.
-                  </p>
-                </div>
+
+            <div className="group rounded-2xl border border-border/50 bg-white p-6 shadow-sm hover-lift hover:border-primary/10 hover:shadow-glass-hover text-center md:text-right">
+              <div className="mx-auto md:mx-0 mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:-translate-y-1">
+                <ShoppingBag size={26} />
               </div>
+              <h3 className="font-cairo text-lg font-extrabold text-primary">سلة ذكية</h3>
+              <p className="mt-2 font-cairo text-sm leading-relaxed text-text-muted">
+                احفظ مشترياتك وأكمل الطلب في أي وقت من أي جهاز.
+              </p>
             </div>
-            <div className="group rounded-xl border border-border bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-50 text-primary transition-colors group-hover:bg-primary group-hover:text-white">
-                  <TrendingUp size={22} />
-                </div>
-                <div>
-                  <h3 className="font-cairo text-sm font-extrabold text-text">تجربة سريعة</h3>
-                  <p className="mt-1 font-cairo text-xs leading-6 text-text-muted">
-                    تصفح المنتجات وأكمل الطلب بخطوات بسيطة.
-                  </p>
-                </div>
+
+            <div className="group rounded-2xl border border-border/50 bg-white p-6 shadow-sm hover-lift hover:border-primary/10 hover:shadow-glass-hover text-center md:text-right">
+              <div className="mx-auto md:mx-0 mb-5 flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-50 text-primary transition-all duration-300 group-hover:bg-primary group-hover:text-white group-hover:shadow-lg group-hover:-translate-y-1">
+                <TrendingUp size={26} />
               </div>
+              <h3 className="font-cairo text-lg font-extrabold text-primary">تجربة سريعة</h3>
+              <p className="mt-2 font-cairo text-sm leading-relaxed text-text-muted">
+                تصفح المنتجات وأكمل الطلب بخطوات بسيطة وواجهة عصرية.
+              </p>
             </div>
           </div>
         </div>

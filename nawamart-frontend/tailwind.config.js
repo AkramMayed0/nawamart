@@ -125,10 +125,14 @@ export default {
         lg: '0 26px 60px -26px rgba(29,36,48,0.24)',
         focus: '0 0 0 3px rgba(201,63,43,0.18)',
         card: '0 18px 42px rgba(29,36,48,0.10)',
+        glass: '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'glass-hover': '0 12px 40px 0 rgba(31, 38, 135, 0.12)',
+        glow: '0 0 20px rgba(201, 63, 43, 0.4)',
       },
       transitionDuration: {
         fast: '120ms',
         DEFAULT: '180ms',
+        slow: '300ms',
       },
       spacing: {
         18: '72px',
@@ -139,9 +143,24 @@ export default {
           from: { transform: 'translateX(-100%)' },
           to: { transform: 'translateX(0)' },
         },
+        'fade-in-up': {
+          from: { opacity: '0', transform: 'translateY(20px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '.8', transform: 'scale(1.05)' },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
       },
       animation: {
         'slide-in': 'slide-in 220ms cubic-bezier(.4,0,.2,1)',
+        'fade-in-up': 'fade-in-up 400ms cubic-bezier(.4,0,.2,1) forwards',
+        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'float': 'float 3s ease-in-out infinite',
       },
     },
   },

@@ -72,30 +72,30 @@ export default function StorefrontLayout() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-bg font-cairo text-text">
-      <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur">
-        <div className="border-b border-border bg-primary text-white">
-          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs font-bold">
+      <header className="sticky top-0 z-40 glass-header shadow-sm transition-all">
+        <div className="border-b border-white/10 bg-gradient-to-r from-primary-800 to-primary text-white shadow-inner">
+          <div className="mx-auto flex h-9 max-w-7xl items-center justify-between px-4 text-xs font-bold tracking-wide">
             <span className="inline-flex items-center gap-2">
-              <ShieldCheck size={14} />
+              <ShieldCheck size={14} className="text-accent-300" />
               دفع موثق وطلبات مباشرة من المتجر
             </span>
-            <span className="hidden sm:inline">تجربة تسوق منظمة وسريعة</span>
+            <span className="hidden sm:inline text-white/80">تجربة تسوق منظمة وسريعة</span>
           </div>
         </div>
 
-        <div className="mx-auto flex h-18 max-w-7xl items-center gap-4 px-4 py-3">
+        <div className="mx-auto flex h-20 max-w-7xl items-center gap-5 px-4 py-3">
           <button
             type="button"
             onClick={() => setMobileOpen((value) => !value)}
-            className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-text-muted lg:hidden"
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-border/50 bg-white/50 text-text-muted lg:hidden hover:bg-white hover:text-primary transition-all shadow-sm"
             aria-label="فتح القائمة"
           >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+            {mobileOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
 
           <StoreMark store={store ? { ...store, slug } : { slug }} />
 
-          <nav className="mr-2 hidden items-center gap-1 lg:flex">
+          <nav className="mr-4 hidden items-center gap-2 lg:flex">
             {navItems.map((item) =>
               item.scrollTo ? (
                 <button
@@ -113,7 +113,7 @@ export default function StorefrontLayout() {
                       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }}
-                  className="rounded-lg px-4 py-2 text-sm font-extrabold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
+                  className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-text-muted transition-all hover:bg-primary-50/80 hover:text-primary hover:shadow-sm"
                 >
                   {item.label}
                 </button>
@@ -121,7 +121,7 @@ export default function StorefrontLayout() {
                 <Link
                   key={item.label}
                   to={item.href}
-                  className="rounded-lg px-4 py-2 text-sm font-extrabold text-text-muted transition-colors hover:bg-primary-50 hover:text-primary"
+                  className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-text-muted transition-all hover:bg-primary-50/80 hover:text-primary hover:shadow-sm"
                 >
                   {item.label}
                 </Link>
@@ -129,11 +129,9 @@ export default function StorefrontLayout() {
             )}
           </nav>
 
-
-
           <Link
             to={`/store/${slug}/cart`}
-            className="relative mr-auto flex h-11 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-extrabold text-white transition-colors hover:bg-accent-700"
+            className="hover-lift relative mr-auto flex h-12 items-center justify-center gap-2.5 rounded-xl bg-accent px-5 text-sm font-extrabold text-white transition-all hover:bg-accent-600 shadow-lg shadow-accent/20 active:scale-95"
             aria-label="سلة التسوق"
           >
             <ShoppingBag size={18} />

@@ -59,44 +59,46 @@ export default function ProductDetailPage() {
       {/* ── Back button ── */}
       <button
         onClick={() => navigate(`/store/${slug}`)}
-        className="inline-flex items-center gap-1.5 font-cairo text-sm text-text-muted hover:text-text transition-colors mb-6"
+        className="inline-flex items-center gap-2 font-cairo text-sm font-bold text-text-muted hover:text-primary transition-all mb-8 bg-bg-soft/50 hover:bg-white px-4 py-2 rounded-xl hover-lift border border-transparent hover:border-border/50 hover:shadow-sm"
       >
         <Icon name="arrow-right" size={16} />
         العودة للمتجر
       </button>
 
       {/* ── Two-column layout ── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14">
 
         {/* Left col — image gallery */}
-        <ImageGallery images={product.images || []} />
+        <div className="rounded-3xl overflow-hidden border border-border/50 bg-white shadow-sm">
+           <ImageGallery images={product.images || []} />
+        </div>
 
         {/* Right col — info */}
-        <div className="flex flex-col gap-5">
+        <div className="flex flex-col gap-6">
 
           {/* Name + price + stock */}
           <div>
-            <h1 className="font-cairo font-extrabold text-2xl text-text mb-2">
+            <h1 className="font-cairo font-extrabold text-3xl text-text mb-3 leading-tight">
               {product.name}
             </h1>
-            <p className="dk-num font-extrabold text-3xl text-primary mb-3">
+            <p className="dk-num font-extrabold text-4xl text-primary mb-4 flex items-end gap-1">
               {product.price?.toLocaleString('ar-YE')}
-              <span className="font-cairo font-normal text-base text-text-muted mr-1">ر.ي</span>
+              <span className="font-cairo font-bold text-lg text-text-muted mb-1">ر.ي</span>
             </p>
-            <span className={`inline-flex items-center gap-1.5 text-xs font-semibold font-cairo px-2.5 py-1 rounded-pill ${
+            <span className={`inline-flex items-center gap-1.5 text-xs font-bold font-cairo px-3 py-1.5 rounded-pill shadow-sm ${
               outOfStock
-                ? 'bg-danger-100 text-danger'
-                : 'bg-success-100 text-success-dark'
+                ? 'bg-danger/10 text-danger border border-danger/20'
+                : 'bg-success/10 text-success-dark border border-success/20'
             }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current" />
-              {outOfStock ? 'نفد المخزون' : product.unlimitedStock ? 'متوفر' : `متوفر · ${product.stock} قطعة`}
+              <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+              {outOfStock ? 'نفد المخزون' : product.unlimitedStock ? 'متوفر وجاهز للتسليم' : `متوفر · ${product.stock} قطعة`}
             </span>
           </div>
 
           {/* Description */}
           {product.description && (
-            <div>
-              <h2 className="font-cairo font-bold text-sm text-text mb-1">الوصف</h2>
+            <div className="bg-white rounded-2xl p-5 border border-border/50 shadow-sm">
+              <h2 className="font-cairo font-extrabold text-sm text-primary mb-2">وصف المنتج</h2>
               <p className="font-cairo text-sm text-text-muted leading-relaxed">
                 {product.description}
               </p>
@@ -105,56 +107,68 @@ export default function ProductDetailPage() {
 
           {/* Product details grid */}
           {(product.sku || product.brand || product.barcode || product.weight || product.category || product.isFeatured) && (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               {product.sku && (
-                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
-                  <Hash size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                  <div className="bg-primary-50 text-primary p-2 rounded-lg">
+                    <Hash size={16} />
+                  </div>
                   <div>
-                    <p className="font-cairo text-[11px] text-text-subtle">SKU</p>
-                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.sku}</p>
+                    <p className="font-cairo text-[11px] font-bold text-text-subtle">رقم الصنف (SKU)</p>
+                    <p className="font-inter text-sm font-extrabold text-text dk-num">{product.sku}</p>
                   </div>
                 </div>
               )}
               {product.brand && (
-                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
-                  <Building2 size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                  <div className="bg-primary-50 text-primary p-2 rounded-lg">
+                    <Building2 size={16} />
+                  </div>
                   <div>
-                    <p className="font-cairo text-[11px] text-text-subtle">العلامة التجارية</p>
-                    <p className="font-cairo text-sm font-semibold text-text">{product.brand}</p>
+                    <p className="font-cairo text-[11px] font-bold text-text-subtle">العلامة التجارية</p>
+                    <p className="font-cairo text-sm font-extrabold text-text">{product.brand}</p>
                   </div>
                 </div>
               )}
               {product.barcode && (
-                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
-                  <Barcode size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                  <div className="bg-primary-50 text-primary p-2 rounded-lg">
+                    <Barcode size={16} />
+                  </div>
                   <div>
-                    <p className="font-cairo text-[11px] text-text-subtle">الباركود</p>
-                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.barcode}</p>
+                    <p className="font-cairo text-[11px] font-bold text-text-subtle">الباركود</p>
+                    <p className="font-inter text-sm font-extrabold text-text dk-num">{product.barcode}</p>
                   </div>
                 </div>
               )}
               {product.weight && (
-                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
-                  <Weight size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                  <div className="bg-primary-50 text-primary p-2 rounded-lg">
+                    <Weight size={16} />
+                  </div>
                   <div>
-                    <p className="font-cairo text-[11px] text-text-subtle">الوزن</p>
-                    <p className="font-inter text-sm font-semibold text-text dk-num">{product.weight} غرام</p>
+                    <p className="font-cairo text-[11px] font-bold text-text-subtle">الوزن</p>
+                    <p className="font-inter text-sm font-extrabold text-text dk-num">{product.weight} غرام</p>
                   </div>
                 </div>
               )}
               {product.category && (
-                <div className="flex items-center gap-2 rounded-lg bg-bg px-3 py-2">
-                  <Tag size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                   <div className="bg-primary-50 text-primary p-2 rounded-lg">
+                    <Tag size={16} />
+                  </div>
                   <div>
-                    <p className="font-cairo text-[11px] text-text-subtle">التصنيف</p>
-                    <p className="font-cairo text-sm font-semibold text-text">{product.category}</p>
+                    <p className="font-cairo text-[11px] font-bold text-text-subtle">التصنيف</p>
+                    <p className="font-cairo text-sm font-extrabold text-text">{product.category}</p>
                   </div>
                 </div>
               )}
               {product.isFeatured && (
-                <div className="flex items-center gap-2 rounded-lg bg-accent-50 px-3 py-2">
-                  <Star size={14} className="text-accent-700 shrink-0" />
-                  <span className="font-cairo text-sm font-bold text-accent-700">منتج مميز</span>
+                <div className="flex items-center gap-3 rounded-xl bg-accent-50 border border-accent/20 px-4 py-3 shadow-sm">
+                  <div className="bg-accent/10 text-accent p-2 rounded-lg">
+                     <Star size={16} className="fill-current" />
+                  </div>
+                  <span className="font-cairo text-sm font-extrabold text-accent-700">منتج مميز</span>
                 </div>
               )}
             </div>
@@ -162,12 +176,14 @@ export default function ProductDetailPage() {
 
           {/* Delivery info — physical */}
           {!isDigital && (
-            <div className="flex items-start gap-3 bg-primary-50 border border-primary-100 rounded-xl p-4">
-              <Icon name="truck" size={20} className="text-primary shrink-0 mt-0.5" />
+            <div className="flex items-start gap-4 bg-primary-50 border border-primary-100 rounded-2xl p-5 shadow-sm">
+              <div className="bg-primary/10 text-primary p-2 rounded-xl shrink-0">
+                 <Icon name="truck" size={22} />
+              </div>
               <div>
-                <p className="font-cairo font-bold text-sm text-primary mb-0.5">توصيل للمنزل</p>
-                <p className="font-cairo text-xs text-primary/70 leading-relaxed">
-                  بعد تأكيد طلبك ورفع صورة الوصل، سيقوم التاجر بشحن منتجك وإبلاغك بالتفاصيل.
+                <p className="font-cairo font-extrabold text-sm text-primary mb-1">توصيل للمنزل الموثوق</p>
+                <p className="font-cairo text-xs text-primary/80 leading-relaxed font-semibold">
+                  بعد تأكيد طلبك ورفع صورة الوصل، سيقوم التاجر بتجهيز شحنتك فوراً وإرسالها عبر أفضل المناديب.
                 </p>
               </div>
             </div>
@@ -175,37 +191,43 @@ export default function ProductDetailPage() {
 
           {/* Delivery info — digital */}
           {isDigital && (
-            <div className="flex items-start gap-3 bg-accent-50 border border-accent-200 rounded-xl p-4">
-              <Icon name="bolt" size={20} className="text-accent-700 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-4 bg-accent-50 border border-accent-200 rounded-2xl p-5 shadow-sm">
+              <div className="bg-accent/10 text-accent-700 p-2 rounded-xl shrink-0">
+                 <Icon name="bolt" size={22} />
+              </div>
               <div>
-                <p className="font-cairo font-bold text-sm text-accent-700 mb-0.5">تسليم فوري</p>
-                <p className="font-cairo text-xs text-accent-700/70 leading-relaxed">
-                  بعد تأكيد الدفع ستُفتح قناة محادثة خاصة مع التاجر لتسليم المنتج الرقمي مباشرةً.
+                <p className="font-cairo font-extrabold text-sm text-accent-700 mb-1">تسليم فوري (رقمي)</p>
+                <p className="font-cairo text-xs text-accent-700/80 leading-relaxed font-semibold">
+                  بمجرد إتمام الدفع، ستحصل على منتجك الرقمي عبر محادثة سرية وآمنة مباشرة مع التاجر.
                 </p>
               </div>
             </div>
           )}
 
           {/* Add to cart button */}
-          <Button
-            variant="primary"
-            size="lg"
-            className="w-full justify-center"
-            disabled={outOfStock}
-            onClick={handleAddToCart}
-          >
-            {outOfStock ? (
-              <>
-                <Icon name="x" size={16} />
-                نفد المخزون
-              </>
-            ) : (
-              <>
-                <Icon name="cart" size={16} />
-                أضف إلى السلة
-              </>
-            )}
-          </Button>
+          <div className="mt-2 sticky bottom-4 z-10 bg-white/80 backdrop-blur-md p-2 -mx-2 rounded-2xl border border-white/20 shadow-[0_-10px_40px_rgba(255,255,255,0.8)]">
+            <button
+              disabled={outOfStock}
+              onClick={handleAddToCart}
+              className={`w-full hover-lift flex h-14 items-center justify-center gap-3 rounded-xl font-cairo text-base font-extrabold transition-all active:scale-95 ${
+                outOfStock
+                  ? 'cursor-not-allowed bg-bg-soft text-text-muted shadow-none'
+                  : 'bg-primary text-white hover:bg-primary-700 shadow-lg shadow-primary/20'
+              }`}
+            >
+              {outOfStock ? (
+                <>
+                  <Icon name="x" size={20} />
+                  عذراً، نفد المخزون
+                </>
+              ) : (
+                <>
+                  <Icon name="cart" size={20} />
+                  أضف إلى السلة
+                </>
+              )}
+            </button>
+          </div>
 
         </div>
       </div>
