@@ -192,7 +192,10 @@ const getPortalTasks = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, message: 'Courier not found or inactive', data: null });
   }
 
-  const dispatches = await DeliveryDispatch.find({ courier: courier._id })
+  const dispatches = await DeliveryDispatch.find({ 
+    courier: courier._id,
+    status: { $nin: ['delivered', 'cancelled'] } 
+  })
     .populate('order', 'totalAmount paymentMethod paymentConfirmed')
     .sort({ createdAt: -1 });
 
