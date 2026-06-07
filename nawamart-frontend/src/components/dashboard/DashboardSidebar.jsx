@@ -13,6 +13,8 @@ import {
   User,
   Users,
   ShieldAlert,
+  Truck,
+  MessageCircle,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 
@@ -107,6 +109,52 @@ export default function DashboardSidebar({ onNavClick }) {
                 )}
                 <ShieldAlert size={18} className={isActive ? 'text-white' : 'text-[#C93F2B]'} />
                 درع المرتجعات
+              </>
+            )}
+          </NavLink>
+        )}
+
+        <NavLink
+          to="/dashboard/whatsapp"
+          onClick={onNavClick}
+          className={({ isActive }) =>
+            `relative flex items-center gap-3 rounded-2xl px-3 py-2.5 font-cairo text-sm font-semibold transition-all ${
+              isActive
+                ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                : 'text-text-muted hover:bg-bg-soft hover:text-text'
+            }`
+          }
+        >
+          {({ isActive }) => (
+            <>
+              {isActive && (
+                <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+              )}
+              <MessageCircle size={18} className={isActive ? 'text-white' : 'text-[#25D366]'} />
+              واتساب السريع
+            </>
+          )}
+        </NavLink>
+
+        {store?.type === 'physical' && store?.subscription?.plan === 'business' && (
+          <NavLink
+            to="/dashboard/couriers"
+            onClick={onNavClick}
+            className={({ isActive }) =>
+              `relative flex items-center gap-3 rounded-2xl px-3 py-2.5 font-cairo text-sm font-semibold transition-all ${
+                isActive
+                  ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                  : 'text-text-muted hover:bg-bg-soft hover:text-text'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+                )}
+                <Truck size={18} className={isActive ? 'text-white' : 'text-[#38BDF8]'} />
+                إدارة المناديب
               </>
             )}
           </NavLink>

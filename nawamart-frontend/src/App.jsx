@@ -43,6 +43,9 @@ import ReportsPage from '@/pages/dashboard/ReportsPage'
 import ProfilePage from '@/pages/dashboard/ProfilePage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
 import AntiFraudPage from '@/pages/dashboard/AntiFraudPage'
+import WhatsAppSettingsPage from '@/pages/dashboard/WhatsAppSettingsPage'
+import CourierDispatcherPage from '@/pages/dashboard/CourierDispatcherPage'
+
 
 import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
 import StorePage from '@/pages/storefront/StorePage'
@@ -227,6 +230,8 @@ export default function App() {
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="anti-fraud" element={<AntiFraudPage />} />
+        <Route path="whatsapp" element={<WhatsAppSettingsPage />} />
+        <Route path="couriers" element={<CourierDispatcherPage />} />
       </Route>
 
       <Route path="/store/:slug" element={<StorefrontLayout />}>
