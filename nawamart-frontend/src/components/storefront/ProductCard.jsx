@@ -25,7 +25,6 @@ export default function ProductCard({ product, featured = false }) {
   }
 
   return (
-  return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl bg-white hover-lift border border-transparent hover:border-primary/10 hover:shadow-glass-hover">
       <div className="relative aspect-[4/5] overflow-hidden bg-bg-soft rounded-t-2xl">
         <Link to={productUrl} className="block h-full w-full" aria-label={product.name}>
