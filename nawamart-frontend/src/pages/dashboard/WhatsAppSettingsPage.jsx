@@ -4,7 +4,10 @@ import { getWhatsAppSettings, updateWhatsAppSettings } from '@/api/whatsapp'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
+import { useAuthStore } from '@/store/authStore'
+
 export default function WhatsAppSettingsPage() {
+  const storeId = useAuthStore(state => state.store?._id)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [settings, setSettings] = useState({
@@ -19,12 +22,12 @@ export default function WhatsAppSettingsPage() {
   })
 
   useEffect(() => {
-    fetchSettings()
-  }, [])
+    if (storeId) fetchSettings()
+  }, [storeId])
 
   const fetchSettings = async () => {
     try {
-      const res = await getWhatsAppSettings()
+      const res = await getWhatsAppSettings({ storeId })
       if (res.data?.data) {
         setSettings(res.data.data)
       }
@@ -38,7 +41,7 @@ export default function WhatsAppSettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
-      await updateWhatsAppSettings(settings)
+      await updateWhatsAppSettings({ ...settings, storeId })
       toast.success('تم حفظ إعدادات واتساب بنجاح')
     } catch {
       toast.error('فشل حفظ الإعدادات')
@@ -50,6 +53,7 @@ export default function WhatsAppSettingsPage() {
   const handleChange = (field, value) => {
     setSettings(prev => ({ ...prev, [field]: value }))
   }
+
 
   if (loading) {
     return (

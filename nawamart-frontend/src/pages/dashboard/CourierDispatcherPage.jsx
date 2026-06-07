@@ -29,8 +29,8 @@ export default function CourierDispatcherPage() {
     setLoading(true)
     try {
       const [cRes, dRes] = await Promise.all([
-        listCouriers(),
-        listDispatches()
+        listCouriers({ storeId: store?._id }),
+        listDispatches({ storeId: store?._id })
       ])
       setCouriers(cRes.data?.data ?? [])
       setDispatches(dRes.data?.data ?? [])
@@ -45,7 +45,7 @@ export default function CourierDispatcherPage() {
     e.preventDefault()
     setSubmittingCourier(true)
     try {
-      await createCourier(courierForm)
+      await createCourier({ ...courierForm, storeId: store?._id })
       toast.success('تمت إضافة المندوب بنجاح')
       setShowAddCourier(false)
       setCourierForm({ name: '', phone: '', vehicleType: 'motorbike', notes: '' })
@@ -61,7 +61,7 @@ export default function CourierDispatcherPage() {
     e.preventDefault()
     setSubmittingDispatch(true)
     try {
-      await assignDispatch(dispatchForm)
+      await assignDispatch({ ...dispatchForm, storeId: store?._id })
       toast.success('تم إسناد الطلب بنجاح وتم إنشاء رابط التتبع')
       setShowAssignDispatch(false)
       setDispatchForm({ orderId: '', courierId: '', notes: '' })
