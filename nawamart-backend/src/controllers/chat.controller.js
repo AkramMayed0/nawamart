@@ -62,7 +62,8 @@ const initChat = asyncHandler(async (req, res) => {
   }
 
   // Check if chat already exists for this order/store
-  const query = { customer: req.user._id, store: storeId };
+  const chatType = orderId ? 'delivery' : 'sales';
+  const query = { customer: req.user._id, store: storeId, chatType };
   if (orderId) {
     query.order = orderId;
   }
@@ -71,6 +72,7 @@ const initChat = asyncHandler(async (req, res) => {
 
   if (!chat) {
     chat = await Chat.create({
+      chatType,
       customer: req.user._id,
       merchant: store.merchant,
       store: storeId,

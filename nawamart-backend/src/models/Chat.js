@@ -149,9 +149,8 @@ const chatSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ────────────────────────────────────────────────────────────────
-// Ensure one chat per order, or one active store chat per customer
+// Ensure one chat per order
 chatSchema.index({ order: 1 }, { unique: true, sparse: true });
-chatSchema.index({ merchant: 1, customer: 1, store: 1 }, { unique: true });
 chatSchema.index({ merchant: 1, lastMessageAt: -1 });
 chatSchema.index({ customer: 1, lastMessageAt: -1 });
 
