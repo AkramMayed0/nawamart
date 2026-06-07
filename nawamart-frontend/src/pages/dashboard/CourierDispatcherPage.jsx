@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Navigation, Plus, MapPin, Truck, CheckCircle, Search, Copy, User, Phone, X } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { listCouriers, createCourier, listDispatches, assignDispatch, sendToPool } from '@/api/courier'
+import { getMerchantOrders } from '@/api/orders'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -9,6 +10,7 @@ export default function CourierDispatcherPage() {
   const store = useAuthStore(s => s.store)
   const [couriers, setCouriers] = useState([])
   const [dispatches, setDispatches] = useState([])
+  const [availableOrders, setAvailableOrders] = useState([])
   const [loading, setLoading] = useState(true)
 
   // Courier Form State
@@ -29,12 +31,25 @@ export default function CourierDispatcherPage() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const [cRes, dRes] = await Promise.all([
+      const [cRes, dRes, oRes] = await Promise.all([
         listCouriers({ storeId: store?._id }),
-        listDispatches({ storeId: store?._id })
+        listDispatches({ storeId: store?._id }),
+        getMerchantOrders({ storeId: store?._id, limit: 100 })
       ])
       setCouriers(cRes.data?.data ?? [])
       setDispatches(dRes.data?.data ?? [])
+      
+      // Filter out orders that are already in the pool or dispatched
+      const allOrders = oRes.data?.data ?? []
+      const dispatchOrderIds = new Set((dRes.data?.data ?? []).map(d => String(d.order?._id || d.order)))
+      
+      const eligibleOrders = allOrders.filter(o => 
+        (o.status === 'confirmed' || o.status === 'shipped') &&
+        !o.inCourierPool &&
+        !dispatchOrderIds.has(String(o._id))
+      )
+      
+      setAvailableOrders(eligibleOrders)
     } catch {
       toast.error('فشل جلب بيانات المناديب والرحلات')
     } finally {
@@ -311,8 +326,16 @@ export default function CourierDispatcherPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">رقم الطلب (ID)</label>
-                <input required type="text" placeholder="انسخ معرف الطلب هنا..." value={dispatchForm.orderId} onChange={e => setDispatchForm(p => ({...p, orderId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] font-en" dir="ltr" />
+                <label className="block text-sm font-bold text-gray-700 mb-1">الطلب المراد توجيهه</label>
+                <select required value={dispatchForm.orderId} onChange={e => setDispatchForm(p => ({...p, orderId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
+                  <option value="" disabled>اختر الطلب...</option>
+                  {availableOrders.map(o => (
+                    <option key={o._id} value={o._id}>
+                      طلب #{String(o._id).slice(-8).toUpperCase()} - {o.deliveryAddress?.city} ({o.items?.length || 0} منتجات)
+                    </option>
+                  ))}
+                </select>
+                {availableOrders.length === 0 && <p className="text-xs text-amber-600 mt-1">لا توجد طلبات مؤكدة متاحة للتوجيه.</p>}
               </div>
               {dispatchMode === 'direct' && (
                 <>
