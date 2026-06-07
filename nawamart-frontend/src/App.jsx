@@ -45,6 +45,7 @@ import SettingsPage from '@/pages/dashboard/SettingsPage'
 import AntiFraudPage from '@/pages/dashboard/AntiFraudPage'
 import WhatsAppSettingsPage from '@/pages/dashboard/WhatsAppSettingsPage'
 import CourierDispatcherPage from '@/pages/dashboard/CourierDispatcherPage'
+import CourierPortalPage from '@/pages/courier/CourierPortalPage'
 
 
 import StorefrontLayout from '@/pages/storefront/StorefrontLayout'
@@ -233,6 +234,8 @@ export default function App() {
         <Route path="whatsapp" element={<WhatsAppSettingsPage />} />
         <Route path="couriers" element={<CourierDispatcherPage />} />
       </Route>
+
+      <Route path="/courier-portal/:courierId" element={<CourierPortalPage />} />
 
       <Route path="/store/:slug" element={<StorefrontLayout />}>
         <Route index element={<StorePage />} />

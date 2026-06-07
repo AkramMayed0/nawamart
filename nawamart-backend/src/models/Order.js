@@ -143,6 +143,11 @@ const orderSchema = new mongoose.Schema(
       ],
       error: { type: String, default: null },
     },
+    // Flag to indicate if this order is available in the courier pool
+    inCourierPool: {
+      type: Boolean,
+      default: false,
+    },
     // Timestamps for each status transition
     confirmedAt:  { type: Date, default: null },
     rejectedAt:   { type: Date, default: null },

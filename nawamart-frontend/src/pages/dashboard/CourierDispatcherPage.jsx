@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Navigation, Plus, MapPin, Truck, CheckCircle, Search, Copy, User, Phone, X } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { listCouriers, createCourier, listDispatches, assignDispatch } from '@/api/courier'
+import { listCouriers, createCourier, listDispatches, assignDispatch, sendToPool } from '@/api/courier'
 import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
@@ -18,6 +18,7 @@ export default function CourierDispatcherPage() {
 
   // Dispatch Form State
   const [showAssignDispatch, setShowAssignDispatch] = useState(false)
+  const [dispatchMode, setDispatchMode] = useState('pool') // 'pool' or 'direct'
   const [dispatchForm, setDispatchForm] = useState({ orderId: '', courierId: '', notes: '' })
   const [submittingDispatch, setSubmittingDispatch] = useState(false)
 
@@ -61,21 +62,31 @@ export default function CourierDispatcherPage() {
     e.preventDefault()
     setSubmittingDispatch(true)
     try {
-      await assignDispatch({ ...dispatchForm, storeId: store?._id })
-      toast.success('تم إسناد الطلب بنجاح وتم إنشاء رابط التتبع')
+      if (dispatchMode === 'pool') {
+        await sendToPool({ orderId: dispatchForm.orderId, storeId: store?._id })
+        toast.success('تمت إضافة الطلب لطلبات التوصيل المتاحة')
+      } else {
+        await assignDispatch({ ...dispatchForm, storeId: store?._id })
+        toast.success('تم إسناد الطلب بنجاح وتم إنشاء رابط التتبع')
+      }
       setShowAssignDispatch(false)
       setDispatchForm({ orderId: '', courierId: '', notes: '' })
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'فشل إسناد الطلب')
+      toast.error(err.response?.data?.message || 'فشل التوجيه')
     } finally {
       setSubmittingDispatch(false)
     }
   }
 
-  const copyToClipboard = (text) => {
+  const copyToClipboard = (text, message = 'تم نسخ الرابط') => {
     navigator.clipboard.writeText(text)
-    toast.success('تم نسخ الرابط الخفيف')
+    toast.success(message)
+  }
+
+  const copyAppURL = (courierId) => {
+    const url = `${window.location.origin}/courier-portal/${courierId}`
+    copyToClipboard(url, 'تم نسخ رابط تطبيق المندوب')
   }
 
   if (store?.type !== 'physical' || store?.plan !== 'business') {
@@ -147,15 +158,23 @@ export default function CourierDispatcherPage() {
                     <h3 className="font-bold text-sm text-gray-800 truncate">{courier.name}</h3>
                     <p className="text-xs text-gray-500 font-en mt-0.5">{courier.phone}</p>
                   </div>
-                  <div className="shrink-0 flex items-center gap-1.5">
-                    <span className={clsx(
-                      'w-2 h-2 rounded-full',
-                      courier.currentStatus === 'available' ? 'bg-[#25D366]' :
-                      courier.currentStatus === 'busy' ? 'bg-amber-500' : 'bg-gray-300'
-                    )} />
-                    <span className="text-[10px] font-bold text-gray-600">
-                      {courier.currentStatus === 'available' ? 'متاح' : courier.currentStatus === 'busy' ? 'مشغول' : 'غير متصل'}
-                    </span>
+                  <div className="shrink-0 flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className={clsx(
+                        'w-2 h-2 rounded-full',
+                        courier.currentStatus === 'available' ? 'bg-[#25D366]' :
+                        courier.currentStatus === 'busy' ? 'bg-amber-500' : 'bg-gray-300'
+                      )} />
+                      <span className="text-[10px] font-bold text-gray-600">
+                        {courier.currentStatus === 'available' ? 'متاح' : courier.currentStatus === 'busy' ? 'مشغول' : 'غير متصل'}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => copyAppURL(courier._id)}
+                      className="text-[10px] font-bold text-[#38BDF8] hover:text-[#0284C7] bg-[#38BDF8]/10 px-2 py-1 rounded transition-colors"
+                    >
+                      نسخ رابط التطبيق
+                    </button>
                   </div>
                 </div>
               ))
@@ -285,22 +304,33 @@ export default function CourierDispatcherPage() {
             </div>
             <form onSubmit={handleAssignDispatch} className="space-y-4">
               <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">طريقة التوجيه</label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setDispatchMode('pool')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'pool' ? "bg-[#38BDF8] text-white border-[#38BDF8]" : "bg-gray-50 text-gray-500 border-gray-200")}>إتاحة للجميع</button>
+                  <button type="button" onClick={() => setDispatchMode('direct')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'direct' ? "bg-[#18212F] text-white border-[#18212F]" : "bg-gray-50 text-gray-500 border-gray-200")}>إسناد مباشر</button>
+                </div>
+              </div>
+              <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">رقم الطلب (ID)</label>
                 <input required type="text" placeholder="انسخ معرف الطلب هنا..." value={dispatchForm.orderId} onChange={e => setDispatchForm(p => ({...p, orderId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] font-en" dir="ltr" />
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">المندوب</label>
-                <select required value={dispatchForm.courierId} onChange={e => setDispatchForm(p => ({...p, courierId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
-                  <option value="" disabled>اختر المندوب...</option>
-                  {couriers.map(c => <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">ملاحظات للمندوب</label>
-                <textarea rows={2} value={dispatchForm.notes} onChange={e => setDispatchForm(p => ({...p, notes: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] resize-none" placeholder="مثال: العميل بانتظارك عند الباب..." />
-              </div>
-              <button type="submit" disabled={submittingDispatch || !dispatchForm.orderId || !dispatchForm.courierId} className="w-full bg-[#38BDF8] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#0284C7] transition-colors disabled:opacity-50 mt-2">
-                {submittingDispatch ? 'جاري الإسناد...' : 'إسناد وإنشاء رابط الخريطة'}
+              {dispatchMode === 'direct' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">المندوب</label>
+                    <select required value={dispatchForm.courierId} onChange={e => setDispatchForm(p => ({...p, courierId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
+                      <option value="" disabled>اختر المندوب...</option>
+                      {couriers.map(c => <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1">ملاحظات للمندوب</label>
+                    <textarea rows={2} value={dispatchForm.notes} onChange={e => setDispatchForm(p => ({...p, notes: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] resize-none" placeholder="مثال: العميل بانتظارك عند الباب..." />
+                  </div>
+                </>
+              )}
+              <button type="submit" disabled={submittingDispatch || !dispatchForm.orderId || (dispatchMode === 'direct' && !dispatchForm.courierId)} className="w-full bg-[#38BDF8] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#0284C7] transition-colors disabled:opacity-50 mt-2">
+                {submittingDispatch ? 'جاري الإرسال...' : dispatchMode === 'pool' ? 'إرسال لطلبات التوصيل المتاحة' : 'إسناد مباشر للمندوب'}
               </button>
             </form>
           </div>
