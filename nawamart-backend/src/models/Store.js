@@ -14,7 +14,6 @@ const storeSchema = new mongoose.Schema(
       minlength: [2, 'اسم المتجر يجب أن يكون على الأقل حرفين'],
       maxlength: [100, 'اسم المتجر لا يمكن أن يتجاوز 100 حرف'],
     },
-    // URL-friendly unique identifier
     slug: {
       type: String,
       unique: true,
@@ -27,76 +26,131 @@ const storeSchema = new mongoose.Schema(
       maxlength: [1000, 'الوصف لا يمكن أن يتجاوز 1000 حرف'],
       default: null,
     },
-    logo: {
-      type: String,
-      default: null,
-    },
-    banner: {
-      type: String,
-      default: null,
-    },
-    // physical = ships products, digital = delivers via chat
+    logo: { type: String, default: null },
+    banner: { type: String, default: null },
     type: {
       type: String,
       enum: ['physical', 'digital'],
       default: 'physical',
     },
-    category: {
-      type: String,
-      trim: true,
-      default: null,
-    },
-    contactPhone: {
-      type: String,
-      trim: true,
-      default: null,
-    },
-    // Payment account info (Cherry, Kuraimi, OneCash)
+    category: { type: String, trim: true, default: null },
+    contactPhone: { type: String, trim: true, default: null },
     paymentAccounts: {
       kuraimi: { type: String, trim: true, default: null },
       oneCash: { type: String, trim: true, default: null },
       jaib: { type: String, trim: true, default: null },
     },
-    isActive: {
-      type: Boolean,
-      default: true,
+    // ─── Store Profile (Settings & Configuration) ─────────────────────────────
+    legalBusinessName:   { type: String, trim: true, default: null },
+    contactEmail:        { type: String, trim: true, lowercase: true, default: null },
+    physicalAddress: {
+      street:  { type: String, trim: true, default: null },
+      city:    { type: String, trim: true, default: null },
+      state:   { type: String, trim: true, default: null },
+      zip:     { type: String, trim: true, default: null },
+      country: { type: String, trim: true, default: 'YE' },
     },
-    // Timed suspension — null means permanent if isActive=false
-    suspendedUntil: {
-      type: Date,
-      default: null,
+    // ─── Status ────────────────────────────────────────────────────────────────
+    storeStatus: {
+      type: String,
+      enum: ['live', 'under_construction', 'paused', 'closed'],
+      default: 'under_construction',
     },
+    constructionPassword: { type: String, default: null },
+    suspendedUntil: { type: Date, default: null },
     // ─── Subscription / Plan ─────────────────────────────────────────────────
     plan: {
       type: String,
       enum: ['starter', 'pro', 'business'],
       default: 'starter',
     },
-    planExpiresAt: {
-      type: Date,
+    planExpiresAt: { type: Date, default: null },
+    planWaslUrl: { type: String, default: null },
+    // ─── Theme ──────────────────────────────────────────────────────────────────
+    activeTheme: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Theme',
       default: null,
     },
-    planWaslUrl: {
+    // ─── Domain ────────────────────────────────────────────────────────────────
+    subdomain: { type: String, trim: true, lowercase: true, default: null },
+    customDomain: { type: String, trim: true, default: null },
+    domainVerified: { type: Boolean, default: false },
+    // ─── Localization ──────────────────────────────────────────────────────────
+    locale: { type: String, default: 'ar-YE' },
+    currency: { type: String, default: 'YER' },
+    language: { type: String, enum: ['ar', 'en'], default: 'ar' },
+    timezone: { type: String, default: 'Asia/Aden' },
+    dateFormat: {
       type: String,
-      default: null,
+      enum: ['DD/MM/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD'],
+      default: 'DD/MM/YYYY',
+    },
+    numberFormat: {
+      type: String,
+      enum: ['1,234.56', '1.234,56', '1 234,56'],
+      default: '1,234.56',
+    },
+    // ─── Hosting ───────────────────────────────────────────────────────────────
+    tenantType: {
+      type: String,
+      enum: ['shared', 'dedicated'],
+      default: 'shared',
+    },
+    dedicatedInfrastructure: {
+      subdomain: { type: String, trim: true, default: null },
+      hostingStatus: { type: String, enum: ['pending', 'active', 'suspended'], default: 'pending' },
+      provisionedAt: { type: Date, default: null },
+    },
+    // ─── Security ──────────────────────────────────────────────────────────────
+    staffPasswordPolicy: {
+      minLength:        { type: Number, default: 8, min: 4, max: 128 },
+      requireUppercase: { type: Boolean, default: true },
+      requireLowercase: { type: Boolean, default: true },
+      requireNumber:    { type: Boolean, default: true },
+      requireSpecial:   { type: Boolean, default: true },
+    },
+    ipAllowlist: {
+      type: [{ type: String, trim: true }],
+      default: [],
+    },
+    // ─── Feature Toggles ───────────────────────────────────────────────────────
+    featureToggles: {
+      blog:            { type: Boolean, default: false },
+      reviews:         { type: Boolean, default: false },
+      wishlists:       { type: Boolean, default: false },
+      multiLanguage:   { type: Boolean, default: false },
+      dropshipping:    { type: Boolean, default: false },
+    },
+    // ─── Integrations ──────────────────────────────────────────────────────────
+    integrations: {
+      paymentGateways: {
+        type: [{ type: String, trim: true }],
+        default: [],
+      },
+      shippingCarriers: {
+        type: [{ type: String, trim: true }],
+        default: [],
+      },
+      marketingTools: {
+        type: [{ type: String, trim: true }],
+        default: [],
+      },
+      accounting: {
+        type: [{ type: String, trim: true }],
+        default: [],
+      },
     },
     // ─── Shipping Fees (physical stores only) ──────────────────────────────────
-    // Array of { city, fee } — merchant sets different shipping fees per city
     shippingFees: [
       {
         city: { type: String, trim: true, required: true },
         fee:  { type: Number, required: true, min: 0 },
       },
     ],
-    // ─── Metrics (updated via atomic ops) ─────────────────────────────────────
-    totalProducts: {
-      type: Number,
-      default: 0,
-    },
-    totalOrders: {
-      type: Number,
-      default: 0,
-    },
+    // ─── Metrics ─────────────────────────────────────────────────────────────
+    totalProducts: { type: Number, default: 0 },
+    totalOrders:  { type: Number, default: 0 },
   },
   {
     timestamps: true,
@@ -105,21 +159,19 @@ const storeSchema = new mongoose.Schema(
   }
 );
 
-// ─── Indexes ────────────────────────────────────────────────────────────────
-// Note: slug index is created automatically by unique:true on the field
 storeSchema.index({ merchant: 1 });
-storeSchema.index({ isActive: 1 });
+storeSchema.index({ subdomain: 1 }, { sparse: true });
+storeSchema.index({ storeStatus: 1 });
 
-// ─── Pre-save: Auto-generate slug from name ──────────────────────────────────
 storeSchema.pre('validate', function (next) {
   if (this.isNew && this.name && !this.slug) {
     this.slug = this.name
       .toLowerCase()
       .replace(/\s+/g, '-')
-      .replace(/[^\w\u0600-\u06FF-]/g, '') // Allow Arabic chars + alphanumeric + dash
+      .replace(/[^\w\u0600-\u06FF-]/g, '')
       .replace(/--+/g, '-')
       .replace(/^-+|-+$/g, '')
-      + '-' + Date.now().toString(36); // Suffix to ensure uniqueness
+      + '-' + Date.now().toString(36);
   }
   next();
 });

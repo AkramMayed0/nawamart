@@ -11,8 +11,8 @@ const Customer = require('./models/Customer');
 const { validateEnv } = require('./config/env');
 const logger = require('./utils/logger');
 
-const PORT = process.env.PORT || 5000;
 const runtime = validateEnv();
+const PORT = runtime.port;
 
 function hasChatAccess(chat, userId, role) {
   const customerId = chat.customer?._id ? chat.customer._id.toString() : chat.customer?.toString();
@@ -145,9 +145,98 @@ io.on('connection', (socket) => {
   });
 });
 
+// ─── Analytics Scheduler ──────────────────────────────────────────────────────
+const MetricsService = require('./services/MetricsService');
+const ReportService = require('./services/ReportService');
+const BackupService = require('./services/BackupService');
+
+function startAnalyticsScheduler() {
+  const DAILY_CRON = 24 * 60 * 60 * 1000;
+  const HOURLY_CHECK = 60 * 60 * 1000;
+
+  const generateDailySnapshot = async () => {
+    try {
+      logger.info('[Scheduler] Generating daily metric snapshot...');
+      await MetricsService.generateSnapshot('daily');
+      logger.info('[Scheduler] Daily metric snapshot complete');
+    } catch (err) {
+      logger.error('[Scheduler] Daily snapshot failed:', err.message);
+    }
+  };
+
+  const generateWeeklySnapshot = async () => {
+    try {
+      logger.info('[Scheduler] Generating weekly metric snapshot...');
+      await MetricsService.generateSnapshot('weekly');
+      logger.info('[Scheduler] Weekly metric snapshot complete');
+    } catch (err) {
+      logger.error('[Scheduler] Weekly snapshot failed:', err.message);
+    }
+  };
+
+  const processReportDeliveries = async () => {
+    try {
+      const results = await ReportService.processScheduledReports();
+      if (results.length > 0) {
+        logger.info(`[Scheduler] Processed ${results.length} scheduled report(s)`);
+      }
+    } catch (err) {
+      logger.error('[Scheduler] Report delivery failed:', err.message);
+    }
+  };
+
+  const generateMonthlySnapshot = async () => {
+    try {
+      logger.info('[Scheduler] Generating monthly metric snapshot...');
+      await MetricsService.generateSnapshot('monthly');
+      logger.info('[Scheduler] Monthly metric snapshot complete');
+    } catch (err) {
+      logger.error('[Scheduler] Monthly snapshot failed:', err.message);
+    }
+  };
+
+  generateDailySnapshot();
+
+  const cleanupBackups = async () => {
+    await BackupService.cleanupExpiredBackups();
+    await BackupService.cleanupExportFiles();
+    await BackupService.purgeExpiredDeletedProducts();
+  };
+
+  const scheduledBackup = async () => {
+    try {
+      logger.info('[Scheduler] Creating daily platform backup...');
+      await BackupService.createBackup({ type: 'scheduled' });
+    } catch (err) {
+      logger.error('[Scheduler] Daily backup failed:', err.message);
+    }
+  };
+
+  setInterval(generateDailySnapshot, DAILY_CRON);
+  setInterval(processReportDeliveries, HOURLY_CHECK);
+  setInterval(cleanupBackups, HOURLY_CHECK);
+  setInterval(scheduledBackup, DAILY_CRON);
+
+  const now = new Date();
+  if (now.getDay() === 0) {
+    setTimeout(generateWeeklySnapshot, 5000);
+  }
+
+  if (now.getDate() === 1) {
+    setTimeout(generateMonthlySnapshot, 5000);
+  }
+
+  logger.info('[Scheduler] Analytics scheduler started');
+}
+
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const start = async () => {
   await connectDB();
+
+  const { seedThemes } = require('./data/themeSeeds');
+  await seedThemes();
+
+  startAnalyticsScheduler();
 
   httpServer.listen(PORT, () => {
     logger.info(`[Startup] NawaMart API is running on port ${PORT}`);

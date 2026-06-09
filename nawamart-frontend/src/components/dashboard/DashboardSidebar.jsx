@@ -14,9 +14,21 @@ import {
   Users,
   ShieldAlert,
   Truck,
-  MessageCircle,
+  Shield,
+  Smartphone,
+  UserCog,
+  Clock,
+  Tag,
+  Key,
+  Webhook,
+  BookOpen,
+  FileText,
+  HelpCircle,
+  Palette,
+  File,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
+import StoreSwitcher from './StoreSwitcher'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'الرئيسية', icon: LayoutDashboard, end: true },
@@ -27,23 +39,51 @@ const NAV_ITEMS = [
   { to: '/dashboard/chat', label: 'التسليم', icon: MessageSquare },
   { to: '/dashboard/finance', label: 'المالية', icon: Banknote },
   { to: '/dashboard/reports', label: 'التقارير', icon: BarChart3 },
+  { to: '/dashboard/discounts', label: 'أكواد الخصم', icon: Tag },
+  { to: '/dashboard/support', label: 'الدعم الفني', icon: HelpCircle },
+  { to: '/dashboard/knowledge', label: 'قاعدة المعرفة', icon: BookOpen },
+  { to: '/dashboard/themes', label: 'المظهر والقوالب', icon: Palette },
+  { to: '/dashboard/pages', label: 'الصفحات', icon: File },
+]
+
+const DEV_ITEMS = [
+  { to: '/dashboard/api-keys', label: 'مفاتيح API', icon: Key },
+  { to: '/dashboard/webhooks', label: 'Webhooks', icon: Webhook },
+]
+
+const SETTINGS_ITEMS = [
   { to: '/dashboard/profile', label: 'الملف الشخصي', icon: User },
+  { to: '/dashboard/staff', label: 'فريق المتجر', icon: UserCog, roles: ['store_owner'] },
+  { to: '/dashboard/activity', label: 'سجل النشاطات', icon: Clock, roles: ['store_owner', 'store_manager'] },
+  { to: '/dashboard/security/mfa', label: 'المصادقة الثنائية', icon: Shield },
+  { to: '/dashboard/sessions', label: 'الجلسات', icon: Smartphone },
   { to: '/dashboard/settings', label: 'الإعدادات', icon: Settings },
 ]
 
 export default function DashboardSidebar({ onNavClick }) {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
+  const stores = useAuthStore((state) => state.stores)
   const store = useAuthStore((state) => state.store)
   const user = useAuthStore((state) => state.user)
+  const storeRole = useAuthStore((state) => state.storeRole)
 
   function handleLogout() {
     logout()
     navigate('/merchant/login', { replace: true })
   }
 
+  const isOwner = !storeRole || storeRole === 'store_owner'
+
   return (
     <aside className="flex h-full flex-col border-l-2 border-accent bg-white" dir="rtl">
+
+      {/* ── Store switcher (multi-store) ── */}
+      {stores.length > 0 && (
+        <div className="px-4 pt-4">
+          <StoreSwitcher onNavClick={onNavClick} />
+        </div>
+      )}
 
       {/* ── Store info section ── */}
       <div className="flex shrink-0 items-center gap-3 border-b border-border bg-gradient-to-l from-primary-50 to-white px-5 py-5">
@@ -64,7 +104,6 @@ export default function DashboardSidebar({ onNavClick }) {
       <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-4">
         {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
           <NavLink
-
             key={to}
             to={to}
             end={end}
@@ -79,7 +118,6 @@ export default function DashboardSidebar({ onNavClick }) {
           >
             {({ isActive }) => (
               <>
-                {/* Active indicator dot */}
                 {isActive && (
                   <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
                 )}
@@ -114,8 +152,6 @@ export default function DashboardSidebar({ onNavClick }) {
           </NavLink>
         )}
 
-
-
         {store?.type === 'physical' && store?.plan === 'business' && (
           <NavLink
             to="/dashboard/couriers"
@@ -139,6 +175,98 @@ export default function DashboardSidebar({ onNavClick }) {
             )}
           </NavLink>
         )}
+
+        {/* ── Developer section ── */}
+        {DEV_ITEMS.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={false}
+            onClick={onNavClick}
+            className={({ isActive }) =>
+              `relative flex items-center gap-3 rounded-2xl px-3 py-2.5 font-cairo text-sm font-semibold transition-all ${
+                isActive
+                  ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                  : 'text-text-muted hover:bg-bg-soft hover:text-text'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+                )}
+                <Icon size={18} className={isActive ? 'text-white' : 'text-text-subtle'} />
+                {label}
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        {/* ── Compliance section ── */}
+        <div className="my-3 border-t border-border" />
+
+        {[
+          { to: '/dashboard/compliance', label: 'الخصوصية والامتثال', icon: Shield },
+          { to: '/dashboard/legal-pages', label: 'الصفحات القانونية', icon: FileText },
+        ].map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={false}
+            onClick={onNavClick}
+            className={({ isActive }) =>
+              `relative flex items-center gap-3 rounded-2xl px-3 py-2.5 font-cairo text-sm font-semibold transition-all ${
+                isActive
+                  ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                  : 'text-text-muted hover:bg-bg-soft hover:text-text'
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+                )}
+                <Icon size={18} className={isActive ? 'text-white' : 'text-text-subtle'} />
+                {label}
+              </>
+            )}
+          </NavLink>
+        ))}
+
+        {/* ── Separator ── */}
+        <div className="my-3 border-t border-border" />
+
+        {/* ── Settings section ── */}
+        {SETTINGS_ITEMS.map(({ to, label, icon: Icon, roles }) => {
+          if (roles && !roles.includes(storeRole) && !isOwner) return null
+          return (
+            <NavLink
+              key={to}
+              to={to}
+              end={false}
+              onClick={onNavClick}
+              className={({ isActive }) =>
+                `relative flex items-center gap-3 rounded-2xl px-3 py-2.5 font-cairo text-sm font-semibold transition-all ${
+                  isActive
+                    ? 'bg-accent text-white shadow-sm shadow-accent/20'
+                    : 'text-text-muted hover:bg-bg-soft hover:text-text'
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 h-2 w-2 rounded-full bg-accent ring-2 ring-white" />
+                  )}
+                  <Icon size={18} className={isActive ? 'text-white' : 'text-text-subtle'} />
+                  {label}
+                </>
+              )}
+            </NavLink>
+          )
+        })}
       </nav>
 
       {/* ── Logout ── */}

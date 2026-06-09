@@ -8,9 +8,11 @@ import { useCustomerAuthStore } from '@/store/customerAuthStore'
 import { useAdminStore } from '@/store/adminStore'
 
 import LandingPage from '@/pages/LandingPage'
+import ChangelogPage from '@/pages/ChangelogPage'
 import NotFoundPage from '@/pages/NotFoundPage'
 import MerchantLogin from '@/pages/auth/MerchantLogin'
 import MerchantRegister from '@/pages/auth/MerchantRegister'
+import MfaChallenge from '@/pages/auth/MfaChallenge'
 import CustomerLogin from '@/pages/auth/CustomerLogin'
 import CustomerRegister from '@/pages/auth/CustomerRegister'
 import ForgotPassword from '@/pages/auth/ForgotPassword'
@@ -28,6 +30,16 @@ import AdminMerchants from '@/pages/admin/AdminMerchants'
 import AdminStores from '@/pages/admin/AdminStores'
 import AdminOrders from '@/pages/admin/AdminOrders'
 import AdminCustomers from '@/pages/admin/AdminCustomers'
+import AdminAnalytics from '@/pages/admin/AdminAnalytics'
+import AdminHealthScores from '@/pages/admin/AdminHealthScores'
+import AdminReports from '@/pages/admin/AdminReports'
+import AdminTickets from '@/pages/admin/AdminTickets'
+import AdminKnowledgeBase from '@/pages/admin/AdminKnowledgeBase'
+import AdminFeedback from '@/pages/admin/AdminFeedback'
+import AdminFeatureFlags from '@/pages/admin/AdminFeatureFlags'
+import AdminChangelog from '@/pages/admin/AdminChangelog'
+import SupportPage from '@/pages/dashboard/SupportPage'
+import KnowledgeViewPage from '@/pages/dashboard/KnowledgeViewPage'
 
 import DashboardLayout from '@/pages/dashboard/DashboardLayout'
 import DashboardHome from '@/pages/dashboard/DashboardHome'
@@ -41,9 +53,24 @@ import ChatPage from '@/pages/dashboard/ChatPage'
 import FinancePage from '@/pages/dashboard/FinancePage'
 import ReportsPage from '@/pages/dashboard/ReportsPage'
 import ProfilePage from '@/pages/dashboard/ProfilePage'
+import MfaSetupPage from '@/pages/dashboard/MfaSetupPage'
+import SessionsPage from '@/pages/dashboard/SessionsPage'
+import StaffPage from '@/pages/dashboard/StaffPage'
 import SettingsPage from '@/pages/dashboard/SettingsPage'
 import AntiFraudPage from '@/pages/dashboard/AntiFraudPage'
 import CourierDispatcherPage from '@/pages/dashboard/CourierDispatcherPage'
+import ActivityLogPage from '@/pages/dashboard/ActivityLogPage'
+import DiscountsPage from '@/pages/dashboard/DiscountsPage'
+import ApiKeysPage from '@/pages/dashboard/ApiKeysPage'
+import WebhooksPage from '@/pages/dashboard/WebhooksPage'
+import CompliancePage from '@/pages/dashboard/CompliancePage'
+import LegalPagesPage from '@/pages/dashboard/LegalPagesPage'
+import ThemesPage from '@/pages/dashboard/ThemesPage'
+import ThemeCustomizerPage from '@/pages/dashboard/ThemeCustomizerPage'
+import PagesPage from '@/pages/dashboard/PagesPage'
+import PageBuilderPage from '@/pages/dashboard/PageBuilderPage'
+import DeveloperPortal from '@/pages/developer/DeveloperPortal'
+import LegalPageView from '@/pages/storefront/LegalPageView'
 import CourierPortalPage from '@/pages/courier/CourierPortalPage'
 
 
@@ -74,6 +101,7 @@ function PrivateRoute({ children, role = 'merchant' }) {
   const user = useAuthStore((state) => state.user)
   const login = useAuthStore((state) => state.login)
   const setStore = useAuthStore((state) => state.setStore)
+  const setStores = useAuthStore((state) => state.setStores)
   const logout = useAuthStore((state) => state.logout)
 
   const session = useQuery({
@@ -88,15 +116,16 @@ function PrivateRoute({ children, role = 'merchant' }) {
     if (!session.data) return
 
     login(token, session.data.user)
-    const sessionStore = session.data.role === 'merchant' ? session.data.stores?.[0] ?? null : null
+    const sessionStores = session.data.role === 'merchant' ? session.data.stores ?? [] : []
+    if (sessionStores.length > 0) {
+      setStores(sessionStores)
+    }
     const currentStore = useAuthStore.getState().store
-    // Only overwrite store from session if it has stores data, or if Zustand is empty.
-    // Prevents a stale session cache (fetched before store creation) from wiping
-    // a freshly created store when navigating from OnboardingPage to Dashboard.
+    const sessionStore = sessionStores[0] ?? null
     if (sessionStore || !currentStore) {
       setStore(sessionStore)
     }
-  }, [session.data, login, setStore, token])
+  }, [session.data, login, setStore, setStores, token])
 
   useEffect(() => {
     if (session.isError) logout()
@@ -203,9 +232,11 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/changelog" element={<ChangelogPage />} />
 
       <Route path="/merchant/login" element={<GuestRoute><MerchantLogin /></GuestRoute>} />
       <Route path="/merchant/register" element={<GuestRoute><MerchantRegister /></GuestRoute>} />
+      <Route path="/merchant/mfa-challenge" element={<MfaChallenge />} />
       <Route path="/merchant/forgot-password" element={<ForgotPassword />} />
       <Route path="/merchant/reset-password/:token" element={<ResetPassword />} />
       <Route path="/customer/login" element={<CustomerGuestRoute><CustomerLogin /></CustomerGuestRoute>} />
@@ -229,10 +260,26 @@ export default function App() {
         <Route path="reports" element={<ReportsPage />} />
         <Route path="profile" element={<ProfilePage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="security/mfa" element={<MfaSetupPage />} />
+        <Route path="sessions" element={<SessionsPage />} />
+        <Route path="staff" element={<StaffPage />} />
+        <Route path="activity" element={<ActivityLogPage />} />
         <Route path="anti-fraud" element={<AntiFraudPage />} />
         <Route path="couriers" element={<CourierDispatcherPage />} />
+        <Route path="discounts" element={<DiscountsPage />} />
+        <Route path="api-keys" element={<ApiKeysPage />} />
+        <Route path="webhooks" element={<WebhooksPage />} />
+        <Route path="compliance" element={<CompliancePage />} />
+        <Route path="legal-pages" element={<LegalPagesPage />} />
+        <Route path="support" element={<SupportPage />} />
+        <Route path="knowledge" element={<KnowledgeViewPage />} />
+        <Route path="themes" element={<ThemesPage />} />
+        <Route path="themes/:themeId/customize" element={<ThemeCustomizerPage />} />
+        <Route path="pages" element={<PagesPage />} />
+        <Route path="pages/:pageId/builder" element={<PageBuilderPage />} />
       </Route>
 
+      <Route path="/developers" element={<DeveloperPortal />} />
       <Route path="/courier-portal/:courierId" element={<CourierPortalPage />} />
 
       <Route path="/store/:slug" element={<StorefrontLayout />}>
@@ -244,6 +291,7 @@ export default function App() {
         <Route path="order/:orderId" element={<OrderConfirmationPage />} />
         <Route path="order/:orderId/track" element={<OrderTrackingPage />} />
         <Route path="chat/:chatId" element={<CustomerChatPage />} />
+        <Route path="legal/:type" element={<LegalPageView />} />
       </Route>
 
       <Route path="/admin/login" element={<AdminGuestRoute><AdminLogin /></AdminGuestRoute>} />
@@ -256,6 +304,14 @@ export default function App() {
         <Route path="stores" element={<AdminStores />} />
         <Route path="orders" element={<AdminOrders />} />
         <Route path="customers" element={<AdminCustomers />} />
+        <Route path="analytics" element={<AdminAnalytics />} />
+        <Route path="health-scores" element={<AdminHealthScores />} />
+        <Route path="reports" element={<AdminReports />} />
+        <Route path="tickets" element={<AdminTickets />} />
+        <Route path="knowledge-base" element={<AdminKnowledgeBase />} />
+        <Route path="feedback" element={<AdminFeedback />} />
+        <Route path="feature-flags" element={<AdminFeatureFlags />} />
+        <Route path="changelog" element={<AdminChangelog />} />
       </Route>
 
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
