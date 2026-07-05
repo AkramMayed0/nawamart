@@ -18,7 +18,7 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-hot-toast": "^2.4.1",
-    "react-router-dom": "^6.24.0",
+    "react-router-dom": "^7.18.1",
     "socket.io-client": "^4.8.3",
     "xlsx": "^0.18.5",
     "zustand": "^4.5.4"
