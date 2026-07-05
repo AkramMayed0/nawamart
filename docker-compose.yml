@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  nawamart-net:
+    driver: bridge
+
 services:
   nawamart-backend:
     build:
@@ -10,11 +14,32 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5000
-      - MONGO_URI=${MONGO_URI}
+      - MONGODB_URI=${MONGODB_URI}
       - JWT_SECRET=${JWT_SECRET}
-      - CORS_ORIGINS=${CORS_ORIGINS}
-      - RATE_LIMIT_MAX=600
-    restart: always
+      - CLIENT_URL=${CLIENT_URL}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-600}
+      - AUTH_RATE_LIMIT_MAX=${AUTH_RATE_LIMIT_MAX:-20}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - nawamart-net
+    volumes:
+      - backend-logs:/usr/src/app/logs
+      - backend-uploads:/usr/src/app/uploads
 
   nawamart-frontend:
     build:
@@ -22,4 +47,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "80:80"
-    restart: always
+    restart: unless-stopped
+    depends_on:
+      nawamart-backend:
+        condition: service_healthy
+    networks:
+      - nawamart-net
+
+volumes:
+  backend-logs:
+  backend-uploads:

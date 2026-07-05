@@ -7,7 +7,8 @@ import toast from 'react-hot-toast'
 import clsx from 'clsx'
 
 export default function CourierDispatcherPage() {
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
   const [couriers, setCouriers] = useState([])
   const [dispatches, setDispatches] = useState([])
   const [availableOrders, setAvailableOrders] = useState([])
@@ -133,7 +134,7 @@ export default function CourierDispatcherPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setShowAddCourier(true)}
-              className="bg-white/10 hover:bg-white/20 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
+              className="bg-surface/10 hover:bg-surface/20 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2"
             >
               <User size={16} />
               إضافة مندوب
@@ -147,12 +148,12 @@ export default function CourierDispatcherPage() {
             </button>
           </div>
         </div>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-surface/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Couriers Column */}
-        <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm lg:col-span-1 flex flex-col">
+        <div className="bg-surface rounded-3xl border border-border p-6 shadow-sm lg:col-span-1 flex flex-col">
           <h2 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
             <User size={18} className="text-[#38BDF8]" />
             المناديب المسجلين
@@ -162,16 +163,16 @@ export default function CourierDispatcherPage() {
             {loading ? (
               <div className="flex justify-center py-8"><div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>
             ) : couriers.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-8">لا يوجد مناديب مضافين بعد.</p>
+              <p className="text-sm text-text-muted text-center py-8">لا يوجد مناديب مضافين بعد.</p>
             ) : (
               couriers.map(courier => (
-                <div key={courier._id} className="p-4 border border-gray-100 rounded-2xl bg-gray-50 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+                <div key={courier._id} className="p-4 border border-border rounded-2xl bg-bg-soft flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shrink-0 shadow-sm">
                     {courier.vehicleType === 'motorbike' ? <Truck size={18} className="text-[#18212F]" /> : <User size={18} className="text-[#18212F]" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-gray-800 truncate">{courier.name}</h3>
-                    <p className="text-xs text-gray-500 font-en mt-0.5">{courier.phone}</p>
+                    <p className="text-xs text-text-muted font-en mt-0.5">{courier.phone}</p>
                   </div>
                   <div className="shrink-0 flex flex-col items-end gap-2">
                     <div className="flex items-center gap-1.5">
@@ -180,7 +181,7 @@ export default function CourierDispatcherPage() {
                         courier.currentStatus === 'available' ? 'bg-[#25D366]' :
                         courier.currentStatus === 'busy' ? 'bg-amber-500' : 'bg-gray-300'
                       )} />
-                      <span className="text-[10px] font-bold text-gray-600">
+                      <span className="text-[10px] font-bold text-text-muted">
                         {courier.currentStatus === 'available' ? 'متاح' : courier.currentStatus === 'busy' ? 'مشغول' : 'غير متصل'}
                       </span>
                     </div>
@@ -198,7 +199,7 @@ export default function CourierDispatcherPage() {
         </div>
 
         {/* Dispatches Column */}
-        <div className="bg-white rounded-3xl border border-gray-100 p-6 shadow-sm lg:col-span-2 flex flex-col">
+        <div className="bg-surface rounded-3xl border border-border p-6 shadow-sm lg:col-span-2 flex flex-col">
           <h2 className="font-bold text-lg text-gray-800 mb-4 flex items-center gap-2">
             <Navigation size={18} className="text-[#38BDF8]" />
             الرحلات الجارية
@@ -210,12 +211,12 @@ export default function CourierDispatcherPage() {
             ) : dispatches.length === 0 ? (
               <div className="text-center py-12">
                 <MapPin size={32} className="text-gray-200 mx-auto mb-3" />
-                <p className="text-sm text-gray-500">لا توجد رحلات توجيه حالياً.</p>
+                <p className="text-sm text-text-muted">لا توجد رحلات توجيه حالياً.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {dispatches.map(dispatch => (
-                  <div key={dispatch._id} className="p-4 border border-gray-100 rounded-2xl bg-white shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                  <div key={dispatch._id} className="p-4 border border-border rounded-2xl bg-surface shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
                     <div className={clsx(
                       'absolute top-0 right-0 w-1 h-full',
                       dispatch.status === 'assigned' ? 'bg-amber-500' :
@@ -225,7 +226,7 @@ export default function CourierDispatcherPage() {
                     
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <p className="text-xs text-gray-500 mb-0.5">طلب رقم</p>
+                        <p className="text-xs text-text-muted mb-0.5">طلب رقم</p>
                         <p className="font-bold text-sm text-[#1D2430] font-en">#{String(dispatch.order?._id || dispatch.order).slice(-8).toUpperCase()}</p>
                       </div>
                       <span className={clsx(
@@ -240,13 +241,13 @@ export default function CourierDispatcherPage() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 mb-4 bg-gray-50 p-2 rounded-xl border border-gray-100">
-                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0">
-                        <User size={14} className="text-gray-600" />
+                    <div className="flex items-center gap-2 mb-4 bg-bg-soft p-2 rounded-xl border border-border">
+                      <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center shrink-0">
+                        <User size={14} className="text-text-muted" />
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-bold text-gray-800 truncate">{dispatch.courier?.name || 'غير معروف'}</p>
-                        <p className="text-[10px] text-gray-500 font-en">{dispatch.courier?.phone || ''}</p>
+                        <p className="text-[10px] text-text-muted font-en">{dispatch.courier?.phone || ''}</p>
                       </div>
                     </div>
 
@@ -256,12 +257,12 @@ export default function CourierDispatcherPage() {
                           type="text"
                           readOnly
                           value={dispatch.lightweightMapUrl}
-                          className="flex-1 bg-gray-50 border border-gray-100 rounded-lg px-2 py-1.5 text-[10px] font-en text-gray-500 focus:outline-none"
+                          className="flex-1 bg-bg-soft border border-border rounded-lg px-2 py-1.5 text-[10px] font-en text-text-muted focus:outline-none"
                           dir="ltr"
                         />
                         <button
                           onClick={() => copyToClipboard(dispatch.lightweightMapUrl)}
-                          className="shrink-0 w-8 h-8 flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg transition-colors"
+                          className="shrink-0 w-8 h-8 flex items-center justify-center bg-bg-soft hover:bg-gray-200 text-text-muted rounded-lg transition-colors"
                           title="نسخ الرابط الخفيف"
                         >
                           <Copy size={14} />
@@ -279,23 +280,23 @@ export default function CourierDispatcherPage() {
       {/* Modals */}
       {showAddCourier && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200">
+          <div className="bg-surface rounded-3xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-lg text-gray-800">إضافة مندوب جديد</h3>
-              <button onClick={() => setShowAddCourier(false)} className="text-gray-400 hover:text-gray-800"><X size={20} /></button>
+              <button onClick={() => setShowAddCourier(false)} className="text-text-subtle hover:text-gray-800"><X size={20} /></button>
             </div>
             <form onSubmit={handleAddCourier} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">اسم المندوب</label>
-                <input required type="text" value={courierForm.name} onChange={e => setCourierForm(p => ({...p, name: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary" />
+                <label className="block text-sm font-bold text-text mb-1">اسم المندوب</label>
+                <input required type="text" value={courierForm.name} onChange={e => setCourierForm(p => ({...p, name: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-primary" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">رقم الهاتف</label>
-                <input required type="text" value={courierForm.phone} onChange={e => setCourierForm(p => ({...p, phone: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary font-en" dir="ltr" />
+                <label className="block text-sm font-bold text-text mb-1">رقم الهاتف</label>
+                <input required type="text" value={courierForm.phone} onChange={e => setCourierForm(p => ({...p, phone: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-primary font-en" dir="ltr" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">نوع المركبة</label>
-                <select value={courierForm.vehicleType} onChange={e => setCourierForm(p => ({...p, vehicleType: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-primary">
+                <label className="block text-sm font-bold text-text mb-1">نوع المركبة</label>
+                <select value={courierForm.vehicleType} onChange={e => setCourierForm(p => ({...p, vehicleType: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-primary">
                   <option value="motorbike">دراجة نارية (موتور)</option>
                   <option value="car">سيارة</option>
                   <option value="walking">مشياً</option>
@@ -312,22 +313,22 @@ export default function CourierDispatcherPage() {
 
       {showAssignDispatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200">
+          <div className="bg-surface rounded-3xl w-full max-w-md p-6 shadow-xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-bold text-lg text-gray-800">إسناد وتوجيه طلب</h3>
-              <button onClick={() => setShowAssignDispatch(false)} className="text-gray-400 hover:text-gray-800"><X size={20} /></button>
+              <button onClick={() => setShowAssignDispatch(false)} className="text-text-subtle hover:text-gray-800"><X size={20} /></button>
             </div>
             <form onSubmit={handleAssignDispatch} className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">طريقة التوجيه</label>
+                <label className="block text-sm font-bold text-text mb-2">طريقة التوجيه</label>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => setDispatchMode('pool')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'pool' ? "bg-[#38BDF8] text-white border-[#38BDF8]" : "bg-gray-50 text-gray-500 border-gray-200")}>إتاحة للجميع</button>
-                  <button type="button" onClick={() => setDispatchMode('direct')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'direct' ? "bg-[#18212F] text-white border-[#18212F]" : "bg-gray-50 text-gray-500 border-gray-200")}>إسناد مباشر</button>
+                  <button type="button" onClick={() => setDispatchMode('pool')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'pool' ? "bg-[#38BDF8] text-white border-[#38BDF8]" : "bg-bg-soft text-text-muted border-border")}>إتاحة للجميع</button>
+                  <button type="button" onClick={() => setDispatchMode('direct')} className={clsx("flex-1 py-2 text-sm font-bold rounded-xl border transition-colors", dispatchMode === 'direct' ? "bg-[#18212F] text-white border-[#18212F]" : "bg-bg-soft text-text-muted border-border")}>إسناد مباشر</button>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">الطلب المراد توجيهه</label>
-                <select required value={dispatchForm.orderId} onChange={e => setDispatchForm(p => ({...p, orderId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
+                <label className="block text-sm font-bold text-text mb-1">الطلب المراد توجيهه</label>
+                <select required value={dispatchForm.orderId} onChange={e => setDispatchForm(p => ({...p, orderId: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
                   <option value="" disabled>اختر الطلب...</option>
                   {availableOrders.map(o => (
                     <option key={o._id} value={o._id}>
@@ -340,15 +341,15 @@ export default function CourierDispatcherPage() {
               {dispatchMode === 'direct' && (
                 <>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">المندوب</label>
-                    <select required value={dispatchForm.courierId} onChange={e => setDispatchForm(p => ({...p, courierId: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
+                    <label className="block text-sm font-bold text-text mb-1">المندوب</label>
+                    <select required value={dispatchForm.courierId} onChange={e => setDispatchForm(p => ({...p, courierId: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-[#38BDF8]">
                       <option value="" disabled>اختر المندوب...</option>
                       {couriers.map(c => <option key={c._id} value={c._id}>{c.name} ({c.phone})</option>)}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1">ملاحظات للمندوب</label>
-                    <textarea rows={2} value={dispatchForm.notes} onChange={e => setDispatchForm(p => ({...p, notes: e.target.value}))} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] resize-none" placeholder="مثال: العميل بانتظارك عند الباب..." />
+                    <label className="block text-sm font-bold text-text mb-1">ملاحظات للمندوب</label>
+                    <textarea rows={2} value={dispatchForm.notes} onChange={e => setDispatchForm(p => ({...p, notes: e.target.value}))} className="w-full px-4 py-2.5 bg-bg-soft border border-border rounded-xl text-sm focus:outline-none focus:border-[#38BDF8] resize-none" placeholder="مثال: العميل بانتظارك عند الباب..." />
                   </div>
                 </>
               )}

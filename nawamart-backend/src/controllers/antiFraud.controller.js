@@ -15,7 +15,7 @@ const listReturnRisks = asyncHandler(async (req, res) => {
   ]);
 
   return apiResponse(res, {
-    message: 'Return risk records loaded',
+    message: 'تم جلب سجلات مخاطر الإرجاع',
     data: items,
     pagination: paginateResponse(total, page, limit),
   });
@@ -29,7 +29,7 @@ const createReturnRisk = asyncHandler(async (req, res) => {
     return res.status(400).json({
       success: false,
       data: null,
-      message: 'customerPhone and reason are required',
+      message: 'رقم هاتف العميل وسبب المخاطرة مطلوبان',
     });
   }
 
@@ -48,7 +48,7 @@ const createReturnRisk = asyncHandler(async (req, res) => {
 
   return apiResponse(res, {
     statusCode: 201,
-    message: 'Return risk record created',
+    message: 'تم إضافة سجل مخاطرة الإرجاع',
     data: risk,
   });
 });
@@ -58,7 +58,7 @@ const checkReturnRisk = asyncHandler(async (req, res) => {
   const phone = String(req.query.phone || req.body.phone || '').trim();
 
   if (!phone) {
-    return res.status(400).json({ success: false, data: null, message: 'phone is required' });
+    return res.status(400).json({ success: false, data: null, message: 'رقم الهاتف مطلوب' });
   }
 
   const matches = await ReturnRisk.find({
@@ -72,7 +72,7 @@ const checkReturnRisk = asyncHandler(async (req, res) => {
   const score = Math.min(100, matches.length * 20 + highRiskCount * 20);
 
   return apiResponse(res, {
-    message: 'Return risk check completed',
+    message: 'تم التحقق من مستوى مخاطرة الإرجاع',
     data: {
       phone,
       score,

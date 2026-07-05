@@ -48,7 +48,7 @@ export default function LandingStoreTypes() {
               نوعان في منصة واحدة
             </span>
           </div>
-          <h2 className="font-cairo font-extrabold text-[40px] leading-[1.15] text-text mb-4">
+          <h2 className="font-cairo font-extrabold text-[28px] sm:text-[40px] leading-[1.15] text-text mb-4">
             متجر يناسب{' '}
             <span className="relative inline-block">
               <span className="shimmer-text">ما تبيعه</span>
@@ -68,7 +68,7 @@ export default function LandingStoreTypes() {
               className={`group relative rounded-3xl p-8 flex flex-col gap-5 overflow-hidden border transition-all duration-300 hover:-translate-y-1 ${
                 t.dark
                   ? 'nm-dark-card text-white'
-                  : 'bg-white border-border hover:border-border-strong hover:shadow-lg'
+                  : 'bg-surface border-border hover:border-border-strong hover:shadow-lg'
               }`}
             >
               {/* Decorative blobs inside dark card */}

@@ -103,12 +103,12 @@ export default function OrderConfirmationPage() {
         </div>
 
         {/* Wasl thumbnail */}
-        {order.waslUrl && (
+        {order.paymentWasl && (
           <div className="flex justify-between items-center pt-1 border-t border-border">
             <span className="font-cairo text-sm text-text-muted">الوصل</span>
-            <a href={order.waslUrl} target="_blank" rel="noopener noreferrer">
+            <a href={order.paymentWasl} target="_blank" rel="noopener noreferrer">
               <img
-                src={order.waslUrl}
+                src={order.paymentWasl}
                 alt="الوصل"
                 className="w-14 h-14 rounded-lg object-cover border border-border hover:opacity-80 transition-opacity"
               />

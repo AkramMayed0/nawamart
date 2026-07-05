@@ -208,7 +208,8 @@ export default function PageBuilderPage() {
   const { pageId } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const store = useAuthStore((s) => s.store)
+  const storeRaw = useAuthStore((s) => s.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   const [previewMode, setPreviewMode] = useState('desktop')
   const [showSectionPicker, setShowSectionPicker] = useState(false)

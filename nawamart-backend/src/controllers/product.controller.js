@@ -1,6 +1,9 @@
 const Product = require('../models/Product');
 const Store = require('../models/Store');
 const { apiResponse, asyncHandler, getPaginationParams, paginateResponse } = require('../utils/helpers');
+const { logActivity } = require('../services/audit');
+const { fire } = require('../services/webhookService');
+const InventoryService = require('../services/InventoryService');
 
 function uploadedImageUrls(req) {
   if (Array.isArray(req.files)) return req.files.map((file) => file.path);
@@ -72,6 +75,8 @@ const createProduct = asyncHandler(async (req, res) => {
   const product = await Product.create({
     store: storeId,
     merchant: store.merchant,
+    createdBy: req.user._id,
+    updatedBy: req.user._id,
     name,
     description,
     price,
@@ -88,6 +93,18 @@ const createProduct = asyncHandler(async (req, res) => {
     digitalDelivery: store.type === 'digital' ? buildDigitalDelivery(req.body) : undefined,
   });
 
+  await InventoryService.getOrCreateItem(product, storeId, store.merchant);
+
+  await logActivity(req, {
+    action: 'product.create',
+    resourceType: 'product',
+    resourceId: product._id,
+    resourceName: product.name,
+    details: `تم إنشاء المنتج ${product.name}`,
+  });
+
+  fire('product.created', product.toObject(), store._id, store.merchant);
+
   return apiResponse(res, {
     statusCode: 201,
     message: 'تم إضافة المنتج بنجاح',
@@ -102,8 +119,7 @@ const createProduct = asyncHandler(async (req, res) => {
 const getProductsByStore = asyncHandler(async (req, res) => {
   const { storeId } = req.params;
   const { limit, skip, page } = getPaginationParams(req);
-  const { search, category } = req.query;
-
+  const { search, category, type, visibility, brand, minPrice, maxPrice, sort } = req.query;
   const store = await Store.findOne({ _id: storeId, isActive: true });
   if (!store) {
     return res.status(404).json({
@@ -112,25 +128,27 @@ const getProductsByStore = asyncHandler(async (req, res) => {
       data: null,
     });
   }
-
-  // Build query
   const query = { store: storeId, isDeleted: false, isActive: true };
-  if (category) {
-    query.category = category;
+  if (category) query.category = category;
+  if (type) query.type = type;
+  if (brand) query.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
   }
-  if (search) {
-    query.$text = { $search: search };
-  }
-
+  if (visibility === 'featured') query.isFeatured = true;
+  if (visibility === 'hidden') query.isActive = false;
+  if (visibility === 'visible') query.isActive = true;
+  if (search) { query.$text = { $search: search }; }
   const [products, total] = await Promise.all([
     Product.find(query)
       .select('-digitalDelivery.fileUrl -digitalDelivery.externalUrl -digitalDelivery.serialCodes')
-      .sort({ createdAt: -1 })
+      .sort(sort === 'price_asc' ? { price: 1 } : sort === 'price_desc' ? { price: -1 } : sort === 'name' ? { name: 1 } : { createdAt: -1 })
       .skip(skip)
       .limit(limit),
     Product.countDocuments(query),
   ]);
-
   return res.status(200).json({
     success: true,
     message: 'تم جلب المنتجات بنجاح',
@@ -236,7 +254,20 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.images = images;
   }
 
+  product.updatedBy = req.user._id;
   await product.save();
+
+  await InventoryService.syncWithProduct(product._id);
+
+  await logActivity(req, {
+    action: 'product.update',
+    resourceType: 'product',
+    resourceId: product._id,
+    resourceName: product.name,
+    details: `تم تحديث المنتج ${product.name}`,
+  });
+
+  fire('product.updated', product.toObject(), product.store._id, product.store.merchant);
 
   return apiResponse(res, {
     message: 'تم تحديث المنتج بنجاح',
@@ -269,14 +300,113 @@ const deleteProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  // Soft delete
+  // Soft delete with 30-day recovery window
   product.isDeleted = true;
   product.isActive = false;
+  product.deletedAt = new Date();
+  product.updatedBy = req.user._id;
   await product.save();
+
+  await logActivity(req, {
+    action: 'product.delete',
+    resourceType: 'product',
+    resourceId: product._id,
+    resourceName: product.name,
+    details: `تم حذف المنتج ${product.name}`,
+  });
+
+  fire('product.deleted', { _id: product._id, name: product.name }, product.store._id, product.store.merchant);
 
   return apiResponse(res, {
     message: 'تم حذف المنتج بنجاح',
     data: null,
+  });
+});
+
+/**
+ * POST /api/products/:id/restore
+ * Restore a soft-deleted product (Merchant only)
+ */
+const restoreProduct = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  let product = await Product.findById(id).populate('store', 'merchant');
+
+  if (!product || !product.isDeleted) {
+    return res.status(404).json({
+      success: false,
+      message: 'المنتج غير موجود أو لم يتم حذفه',
+      data: null,
+    });
+  }
+
+  if (product.store.merchant.toString() !== req.user._id.toString()) {
+    return res.status(403).json({
+      success: false,
+      message: 'لا تملك صلاحية استعادة هذا المنتج',
+      data: null,
+    });
+  }
+
+  product.isDeleted = false;
+  product.isActive = true;
+  product.deletedAt = null;
+  product.updatedBy = req.user._id;
+  await product.save();
+
+  await logActivity(req, {
+    action: 'product.restore',
+    resourceType: 'product',
+    resourceId: product._id,
+    resourceName: product.name,
+    details: `تمت استعادة المنتج ${product.name}`,
+  });
+
+  fire('product.restored', product.toObject(), product.store._id, product.store.merchant);
+
+  return apiResponse(res, {
+    message: 'تمت استعادة المنتج بنجاح',
+    data: product,
+  });
+});
+
+const getMerchantProducts = asyncHandler(async (req, res) => {
+  const { storeId } = req.query;
+  if (!storeId) return res.status(400).json({ success: false, message: 'معرّف المتجر مطلوب', data: null });
+
+  const store = await Store.findOne({ _id: storeId, merchant: req.user._id });
+  if (!store) return res.status(403).json({ success: false, message: 'المتجر غير موجود', data: null });
+
+  const { limit, skip, page } = getPaginationParams(req);
+  const { search, category, visibility, brand, minPrice, maxPrice, sort, type } = req.query;
+
+  const query = { store: storeId, isDeleted: false };
+  if (category) query.category = category;
+  if (brand) query.brand = new RegExp(brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (type) query.type = type;
+  if (minPrice || maxPrice) {
+    query.price = {};
+    if (minPrice) query.price.$gte = Number(minPrice);
+    if (maxPrice) query.price.$lte = Number(maxPrice);
+  }
+  if (visibility === 'featured') query.isFeatured = true;
+  if (visibility === 'archived') query.isActive = false;
+  if (visibility === 'active') query.isActive = true;
+  if (search) query.$text = { $search: search };
+
+  const [products, total] = await Promise.all([
+    Product.find(query)
+      .select('-digitalDelivery.fileUrl -digitalDelivery.externalUrl -digitalDelivery.serialCodes')
+      .sort(sort === 'price_asc' ? { price: 1 } : sort === 'price_desc' ? { price: -1 } : sort === 'name' ? { name: 1 } : { createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    Product.countDocuments(query),
+  ]);
+
+  return apiResponse(res, {
+    message: 'تم جلب المنتجات',
+    data: products,
+    pagination: paginateResponse(total, page, limit),
   });
 });
 
@@ -286,4 +416,6 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
+  restoreProduct,
+  getMerchantProducts,
 };

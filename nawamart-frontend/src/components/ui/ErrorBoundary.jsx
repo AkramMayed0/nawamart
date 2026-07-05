@@ -1,9 +1,6 @@
 import { Component } from 'react'
+import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
 
-/**
- * Global React Error Boundary
- * Catches any uncaught render errors and shows a friendly Arabic fallback.
- */
 export default class ErrorBoundary extends Component {
   constructor(props) {
     super(props)
@@ -15,7 +12,6 @@ export default class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    // Could send to Sentry / logging here
     console.error('[ErrorBoundary]', error, info)
   }
 
@@ -29,30 +25,13 @@ export default class ErrorBoundary extends Component {
 
     return (
       <div
-        className="min-h-screen flex flex-col items-center justify-center bg-bg px-4 text-center"
+        className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-bg via-white to-bg px-4 text-center"
         dir="rtl"
       >
-        {/* Icon */}
-        <div className="w-20 h-20 rounded-2xl bg-danger-100 flex items-center justify-center mb-6">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="36"
-            height="36"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-danger"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-danger-100 to-red-100 flex items-center justify-center mb-6 shadow-lg">
+          <AlertTriangle size={36} className="text-danger" />
         </div>
 
-        {/* Message */}
         <h1 className="font-cairo font-extrabold text-2xl text-text mb-2">
           حدث خطأ غير متوقع
         </h1>
@@ -60,18 +39,19 @@ export default class ErrorBoundary extends Component {
           نعتذر عن هذا الخطأ. يرجى المحاولة مجدداً أو العودة للصفحة الرئيسية.
         </p>
 
-        {/* Buttons */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-center">
           <button
             onClick={this.handleReset}
-            className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-5 py-2.5 rounded-xl bg-primary text-white hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 font-cairo font-bold text-sm px-6 py-3 rounded-xl bg-primary text-white hover:bg-primary-700 hover:-translate-y-0.5 transition-all shadow-md shadow-primary/15"
           >
+            <Home size={16} />
             العودة للرئيسية
           </button>
           <button
             onClick={() => window.location.reload()}
-            className="inline-flex items-center gap-2 font-cairo font-semibold text-sm px-5 py-2.5 rounded-xl border border-border text-text-muted hover:bg-bg-soft transition-colors"
+            className="inline-flex items-center gap-2 font-cairo font-semibold text-sm px-6 py-3 rounded-xl border border-border text-text-muted hover:bg-white hover:text-text hover:shadow-sm transition-all"
           >
+            <RefreshCw size={16} />
             إعادة المحاولة
           </button>
         </div>

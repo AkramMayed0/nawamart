@@ -67,7 +67,7 @@ io.on('connection', (socket) => {
   const joinChatRoom = async (chatId, label = 'chat') => {
     const chat = await Chat.findById(chatId).select('merchant customer');
     if (!chat || !hasChatAccess(chat, socket.user.id, socket.user.role)) {
-      socket.emit('socketError', { message: 'Not authorized for this chat' });
+      socket.emit('socketError', { message: 'لا تملك صلاحية الوصول لهذه المحادثة' });
       return;
     }
 
@@ -77,21 +77,21 @@ io.on('connection', (socket) => {
 
   const canUseRoom = (chatId) => {
     if (chatId && socket.rooms.has(chatId)) return true;
-    socket.emit('socketError', { message: 'Join the chat before using this socket event' });
+    socket.emit('socketError', { message: 'انضم للمحادثة أولاً قبل استخدام هذا الحدث' });
     return false;
   };
 
   socket.on('joinRoom', (chatId) => {
     joinChatRoom(chatId).catch((err) => {
       console.error('[Socket] joinRoom failed:', err.message);
-      socket.emit('socketError', { message: 'Could not join chat' });
+      socket.emit('socketError', { message: 'تعذر الانضمام للمحادثة' });
     });
   });
 
   socket.on('join_chat', (chatId) => {
     joinChatRoom(chatId, 'chat (legacy)').catch((err) => {
       console.error('[Socket] join_chat failed:', err.message);
-      socket.emit('socketError', { message: 'Could not join chat' });
+      socket.emit('socketError', { message: 'تعذر الانضمام للمحادثة' });
     });
   });
 

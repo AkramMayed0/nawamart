@@ -26,7 +26,8 @@ const PAGE_TYPE_COLORS = {
 export default function PagesPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const store = useAuthStore((s) => s.store)
+  const storeRaw = useAuthStore((s) => s.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   const [searchQuery, setSearchQuery] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)

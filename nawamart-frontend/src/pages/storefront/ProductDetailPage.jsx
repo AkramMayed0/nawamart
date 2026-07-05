@@ -10,7 +10,7 @@ import NotFound from '@/components/ui/NotFound'
 import { ProductCardSkeleton } from '@/components/ui/Skeleton'
 import ImageGallery from '@/components/storefront/ImageGallery'
 import Icon from '@/components/ui/Icon'
-import Button from '@/components/ui/Button'
+
 
 export default function ProductDetailPage() {
   const { slug, productId } = useParams()
@@ -69,7 +69,7 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-14">
 
         {/* Left col — image gallery */}
-        <div className="rounded-3xl overflow-hidden border border-border/50 bg-white shadow-sm">
+        <div className="rounded-3xl overflow-hidden border border-border/50 bg-surface shadow-sm">
            <ImageGallery images={product.images || []} />
         </div>
 
@@ -97,7 +97,7 @@ export default function ProductDetailPage() {
 
           {/* Description */}
           {product.description && (
-            <div className="bg-white rounded-2xl p-5 border border-border/50 shadow-sm">
+            <div className="bg-surface rounded-2xl p-5 border border-border/50 shadow-sm">
               <h2 className="font-cairo font-extrabold text-sm text-primary mb-2">وصف المنتج</h2>
               <p className="font-cairo text-sm text-text-muted leading-relaxed">
                 {product.description}
@@ -109,7 +109,7 @@ export default function ProductDetailPage() {
           {(product.sku || product.brand || product.barcode || product.weight || product.category || product.isFeatured) && (
             <div className="grid grid-cols-2 gap-3">
               {product.sku && (
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-3 rounded-xl bg-surface border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
                   <div className="bg-primary-50 text-primary p-2 rounded-lg">
                     <Hash size={16} />
                   </div>
@@ -120,7 +120,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.brand && (
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-3 rounded-xl bg-surface border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
                   <div className="bg-primary-50 text-primary p-2 rounded-lg">
                     <Building2 size={16} />
                   </div>
@@ -131,7 +131,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.barcode && (
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-3 rounded-xl bg-surface border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
                   <div className="bg-primary-50 text-primary p-2 rounded-lg">
                     <Barcode size={16} />
                   </div>
@@ -142,7 +142,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.weight && (
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-3 rounded-xl bg-surface border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
                   <div className="bg-primary-50 text-primary p-2 rounded-lg">
                     <Weight size={16} />
                   </div>
@@ -153,7 +153,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
               {product.category && (
-                <div className="flex items-center gap-3 rounded-xl bg-white border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
+                <div className="flex items-center gap-3 rounded-xl bg-surface border border-border/50 px-4 py-3 shadow-sm hover:border-primary/20 transition-colors">
                    <div className="bg-primary-50 text-primary p-2 rounded-lg">
                     <Tag size={16} />
                   </div>
@@ -205,7 +205,7 @@ export default function ProductDetailPage() {
           )}
 
           {/* Add to cart button */}
-          <div className="mt-2 sticky bottom-4 z-10 bg-white/80 backdrop-blur-md p-2 -mx-2 rounded-2xl border border-white/20 shadow-[0_-10px_40px_rgba(255,255,255,0.8)]">
+          <div className="mt-2 sticky bottom-4 z-10 bg-surface/80 backdrop-blur-md p-2 -mx-2 rounded-2xl border border-white/20 shadow-[0_-10px_40px_rgba(255,255,255,0.8)]">
             <button
               disabled={outOfStock}
               onClick={handleAddToCart}

@@ -1,4 +1,5 @@
 import Icon from '@/components/ui/Icon'
+import { ShoppingCart, CreditCard, Rocket, Crosshair, Check, Zap } from 'lucide-react'
 
 const FLOWS = [
   {
@@ -9,17 +10,17 @@ const FLOWS = [
     title: 'تدفق المنتجات المادية', sub: 'للملابس، الأغذية، الإكسسوارات',
     steps: [
       {
-        emoji: '🛒',
+        icon: ShoppingCart,
         title: 'العميل يتسوق ويضيف للسلة',
         body: 'يتصفح المنتجات في متجرك، ويضيف ما يريد، ثم يُدخل عنوان التوصيل في المحافظة المناسبة.'
       },
       {
-        emoji: '💳',
+        icon: CreditCard,
         title: 'يدفع ويرفع الوصل',
         body: 'يحوّل المبلغ عبر Cherry / Kuraimi / OneCash، ثم يرفع صورة وصل الدفع لتأكيد العملية.'
       },
       {
-        emoji: '🚀',
+        icon: Rocket,
         title: 'تأكّد، اشحن، تابع',
         body: 'تأكّد من الوصل، أرسل الطلب، وحدّث حالته. العميل يتابع كل خطوة حتى التسليم.'
       },
@@ -33,17 +34,17 @@ const FLOWS = [
     title: 'تدفق المنتجات الرقمية', sub: 'للاشتراكات، الحسابات، أكواد التفعيل',
     steps: [
       {
-        emoji: '🎯',
+        icon: Crosshair,
         title: 'العميل يختار ويدفع',
         body: 'يتصفح المنتجات الرقمية ويُتم الطلب — بلا عنوان شحن، فقط بياناته الأساسية ووصل الدفع.'
       },
       {
-        emoji: '✅',
+        icon: Check,
         title: 'تأكّد من الوصل',
         body: 'تراجع الوصل من لوحة التحكم، وبضغطة واحدة تفتح قناة محادثة خاصة بين متجرك والعميل.'
       },
       {
-        emoji: '⚡',
+        icon: Zap,
         title: 'سلّم المنتج عبر الشات',
         body: 'أرسل الرابط، الحساب، الكود، أو الملف مباشرة. العميل يؤكد الاستلام وتُغلق الجلسة.'
       },
@@ -53,7 +54,7 @@ const FLOWS = [
 
 export default function LandingHowItWorks() {
   return (
-    <section id="physical" className="relative py-24 overflow-hidden bg-white">
+    <section id="physical" className="relative py-24 overflow-hidden bg-surface">
       {/* Top border gradient */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
@@ -68,7 +69,7 @@ export default function LandingHowItWorks() {
           <div className="flex justify-center mb-4">
             <span className="nm-kicker-center">كيف يعمل</span>
           </div>
-          <h2 className="font-cairo font-extrabold text-[40px] leading-[1.15] text-text mb-4">
+          <h2 className="font-cairo font-extrabold text-[28px] sm:text-[40px] leading-[1.15] text-text mb-4">
             ٣ خطوات لكل نوع متجر
           </h2>
           <p className="font-cairo text-[17px] leading-[1.7] text-text-muted">
@@ -116,7 +117,7 @@ export default function LandingHowItWorks() {
                       <div className={`pb-${i < flow.steps.length - 1 ? '6' : '0'} pt-1 flex-1 min-w-0`}
                         style={{ paddingBottom: i < flow.steps.length - 1 ? '24px' : '0' }}>
                         <div className="flex items-center gap-2 mb-1.5">
-                          <span className="text-lg">{step.emoji}</span>
+                          {(() => { const StepIcon = step.icon; return <StepIcon size={20} className="text-text-muted" /> })()}
                           <h4 className="font-cairo font-extrabold text-[15px] text-text">{step.title}</h4>
                         </div>
                         <p className="font-cairo text-[13.5px] leading-[1.65] text-text-muted">{step.body}</p>

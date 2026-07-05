@@ -1,0 +1,16 @@
+import api from './axios'
+
+export const getInventoryItems       = (params) => api.get('/inventory/items', { params })
+export const getInventoryItem        = (id) => api.get(`/inventory/items/${id}`)
+export const updateInventoryItem     = (id, data) => api.put(`/inventory/items/${id}`, data)
+export const createAdjustment        = (data) => api.post('/inventory/adjustments', data)
+export const getAdjustments          = (params) => api.get('/inventory/adjustments', { params })
+export const createLocation          = (data) => api.post('/inventory/locations', data)
+export const getLocations            = (params) => api.get('/inventory/locations', { params })
+export const updateLocation          = (id, data) => api.put(`/inventory/locations/${id}`, data)
+export const deleteLocation          = (id) => api.delete(`/inventory/locations/${id}`)
+export const transferStock           = (data) => api.post('/inventory/transfers', data)
+export const getValuationReport      = (params) => api.get('/inventory/reports/valuation', { params })
+export const getLowStockReport       = (params) => api.get('/inventory/reports/low-stock', { params })
+export const getProjectedDepletion   = (params) => api.get('/inventory/reports/projected-depletion', { params })
+export const getInventoryHistory     = (params) => api.get('/inventory/history', { params })

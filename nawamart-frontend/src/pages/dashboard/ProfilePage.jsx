@@ -6,25 +6,20 @@ import usePageTitle from '@/hooks/usePageTitle'
 import Input from '@/components/ui/Input'
 import Button from '@/components/ui/Button'
 import { resolveAssetUrl } from '@/utils/assets'
-import { User, Lock, Mail, Camera, Phone, Pencil } from 'lucide-react'
+import { User, Lock, Mail, Camera, Phone, Pencil, Shield, AlertTriangle } from 'lucide-react'
 
-function SectionCard({ icon: Icon, title, subtitle, children, accent = 'primary' }) {
-  const topBorder = {
-    primary: 'bg-primary',
-    warning: 'bg-warning',
-    accent: 'bg-accent',
-  }
-  const iconBg = {
-    primary: 'bg-primary/10 text-primary',
-    warning: 'bg-warning-100 text-warning',
-    accent: 'bg-accent-50 text-accent-700',
-  }
+/* ── Section card ── */
+function SectionCard({ icon: Icon, iconColor = '#6366F1', title, subtitle, children }) {
   return (
-    <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-card transition-shadow duration-fast">
-      <div className={`h-1 ${topBorder[accent] || topBorder.primary}`} />
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconBg[accent] || iconBg.primary}`}>
-          <Icon size={18} />
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+      <div
+        className="flex items-center gap-3 px-5 py-4 border-b border-border"
+      >
+        <div
+          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{ background: `rgba(${hexToRgb(iconColor)},0.10)` }}
+        >
+          <Icon size={18} style={{ color: iconColor }} />
         </div>
         <div>
           <h2 className="font-cairo font-bold text-base text-text">{title}</h2>
@@ -38,20 +33,23 @@ function SectionCard({ icon: Icon, title, subtitle, children, accent = 'primary'
   )
 }
 
+function hexToRgb(hex) {
+  const h = hex.replace('#', '')
+  return `${parseInt(h.substring(0,2),16)}, ${parseInt(h.substring(2,4),16)}, ${parseInt(h.substring(4,6),16)}`
+}
+
 export default function ProfilePage() {
   usePageTitle('الملف الشخصي')
-  const user = useAuthStore((s) => s.user)
+  const user       = useAuthStore((s) => s.user)
   const updateUser = useAuthStore((s) => s.updateUser)
 
-  const [name, setName] = useState(user?.name || '')
-  const [phone, setPhone] = useState(user?.phone || '')
-
+  const [name, setName]                       = useState(user?.name || '')
+  const [phone, setPhone]                     = useState(user?.phone || '')
   const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-
-  const [profileFile, setProfileFile] = useState(null)
-  const [profilePreview, setProfilePreview] = useState(user?.profileImage || null)
-  const [saving, setSaving] = useState(false)
+  const [newPassword, setNewPassword]         = useState('')
+  const [profileFile, setProfileFile]         = useState(null)
+  const [profilePreview, setProfilePreview]   = useState(user?.profileImage || null)
+  const [saving, setSaving]                   = useState(false)
   const fileInputRef = useRef(null)
 
   function handleImageChange(e) {
@@ -63,19 +61,12 @@ export default function ProfilePage() {
 
   async function handleSave(e) {
     e.preventDefault()
-    if (!name.trim()) {
-      toast.error('الاسم مطلوب')
-      return
-    }
-
+    if (!name.trim()) { toast.error('الاسم مطلوب'); return }
     if ((currentPassword && !newPassword) || (!currentPassword && newPassword)) {
-      toast.error('كلمة المرور الحالية والجديدة مطلوبتان معاً')
-      return
+      toast.error('كلمة المرور الحالية والجديدة مطلوبتان معاً'); return
     }
-
     if (newPassword && newPassword.length < 6) {
-      toast.error('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل')
-      return
+      toast.error('كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل'); return
     }
 
     setSaving(true)
@@ -83,20 +74,16 @@ export default function ProfilePage() {
       const formData = new FormData()
       formData.append('name', name.trim())
       formData.append('phone', phone.trim())
-
       if (currentPassword && newPassword) {
         formData.append('currentPassword', currentPassword)
         formData.append('newPassword', newPassword)
       }
-
       if (profileFile) formData.append('profileImage', profileFile)
 
       const res = await updateProfile(formData)
       updateUser(res.data.data.user)
-
       setCurrentPassword('')
       setNewPassword('')
-
       toast.success('تم تحديث الملف الشخصي')
     } catch (err) {
       toast.error(err?.response?.data?.message || err?.message || 'حدث خطأ أثناء الحفظ')
@@ -105,90 +92,109 @@ export default function ProfilePage() {
     }
   }
 
+  const avatarSrc = profilePreview
+    ? (profilePreview.startsWith('blob:') ? profilePreview : resolveAssetUrl(profilePreview))
+    : null
+
   return (
     <div className="max-w-3xl mx-auto px-4 py-8" dir="rtl">
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center shadow-sm">
-          <User size={20} className="text-primary" />
-        </div>
-        <div>
-          <h1 className="font-cairo font-extrabold text-2xl text-text">الملف الشخصي</h1>
-          <p className="font-cairo text-sm text-text-muted mt-0.5">عدّل بيانات حسابك الشخصية وكلمة المرور.</p>
+
+      {/* ── Page header ── */}
+      <div className="page-header mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center shadow-sm" style={{ background: 'rgba(20,184,166,0.10)' }}>
+            <User size={20} style={{ color: '#14B8A6' }} />
+          </div>
+          <div>
+            <h1 className="font-cairo font-extrabold text-2xl text-text">الملف الشخصي</h1>
+            <p className="font-cairo text-sm text-text-muted mt-0.5">عدّل بيانات حسابك الشخصية وكلمة المرور.</p>
+          </div>
         </div>
       </div>
 
-      <form onSubmit={handleSave} className="flex flex-col gap-6">
+      <form onSubmit={handleSave} className="flex flex-col gap-5">
 
-        {/* Profile header card */}
-        <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
-          <div className="h-1 bg-primary" />
-          <div className="p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
-              <div className="relative group">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-bg-soft shadow-sm transition-shadow group-hover:shadow-md">
-                  {profilePreview ? (
-                    <img
-                      src={resolveAssetUrl(profilePreview) || profilePreview}
-                      alt="الصورة الشخصية"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <User size={40} className="text-text-subtle" />
-                  )}
+        {/* ── Avatar hero card ── */}
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
+          {/* Color strip */}
+          <div className="h-20 w-full" style={{ background: 'linear-gradient(135deg, #0D0D12 0%, #18212F 100%)' }} />
+          <div className="px-6 pb-6">
+            {/* Avatar floating above the strip */}
+            <div className="flex items-end gap-5 -mt-10 mb-4">
+              <div className="relative group shrink-0">
+                <div
+                  className="w-20 h-20 rounded-2xl overflow-hidden border-4 bg-bg-soft shadow-lg"
+                  style={{ borderColor: 'var(--color-surface)' }}
+                >
+                  {avatarSrc
+                    ? <img src={avatarSrc} alt="الصورة الشخصية" className="w-full h-full object-cover" />
+                    : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+                        <User size={32} className="text-primary" />
+                      </div>
+                    )
+                  }
                 </div>
+                {/* Edit overlay */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute bottom-0 left-0 w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center shadow-lg hover:bg-primary-700 transition-all hover:scale-105"
+                  className="absolute inset-0 rounded-2xl flex items-center justify-center bg-black/0 hover:bg-black/40 transition-all group"
+                  aria-label="تغيير الصورة"
                 >
-                  <Camera size={14} />
+                  <Camera size={20} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
-              <div className="text-center sm:text-right flex-1 min-w-0">
+              <div className="pb-1">
                 <h2 className="font-cairo font-extrabold text-xl text-text">{user?.name || 'حسابي'}</h2>
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-1">
-                  <Mail size={14} className="text-text-subtle shrink-0" />
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <Mail size={13} className="text-text-subtle shrink-0" />
                   <p className="font-cairo text-sm text-text-muted">{user?.email || ''}</p>
                 </div>
-                <p className="font-cairo text-xs text-text-subtle mt-2">PNG أو JPG · حتى 2 ميجابايت</p>
               </div>
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              onChange={handleImageChange}
-            />
+            <p className="font-cairo text-xs text-text-subtle">
+              انقر على الصورة لتغييرها · PNG أو JPG · حتى 2 ميجابايت
+            </p>
           </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp"
+            className="hidden"
+            onChange={handleImageChange}
+          />
         </div>
 
-        {/* Personal Information */}
-        <SectionCard icon={User} title="المعلومات الشخصية" subtitle="الاسم ورقم الهاتف" accent="primary">
+        {/* ── Personal info ── */}
+        <SectionCard
+          icon={User}
+          iconColor="#14B8A6"
+          title="بيانات الحساب"
+          subtitle="الاسم ورقم الهاتف"
+        >
           <div className="flex flex-col gap-5">
             <Input
               label="الاسم"
               placeholder="محمد أحمد"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={e => setName(e.target.value)}
               disabled={saving}
               prefix={<Pencil size={16} />}
             />
-
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-semibold font-cairo text-text">البريد الإلكتروني</label>
-              <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-soft px-3.5 py-2.5">
+              <div className="flex items-center gap-2 rounded-xl border border-border bg-bg-soft px-3.5 py-2.5">
                 <Mail size={16} className="text-text-subtle shrink-0" />
                 <span className="font-cairo text-[15px] text-text-muted">{user?.email || ''}</span>
               </div>
               <p className="font-cairo text-xs text-text-subtle">البريد الإلكتروني لا يمكن تغييره.</p>
             </div>
-
             <Input
               label="رقم الهاتف"
               placeholder="7XXXXXXXX"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={e => setPhone(e.target.value)}
               disabled={saving}
               prefix={<Phone size={16} />}
               inputClassName="font-en"
@@ -196,8 +202,13 @@ export default function ProfilePage() {
           </div>
         </SectionCard>
 
-        {/* Security */}
-        <SectionCard icon={Lock} title="تغيير كلمة المرور" subtitle="اترك الحقول فارغة إذا كنت لا تريد تغيير كلمة المرور." accent="warning">
+        {/* ── Password ── */}
+        <SectionCard
+          icon={Lock}
+          iconColor="#F59E0B"
+          title="كلمة المرور"
+          subtitle="اترك الحقول فارغة إذا كنت لا تريد تغيير كلمة المرور."
+        >
           <div className="flex flex-col gap-4">
             <Input
               label="كلمة المرور الحالية"
@@ -205,7 +216,7 @@ export default function ProfilePage() {
               placeholder="********"
               autoComplete="current-password"
               value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
+              onChange={e => setCurrentPassword(e.target.value)}
               disabled={saving}
               prefix={<Lock size={16} />}
             />
@@ -215,18 +226,76 @@ export default function ProfilePage() {
               placeholder="********"
               autoComplete="new-password"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={e => setNewPassword(e.target.value)}
               disabled={saving}
               prefix={<Lock size={16} />}
             />
           </div>
         </SectionCard>
 
+        {/* ── Security options ── */}
+        <SectionCard
+          icon={Shield}
+          iconColor="#22C55E"
+          title="خيارات الأمان"
+          subtitle="إعدادات إضافية لحماية حسابك"
+        >
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <p className="font-cairo font-semibold text-sm text-text">المصادقة الثنائية</p>
+              <p className="font-cairo text-xs text-text-muted mt-0.5">أضف طبقة حماية إضافية لحسابك</p>
+            </div>
+            <a
+              href="/dashboard/security/mfa"
+              className="font-cairo text-sm font-semibold transition-colors"
+              style={{ color: '#22C55E' }}
+            >
+              الإعداد &larr;
+            </a>
+          </div>
+        </SectionCard>
+
+        {/* ── Save ── */}
         <div className="flex justify-start">
-          <Button type="submit" variant="primary" size="lg" loading={saving} disabled={saving}>
+          <button
+            type="submit"
+            disabled={saving}
+            className="inline-flex items-center gap-2 rounded-xl px-6 py-2.5 font-cairo font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+            style={{ background: 'linear-gradient(135deg,#C93F2B,#A62F20)', boxShadow: '0 4px 12px rgba(201,63,43,0.30)' }}
+          >
             {saving ? 'جاري الحفظ...' : 'حفظ التغييرات'}
-          </Button>
+          </button>
         </div>
+
+        {/* ── Danger zone ── */}
+        <div className="bg-surface border rounded-2xl overflow-hidden" style={{ borderColor: 'rgba(231,76,60,0.25)' }}>
+          <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: 'rgba(231,76,60,0.15)' }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(231,76,60,0.08)' }}>
+              <AlertTriangle size={18} style={{ color: '#E74C3C' }} />
+            </div>
+            <div>
+              <h2 className="font-cairo font-bold text-base" style={{ color: '#E74C3C' }}>منطقة الخطر</h2>
+              <p className="font-cairo text-xs text-text-muted mt-0.5">هذه الإجراءات لا يمكن التراجع عنها</p>
+            </div>
+          </div>
+          <div className="p-5 flex items-center justify-between">
+            <div>
+              <p className="font-cairo font-semibold text-sm text-text">حذف الحساب</p>
+              <p className="font-cairo text-xs text-text-muted mt-0.5">سيتم حذف جميع بياناتك ومتاجرك نهائياً</p>
+            </div>
+            <button
+              type="button"
+              className="font-cairo text-sm font-bold px-4 py-2 rounded-xl border transition-all hover:text-white"
+              style={{ borderColor: 'rgba(231,76,60,0.4)', color: '#E74C3C' }}
+              onMouseEnter={e => { e.currentTarget.style.background = '#E74C3C'; e.currentTarget.style.color = '#fff' }}
+              onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#E74C3C' }}
+              onClick={() => toast.error('تواصل مع الدعم لحذف حسابك')}
+            >
+              حذف الحساب
+            </button>
+          </div>
+        </div>
+
       </form>
     </div>
   )

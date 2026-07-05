@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Routes, Route, Navigate, useSearchParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useSearchParams, Outlet } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { getProfile } from '@/api/auth'
 import { getAdminSession } from '@/api/admin'
@@ -40,6 +40,9 @@ import AdminFeatureFlags from '@/pages/admin/AdminFeatureFlags'
 import AdminChangelog from '@/pages/admin/AdminChangelog'
 import SupportPage from '@/pages/dashboard/SupportPage'
 import KnowledgeViewPage from '@/pages/dashboard/KnowledgeViewPage'
+import InventoryPage from '@/pages/dashboard/InventoryPage'
+import InventoryLocationsPage from '@/pages/dashboard/InventoryLocationsPage'
+import InventoryAdjustmentsPage from '@/pages/dashboard/InventoryAdjustmentsPage'
 
 import DashboardLayout from '@/pages/dashboard/DashboardLayout'
 import DashboardHome from '@/pages/dashboard/DashboardHome'
@@ -65,8 +68,12 @@ import ApiKeysPage from '@/pages/dashboard/ApiKeysPage'
 import WebhooksPage from '@/pages/dashboard/WebhooksPage'
 import CompliancePage from '@/pages/dashboard/CompliancePage'
 import LegalPagesPage from '@/pages/dashboard/LegalPagesPage'
+import CustomizationHubPage from '@/pages/dashboard/CustomizationHubPage'
 import ThemesPage from '@/pages/dashboard/ThemesPage'
 import ThemeCustomizerPage from '@/pages/dashboard/ThemeCustomizerPage'
+import ThemePresetsPage from '@/pages/dashboard/ThemePresetsPage'
+import HomepageBuilderPage from '@/pages/dashboard/HomepageBuilderPage'
+import ThemeAssetsPage from '@/pages/dashboard/ThemeAssetsPage'
 import PagesPage from '@/pages/dashboard/PagesPage'
 import PageBuilderPage from '@/pages/dashboard/PageBuilderPage'
 import DeveloperPortal from '@/pages/developer/DeveloperPortal'
@@ -87,7 +94,18 @@ import CustomerChatPage from '@/pages/storefront/CustomerChatPage'
 function RouteLoader() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg" dir="rtl">
-      <p className="font-cairo text-sm font-semibold text-text-muted">جاري التحقق من الجلسة...</p>
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-8 h-8 rounded-full border-2 border-border border-t-accent animate-spin" />
+        <p className="font-cairo text-sm font-semibold text-text-muted">جاري التحقق من الجلسة...</p>
+      </div>
+    </div>
+  )
+}
+
+function AnimatedOutlet() {
+  return (
+    <div className="page-enter">
+      <Outlet />
     </div>
   )
 }
@@ -273,10 +291,18 @@ export default function App() {
         <Route path="legal-pages" element={<LegalPagesPage />} />
         <Route path="support" element={<SupportPage />} />
         <Route path="knowledge" element={<KnowledgeViewPage />} />
+        <Route path="customize" element={<CustomizationHubPage />} />
         <Route path="themes" element={<ThemesPage />} />
+        <Route path="themes/customize" element={<ThemeCustomizerPage />} />
         <Route path="themes/:themeId/customize" element={<ThemeCustomizerPage />} />
+        <Route path="themes/presets" element={<ThemePresetsPage />} />
+        <Route path="themes/assets" element={<ThemeAssetsPage />} />
+        <Route path="themes/homepage" element={<HomepageBuilderPage />} />
         <Route path="pages" element={<PagesPage />} />
         <Route path="pages/:pageId/builder" element={<PageBuilderPage />} />
+        <Route path="inventory" element={<InventoryPage />} />
+        <Route path="inventory/locations" element={<InventoryLocationsPage />} />
+        <Route path="inventory/adjustments" element={<InventoryAdjustmentsPage />} />
       </Route>
 
       <Route path="/developers" element={<DeveloperPortal />} />

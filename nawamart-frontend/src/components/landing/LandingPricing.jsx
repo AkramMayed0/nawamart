@@ -55,7 +55,7 @@ export default function LandingPricing() {
           <div className="flex justify-center mb-4">
             <span className="nm-kicker-center"><Sparkles size={11} />الباقات</span>
           </div>
-          <h2 className="font-cairo font-extrabold text-[42px] leading-[1.15] text-text mb-4">
+          <h2 className="font-cairo font-extrabold text-[28px] sm:text-[42px] leading-[1.15] text-text mb-4">
             ابدأ بـ Pro،{' '}
             <span className="shimmer-text">ارتقِ إلى Business</span>
           </h2>
@@ -68,7 +68,7 @@ export default function LandingPricing() {
         <div className="grid gap-6 lg:grid-cols-2 max-w-5xl mx-auto mb-16">
 
           {/* ── PRO Card ── */}
-          <article className="relative flex flex-col rounded-3xl overflow-hidden border border-border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-border-strong">
+          <article className="relative flex flex-col rounded-3xl overflow-hidden border border-border bg-surface transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-border-strong">
             <div className="p-8">
               {/* Plan name + icon */}
               <div className="flex items-center gap-3 mb-3">
@@ -84,7 +84,7 @@ export default function LandingPricing() {
 
               {/* Price */}
               <div className="flex items-end gap-2 mb-1">
-                <span className="font-cairo text-[54px] font-extrabold leading-none text-text dk-num">8,000</span>
+                  <span className="font-cairo text-[40px] sm:text-[54px] font-extrabold leading-none text-text dk-num">8,000</span>
                 <span className="pb-3 font-cairo text-sm font-bold text-text-muted">ر.ي / شهر</span>
               </div>
               <p className="font-cairo text-xs text-text-subtle mb-6">لا حاجة لبطاقة ائتمان · إلغاء في أي وقت</p>
@@ -144,7 +144,7 @@ export default function LandingPricing() {
 
               {/* Price */}
               <div className="flex items-end gap-2 mb-1">
-                <span className="font-cairo text-[54px] font-extrabold leading-none text-white dk-num">13,000</span>
+                <span className="font-cairo text-[40px] sm:text-[54px] font-extrabold leading-none text-white dk-num">13,000</span>
                 <span className="pb-3 font-cairo text-sm font-bold" style={{ color: 'rgba(255,255,255,0.4)' }}>ر.ي / شهر</span>
               </div>
               <p className="font-cairo text-xs mb-6" style={{ color: 'rgba(255,255,255,0.3)' }}>يشمل كل ميزات Pro + 5 ميزات حصرية</p>
@@ -193,7 +193,7 @@ export default function LandingPricing() {
         {/* Feature comparison table */}
         <div className="max-w-3xl mx-auto">
           <h3 className="font-cairo text-center text-xl font-extrabold text-text mb-6">مقارنة الميزات</h3>
-          <div className="rounded-3xl overflow-hidden border border-border bg-white shadow-sm">
+          <div className="rounded-3xl overflow-hidden border border-border bg-surface shadow-sm">
             {/* Header */}
             <div className="grid grid-cols-[1fr_auto_auto] gap-6 px-6 py-4 font-cairo text-sm font-extrabold" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <span className="text-text-muted">الميزة</span>

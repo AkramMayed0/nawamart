@@ -147,11 +147,11 @@ export default function CustomerRegister() {
       </div>
 
       {/* ── Form panel ── */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-white to-bg">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-surface to-bg">
         <div className="w-full max-w-md">
 
           {/* Card wrapper */}
-          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
+          <div className="bg-surface rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
             {/* Accent bar at top */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-primary via-accent to-primary" />
 
@@ -232,7 +232,7 @@ export default function CustomerRegister() {
                   <div className="w-full border-t border-border" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-3 font-cairo text-text-muted">أو</span>
+                  <span className="bg-surface px-3 font-cairo text-text-muted">أو</span>
                 </div>
               </div>
 

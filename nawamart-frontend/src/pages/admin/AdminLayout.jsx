@@ -67,7 +67,7 @@ export default function AdminLayout() {
 
         {/* Page content — dark bg */}
         <main className="min-h-0 flex-1 overflow-y-auto" style={{ background: '#0d1117' }}>
-          <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8">
+          <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6 px-5 py-6 md:px-8 md:py-8 page-enter">
             <Outlet />
           </div>
         </main>

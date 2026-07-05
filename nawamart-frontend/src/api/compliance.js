@@ -1,0 +1,16 @@
+import api from './axios'
+export const recordConsent = (data) => api.post('/compliance/consent', data)
+export const getConsentHistory = (params) => api.get('/compliance/consent/history', { params })
+export const getConsentTypes = () => api.get('/compliance/consent/types')
+export const requestDataExport = (data) => api.post('/compliance/data/export', data)
+export const requestDataDeletion = (data) => api.post('/compliance/data/deletion', data)
+export const getDataRequests = (params) => api.get('/compliance/data/requests', { params })
+export const getDataRequestById = (id) => api.get(`/compliance/data/requests/${id}`)
+export const downloadExport = (id) => api.get(`/compliance/data/export/${id}/download`)
+
+export const getLegalPages = (storeId, params) => api.get(`/compliance/pages/${storeId}`, { params })
+export const createLegalPage = (storeId, data) => api.post(`/compliance/pages/${storeId}`, data)
+export const generateFromTemplate = (storeId, data) => api.post(`/compliance/pages/${storeId}/from-template`, data)
+export const updateLegalPage = (id, data) => api.put(`/compliance/pages/${id}`, data)
+export const getLegalPageTypes = () => api.get('/compliance/legal-types')
+export const getPublicLegalPage = (slug, type) => api.get(`/stores/${slug}/legal/${type}`)

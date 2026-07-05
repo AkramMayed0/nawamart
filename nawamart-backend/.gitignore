@@ -19,3 +19,9 @@ Thumbs.db
 
 # Uploads (local)
 uploads/
+
+# Data exports (generated on demand)
+exports/
+
+# Backups (generated on demand)
+backups/

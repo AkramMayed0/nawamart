@@ -188,11 +188,13 @@ const toggleStoreActive = asyncHandler(async (req, res) => {
 
   if (store.isActive) {
     store.isActive = false;
+    store.storeStatus = 'closed';
     store.suspendedUntil = days && days > 0
       ? new Date(Date.now() + days * 24 * 60 * 60 * 1000)
       : null;
   } else {
     store.isActive = true;
+    store.storeStatus = 'live';
     store.suspendedUntil = null;
   }
 

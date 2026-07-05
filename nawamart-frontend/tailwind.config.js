@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: [
     './index.html',
     './src/**/*.{js,ts,jsx,tsx}',
@@ -66,18 +67,18 @@ export default {
           900: '#111827',
         },
         bg: {
-          DEFAULT: '#F6F3EE',
-          soft: '#ECE8E1',
+          DEFAULT: 'var(--color-bg)',
+          soft: 'var(--color-bg-soft)',
         },
-        surface: '#FFFFFF',
+        surface: 'var(--color-surface)',
         text: {
-          DEFAULT: '#1D2430',
-          muted: '#5F6673',
-          subtle: '#9298A3',
+          DEFAULT: 'var(--color-text)',
+          muted: 'var(--color-text-muted)',
+          subtle: 'var(--color-text-subtle)',
         },
         border: {
-          DEFAULT: '#E1DED8',
-          strong: '#CFC8BE',
+          DEFAULT: 'var(--color-border)',
+          strong: 'var(--color-border-strong)',
         },
         success: {
           DEFAULT: '#27AE60',

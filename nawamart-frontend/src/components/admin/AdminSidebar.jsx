@@ -11,6 +11,14 @@ import {
   BarChart3,
   Settings,
   Bell,
+  Heart,
+  FileText,
+  Activity,
+  Ticket,
+  BookOpen,
+  MessageSquare,
+  ToggleLeft,
+  Megaphone,
 } from 'lucide-react'
 import { useAdminStore } from '@/store/adminStore'
 
@@ -34,7 +42,24 @@ const NAV_SECTIONS = [
   {
     label: 'التحليلات',
     items: [
-      { to: '/admin/dashboard', label: 'التقارير', icon: BarChart3, end: true },
+      { to: '/admin/dashboard/analytics', label: 'مقاييس المنصة', icon: BarChart3 },
+      { to: '/admin/dashboard/health-scores', label: 'صحة التجار', icon: Heart },
+      { to: '/admin/dashboard/reports', label: 'التقارير المبرمجة', icon: FileText },
+    ],
+  },
+  {
+    label: 'تطور المنصة',
+    items: [
+      { to: '/admin/dashboard/feature-flags', label: 'الميزات', icon: ToggleLeft },
+      { to: '/admin/dashboard/changelog', label: 'سجل التحديثات', icon: Megaphone },
+    ],
+  },
+  {
+    label: 'الدعم',
+    items: [
+      { to: '/admin/dashboard/tickets', label: 'الدعم الفني', icon: Ticket },
+      { to: '/admin/dashboard/knowledge-base', label: 'قاعدة المعرفة', icon: BookOpen },
+      { to: '/admin/dashboard/feedback', label: 'الملاحظات', icon: MessageSquare },
     ],
   },
 ]

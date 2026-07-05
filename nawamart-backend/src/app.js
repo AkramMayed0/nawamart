@@ -23,7 +23,7 @@ app.use(requestId);
 
 const cspDirectives = {
   defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'https://accounts.google.com'],
+  scriptSrc: ["'self'", "'unsafe-inline'", 'https://accounts.google.com'],
   styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
   fontSrc: ["'self'", 'https://fonts.gstatic.com'],
   imgSrc: ["'self'", 'data:', 'blob:',
@@ -188,7 +188,11 @@ const changelogRoutes = require('./routes/changelog.routes');
 const adminChangelogRoutes = require('./routes/adminChangelog.routes');
 const themeRoutes = require('./routes/theme.routes');
 const themeSettingsRoutes = require('./routes/themeSettings.routes');
+const themePresetRoutes = require('./routes/themePreset.routes');
+const homepageRoutes = require('./routes/homepage.routes');
+const themeAssetRoutes = require('./routes/themeAsset.routes');
 const pageRoutes = require('./routes/page.routes');
+const inventoryRoutes = require('./routes/inventory.routes');
 
 app.use('/api/stores', storeRoutes);
 app.use('/api/products', productRoutes);
@@ -225,7 +229,11 @@ app.use('/api/admin/features', adminFeatureFlagRoutes);
 app.use('/api/admin/changelog', adminChangelogRoutes);
 app.use('/api/themes', themeRoutes);
 app.use('/api/theme-settings', themeSettingsRoutes);
+app.use('/api/theme-presets', themePresetRoutes);
+app.use('/api/homepage', homepageRoutes);
+app.use('/api/theme-assets', themeAssetRoutes);
 app.use('/api/pages', pageRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 app.get('/api/stores/:slug/legal/:type', getPublicLegalPage);
 

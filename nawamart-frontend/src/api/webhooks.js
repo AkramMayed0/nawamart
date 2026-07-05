@@ -1,0 +1,10 @@
+import api from './axios'
+export const listWebhooks = (storeId, params) => api.get(`/webhooks/${storeId}`, { params })
+export const createWebhook = (storeId, data) => api.post(`/webhooks/${storeId}`, data)
+export const updateWebhook = (id, data) => api.put(`/webhooks/${id}`, data)
+export const deleteWebhook = (id) => api.delete(`/webhooks/${id}`)
+export const testWebhook = (id) => api.post(`/webhooks/${id}/test`)
+export const rotateWebhookSecret = (id) => api.post(`/webhooks/${id}/rotate-secret`)
+export const listWebhookDeliveries = (id, params) => api.get(`/webhooks/${id}/deliveries`, { params })
+export const getWebhookDelivery = (id, deliveryId) => api.get(`/webhooks/${id}/deliveries/${deliveryId}`)
+export const getWebhookEvents = () => api.get('/webhooks/events')

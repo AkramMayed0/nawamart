@@ -1,26 +1,37 @@
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bot, CheckCircle2, MessageSquareText, ShieldCheck, Truck, WalletCards, Zap, Sparkles, TrendingUp } from 'lucide-react'
-import Button from '@/components/ui/Button'
+import {
+  ArrowLeft, Bot, CheckCircle2, MessageSquareText,
+  ShieldCheck, Truck, WalletCards, Zap, TrendingUp, Star,
+} from 'lucide-react'
 import heroPhone from '@/assets/hero-phone.png'
 
 const CAPABILITIES = [
-  { icon: WalletCards, label: 'إيصالات المحافظ', tone: 'bg-amber-100 text-amber-700', glow: 'icon-glow-amber' },
-  { icon: MessageSquareText, label: 'شات مباشر', tone: 'bg-teal-100 text-teal-700', glow: 'icon-glow-teal' },
-  { icon: Zap, label: 'تسليم رقمي فوري', tone: 'bg-violet-100 text-violet-700', glow: 'icon-glow-violet' },
-  { icon: Truck, label: 'مندوب محلي', tone: 'bg-primary-100 text-primary-700', glow: '' },
+  { icon: WalletCards,       label: 'إيصالات المحافظ', bg: '#FFF8E8', color: '#B7791F' },
+  { icon: MessageSquareText, label: 'شات مباشر',        bg: '#EFFCF9', color: '#0F766E' },
+  { icon: Zap,               label: 'تسليم رقمي فوري',  bg: '#F5F1FF', color: '#6750A4' },
+  { icon: Truck,             label: 'مندوب محلي',        bg: '#F0F4FF', color: '#2D7BE0' },
 ]
 
 const STATS = [
   { value: '+500', label: 'تاجر نشط' },
-  { value: '3G', label: 'محسّن لشبكات' },
-  { value: '15', label: 'دقيقة للإعداد' },
+  { value: '3G',   label: 'محسّن لشبكات' },
+  { value: '15',   label: 'دقيقة للإعداد' },
 ]
 
-function FloatingCard({ className, children, delay = 0 }) {
+function FloatingCard({ style, children, delay = 0, className = '' }) {
   return (
     <div
-      className={`nm-card absolute rounded-2xl ${className}`}
-      style={{ animationDelay: `${delay}s` }}
+      className={`pop-in ${className}`}
+      style={{
+        position: 'absolute',
+        background: 'rgba(255,255,255,0.96)',
+        backdropFilter: 'blur(24px)',
+        border: '1px solid rgba(255,255,255,0.9)',
+        borderRadius: '16px',
+        boxShadow: '0 4px 24px rgba(24,33,47,0.1), 0 1px 4px rgba(24,33,47,0.06)',
+        animationDelay: `${delay}s`,
+        ...style,
+      }}
     >
       {children}
     </div>
@@ -29,91 +40,112 @@ function FloatingCard({ className, children, delay = 0 }) {
 
 function CommercePreview() {
   return (
-    <div className="relative min-h-[480px] md:min-h-[580px] flex items-center justify-center">
-      {/* Glow blob behind phone */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="w-[360px] h-[360px] rounded-full bg-accent/8 blur-[80px] animate-pulse" style={{ animationDuration: '4s' }} />
+    <div style={{ position: 'relative', minHeight: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Ambient glow */}
+      <div style={{
+        position: 'absolute', inset: 0, display: 'flex',
+        alignItems: 'center', justifyContent: 'center', pointerEvents: 'none',
+      }}>
+        <div style={{
+          width: '360px', height: '360px', borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(201,63,43,0.1) 0%, transparent 65%)',
+          animation: 'pulse-glow 4s ease-in-out infinite',
+        }} />
       </div>
 
-      {/* Main phone image */}
+      {/* Phone */}
       <img
         src={heroPhone}
-        alt="واجهة متجر نوا مارت على الهاتف"
-        className="hero-media-shadow hero-float relative z-10 w-[240px] md:w-[300px] lg:w-[340px]"
+        alt="واجهة متجر نوا مارت"
+        className="hero-media-shadow hero-float"
+        style={{ position: 'relative', zIndex: 10, width: '260px', maxWidth: '80%' }}
         loading="eager"
       />
 
       {/* Safe payment card */}
-      <FloatingCard className="right-0 top-16 hidden w-[250px] p-4 md:block pop-in" delay={0.3}>
-        <div className="mb-3 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-teal-100 text-teal-700 icon-glow-teal">
-            <ShieldCheck size={18} />
+      <FloatingCard
+        style={{ top: '60px', insetInlineEnd: 0, width: '230px', padding: '14px' }}
+        delay={0.3}
+        className="hidden md:block"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+          <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EFFCF9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ShieldCheck size={16} style={{ color: '#0F766E' }} />
           </div>
           <div>
-            <p className="font-cairo text-sm font-extrabold text-text">طلب آمن ✓</p>
-            <p className="font-cairo text-xs text-text-muted">تم قبول وصل الدفع</p>
+            <p className="font-cairo text-sm font-extrabold" style={{ color: '#0D0D12' }}>طلب آمن ✓</p>
+            <p className="font-cairo text-xs" style={{ color: '#5A5A72' }}>تم قبول وصل الدفع</p>
           </div>
         </div>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
           {['وصل', 'دفع', 'تأكيد'].map((item, i) => (
-            <div key={item} className={`rounded-lg px-2 py-2 text-center font-cairo text-[11px] font-bold ${i === 1 ? 'bg-teal-100 text-teal-700' : 'bg-bg text-text-muted'}`}>
+            <div key={item} style={{
+              borderRadius: '8px', padding: '6px',
+              textAlign: 'center',
+              background: i === 1 ? '#EFFCF9' : '#F5F5F7',
+              color: i === 1 ? '#0F766E' : '#9494A8',
+              fontSize: '11px', fontWeight: 700,
+            }} className="font-cairo">
               {item}
             </div>
           ))}
         </div>
       </FloatingCard>
 
-      {/* Store status card */}
-      <FloatingCard className="bottom-14 left-0 hidden w-[270px] p-4 lg:block pop-in" delay={0.5}>
-        <div className="mb-3 flex items-center justify-between">
-          <p className="font-cairo text-sm font-extrabold text-text">تشغيل المتجر</p>
-          <span className="flex items-center gap-1.5 rounded-full bg-success-100 px-2.5 py-1 font-cairo text-[11px] font-extrabold text-success-dark">
-            <span className="w-1.5 h-1.5 rounded-full bg-success-dark animate-pulse" />
-            جاهز
+      {/* Store progress card */}
+      <FloatingCard
+        style={{ bottom: '80px', insetInlineStart: 0, width: '250px', padding: '14px' }}
+        delay={0.5}
+        className="hidden lg:block"
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+          <p className="font-cairo text-sm font-extrabold" style={{ color: '#0D0D12' }}>المتجر جاهز</p>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: '5px',
+            background: '#DFF5E7', borderRadius: '999px',
+            padding: '3px 10px', fontSize: '11px', fontWeight: 700, color: '#1E8C4D',
+          }} className="font-cairo">
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#27AE60', display: 'inline-block' }} />
+            نشط
           </span>
         </div>
-        <div className="space-y-2.5">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {[
-            { label: 'منتجات', pct: 76, color: 'bg-teal-700' },
-            { label: 'طلبات', pct: 62, color: 'bg-accent' },
-            { label: 'واتساب', pct: 48, color: 'bg-amber-700' },
+            { label: 'منتجات', pct: 76, color: '#0F766E' },
+            { label: 'طلبات',  pct: 62, color: '#C93F2B' },
+            { label: 'واتساب', pct: 48, color: '#B7791F' },
           ].map(({ label, pct, color }) => (
-            <div key={label} className="flex items-center gap-2">
-              <CheckCircle2 size={13} className="text-teal-700 shrink-0" />
-              <span className="font-cairo text-xs font-bold text-text-muted w-12 shrink-0">{label}</span>
-              <div className="h-1.5 flex-1 rounded-full bg-bg-soft overflow-hidden">
-                <div className={`h-full rounded-full ${color} transition-all duration-1000`} style={{ width: `${pct}%` }} />
+            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={12} style={{ color: '#0F766E', flexShrink: 0 }} />
+              <span className="font-cairo text-xs font-bold" style={{ color: '#9494A8', width: '44px', flexShrink: 0 }}>{label}</span>
+              <div style={{ height: '4px', flex: 1, borderRadius: '999px', background: '#F5F5F7', overflow: 'hidden' }}>
+                <div style={{ height: '100%', borderRadius: '999px', background: color, width: `${pct}%`, transition: 'width 1s ease' }} />
               </div>
-              <span className="font-cairo text-[10px] font-bold text-text-subtle dk-num">{pct}%</span>
+              <span className="font-cairo dk-num" style={{ fontSize: '10px', fontWeight: 700, color: '#9494A8' }}>{pct}%</span>
             </div>
           ))}
         </div>
       </FloatingCard>
 
       {/* WhatsApp bot card */}
-      <FloatingCard className="bottom-0 right-4 w-[200px] p-3 md:right-10 pop-in" delay={0.7}>
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent-50 text-accent-700 icon-glow-accent shrink-0">
-            <Bot size={16} />
+      <FloatingCard
+        style={{ bottom: '10px', insetInlineEnd: '16px', width: '190px', padding: '12px' }}
+        delay={0.7}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: '#FFF4F1', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Bot size={15} style={{ color: '#C93F2B' }} />
           </div>
           <div>
-            <p className="font-cairo text-xs font-extrabold text-text">بوت واتساب</p>
-            <p className="font-cairo text-[11px] text-text-muted leading-tight">يسترجع السلات بهدوء</p>
+            <p className="font-cairo text-xs font-extrabold" style={{ color: '#0D0D12' }}>بوت واتساب</p>
+            <p className="font-cairo" style={{ fontSize: '11px', color: '#5A5A72', lineHeight: '1.3' }}>يسترجع السلات تلقائياً</p>
           </div>
         </div>
-        <div className="mt-2.5 flex items-center gap-1.5">
-          <TrendingUp size={11} className="text-success" />
-          <span className="font-cairo text-[10px] font-bold text-success">+38% استرجاع</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '8px' }}>
+          <TrendingUp size={11} style={{ color: '#27AE60' }} />
+          <span className="font-cairo" style={{ fontSize: '11px', fontWeight: 700, color: '#27AE60' }}>+38% استرجاع</span>
         </div>
       </FloatingCard>
-
-      {/* Sparkle decorations */}
-      <div className="absolute top-8 left-8 text-accent/30 hero-float" style={{ animationDelay: '1s', animationDuration: '6s' }}>
-        <Sparkles size={18} />
-      </div>
-      <div className="absolute top-1/3 right-4 text-teal-700/20 hero-float" style={{ animationDelay: '2.5s', animationDuration: '8s' }}>
-        <Sparkles size={14} />
-      </div>
     </div>
   )
 }
@@ -122,96 +154,194 @@ export default function LandingHero() {
   const navigate = useNavigate()
 
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      {/* Aurora background blobs */}
-      <div className="aurora-blob aurora-blob-1" />
-      <div className="aurora-blob aurora-blob-2" />
-      <div className="aurora-blob aurora-blob-3" />
+    <section
+      style={{ position: 'relative', overflow: 'hidden', borderBottom: '1px solid #E2E2E9' }}
+    >
+      {/* Subtle grid background */}
+      <div className="hero-grid-pattern" style={{
+        position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none',
+      }} />
 
-      {/* Grid pattern overlay */}
-      <div className="absolute inset-0 hero-grid-pattern opacity-60 pointer-events-none" />
+      {/* Gradient overlays */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 80% 60% at 70% 10%, rgba(201,63,43,0.06) 0%, transparent 55%)',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'radial-gradient(ellipse 60% 50% at 0% 70%, rgba(15,118,110,0.05) 0%, transparent 55%)',
+      }} />
 
-      {/* Content */}
-      <div className="relative nm-container grid min-h-[calc(100vh-72px)] items-center gap-10 py-12 lg:grid-cols-[1fr_1fr] lg:py-16">
-        {/* Left: Copy */}
-        <div className="max-w-2xl">
-          {/* Kicker badge */}
-          <div className="hero-fade-in mb-6">
-            <span className="nm-kicker-center">
-              <Zap size={11} />
-              تجارة يمنية أسرع وأوضح
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="hero-fade-in hero-fade-in-delay-1 font-cairo leading-[1.05]">
-            <span className="block text-[52px] font-extrabold text-text sm:text-[64px] lg:text-[72px] tracking-tight">
-              Nawa<span className="shimmer-text">Mart</span>
-            </span>
-            <span className="mt-2 block text-[28px] font-extrabold leading-[1.25] text-text-muted sm:text-[36px] lg:text-[42px]">
-              متجر خفيف للدفع المحلي،{' '}
-              <span className="relative inline-block text-text">
-                الشات
-                <svg className="absolute -bottom-1 left-0 right-0 w-full" height="6" viewBox="0 0 100 6" preserveAspectRatio="none">
-                  <path d="M0 5 Q50 0 100 5" stroke="url(#acc)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-                  <defs><linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#C93F2B"/><stop offset="100%" stopColor="#E87961"/></linearGradient></defs>
-                </svg>
+      <div
+        className="nm-container"
+        style={{
+          display: 'grid',
+          minHeight: 'calc(100vh - 72px)',
+          alignItems: 'center',
+          gap: '40px',
+          padding: '48px 0',
+          gridTemplateColumns: '1fr',
+          position: 'relative',
+        }}
+      >
+        <style>{`
+          @media (min-width: 1024px) {
+            .hero-grid { grid-template-columns: 1fr 1fr !important; }
+          }
+        `}</style>
+        <div className="hero-grid" style={{
+          display: 'grid', gridTemplateColumns: '1fr', gap: '40px', alignItems: 'center',
+        }}>
+          {/* Copy */}
+          <div style={{ maxWidth: '560px' }}>
+            {/* Kicker */}
+            <div className="hero-fade-in" style={{ marginBottom: '20px' }}>
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'linear-gradient(135deg, #FFF4F1, #FFE4DD)',
+                border: '1px solid rgba(201,63,43,0.15)',
+                borderRadius: '999px', padding: '5px 14px',
+                fontSize: '11px', fontWeight: 800, letterSpacing: '0.1em',
+                textTransform: 'uppercase', color: '#C93F2B',
+              }} className="font-cairo">
+                <Zap size={11} />
+                تجارة يمنية أسرع وأوضح
               </span>
-              {', '}والتسليم.
-            </span>
-          </h1>
+            </div>
 
-          {/* Description */}
-          <p className="hero-fade-in hero-fade-in-delay-2 mt-6 max-w-xl font-cairo text-base leading-8 text-text-muted sm:text-lg">
-            واجهة متجر محسّنة لشبكات اليمن، إدارة طلبات واضحة، رفع إيصالات المحافظ، وتسليم رقمي أو مادي بدون تعقيد.
-          </p>
+            {/* Headline */}
+            <div className="hero-fade-in hero-fade-in-delay-1">
+              <h1 className="font-cairo" style={{ margin: 0 }}>
+                <span style={{
+                  display: 'block',
+                  fontSize: 'clamp(40px, 6vw, 72px)',
+                  fontWeight: 800,
+                  color: '#0D0D12',
+                  lineHeight: 1.05,
+                  letterSpacing: '-0.02em',
+                }}>
+                  Nawa<span className="shimmer-text">Mart</span>
+                </span>
+                <span style={{
+                  display: 'block',
+                  fontSize: 'clamp(24px, 3.5vw, 42px)',
+                  fontWeight: 800,
+                  color: '#5A5A72',
+                  lineHeight: 1.25,
+                  marginTop: '8px',
+                }}>
+                  متجر خفيف للدفع المحلي،{' '}
+                  <span style={{ color: '#0D0D12', position: 'relative', display: 'inline-block' }}>
+                    الشات
+                    <svg style={{ position: 'absolute', bottom: '-3px', left: 0, right: 0, width: '100%' }} height="5" viewBox="0 0 100 5" preserveAspectRatio="none">
+                      <path d="M0 4 Q50 0 100 4" stroke="url(#acc)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+                      <defs><linearGradient id="acc" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#C93F2B"/><stop offset="100%" stopColor="#E87961"/></linearGradient></defs>
+                    </svg>
+                  </span>
+                  {', والتسليم.'}
+                </span>
+              </h1>
+            </div>
 
-          {/* CTA Buttons */}
-          <div className="hero-fade-in hero-fade-in-delay-3 mt-8 flex flex-col gap-3 sm:flex-row">
-            <button
-              onClick={() => navigate('/merchant/register')}
-              className="group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-xl bg-accent px-8 py-4 font-cairo text-base font-extrabold text-white shadow-lg shadow-accent/30 transition-all duration-200 hover:shadow-accent/50 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-            >
-              <span className="relative z-10">ابدأ متجرك</span>
-              <ArrowLeft size={18} className="relative z-10 transition-transform group-hover:-translate-x-1" />
-              <div className="absolute inset-0 bg-gradient-to-l from-accent-700 to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-            </button>
-            <button
-              onClick={() => navigate('/merchant/login')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white/80 px-8 py-4 font-cairo text-base font-extrabold text-text backdrop-blur-sm transition-all duration-200 hover:bg-white hover:border-border-strong hover:shadow-md hover:-translate-y-0.5"
-            >
-              دخول التجار
-            </button>
-          </div>
+            {/* Description */}
+            <p className="hero-fade-in hero-fade-in-delay-2 font-cairo" style={{
+              marginTop: '24px', fontSize: '17px', lineHeight: 1.7, color: '#5A5A72', maxWidth: '480px',
+            }}>
+              واجهة متجر محسّنة لشبكات اليمن، إدارة طلبات واضحة، رفع إيصالات المحافظ، وتسليم رقمي أو مادي بدون تعقيد.
+            </p>
 
-          {/* Stats row */}
-          <div className="hero-fade-in hero-fade-in-delay-4 mt-8 flex items-center gap-6 border-t border-border pt-6">
-            {STATS.map(({ value, label }, i) => (
-              <div key={label} className={`${i > 0 ? 'border-r border-border pr-6' : ''}`}>
-                <p className="font-cairo text-2xl font-extrabold text-text dk-num">{value}</p>
-                <p className="font-cairo text-xs text-text-muted mt-0.5">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Feature chips */}
-          <div className="hero-fade-in hero-fade-in-delay-5 mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-            {CAPABILITIES.map(({ icon: Icon, label, tone, glow }) => (
-              <div
-                key={label}
-                className={`nm-pressable flex flex-col gap-2 rounded-xl border border-border bg-white/70 p-3 backdrop-blur-sm hover:bg-white hover:border-border-strong hover:shadow-sm`}
+            {/* CTAs */}
+            <div className="hero-fade-in hero-fade-in-delay-3" style={{ marginTop: '32px', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => navigate('/merchant/register')}
+                className="font-cairo"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '10px',
+                  padding: '14px 28px', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #C93F2B 0%, #A62F20 100%)',
+                  color: '#FFFFFF', fontWeight: 800, fontSize: '16px',
+                  border: 'none', cursor: 'pointer',
+                  boxShadow: '0 4px 20px rgba(201,63,43,0.35)',
+                  transition: 'all 200ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(201,63,43,0.45)' }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 4px 20px rgba(201,63,43,0.35)' }}
               >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${tone} ${glow}`}>
-                  <Icon size={15} />
-                </div>
-                <p className="font-cairo text-xs font-extrabold text-text leading-tight">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+                ابدأ متجرك مجاناً
+                <ArrowLeft size={18} />
+              </button>
+              <button
+                onClick={() => navigate('/merchant/login')}
+                className="font-cairo"
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  padding: '14px 28px', borderRadius: '12px',
+                  background: '#FFFFFF', color: '#0D0D12',
+                  fontWeight: 800, fontSize: '16px',
+                  border: '1.5px solid #E2E2E9', cursor: 'pointer',
+                  transition: 'all 200ms ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8C8D8'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E2E9'; e.currentTarget.style.boxShadow = 'none' }}
+              >
+                دخول التجار
+              </button>
+            </div>
 
-        {/* Right: Visual preview */}
-        <CommercePreview />
+            {/* Stats */}
+            <div className="hero-fade-in hero-fade-in-delay-4" style={{
+              marginTop: '32px', display: 'flex', alignItems: 'center', gap: '0',
+              borderTop: '1px solid #E2E2E9', paddingTop: '24px', flexWrap: 'wrap', gap: '0',
+            }}>
+              {STATS.map(({ value, label }, i) => (
+                <div key={label} style={{
+                  padding: i > 0 ? '0 0 0 24px' : '0 24px 0 0',
+                  borderLeft: i > 0 ? '1px solid #E2E2E9' : 'none',
+                  marginLeft: i > 0 ? '24px' : 0,
+                }}>
+                  <p className="font-cairo font-extrabold dk-num" style={{ fontSize: '22px', color: '#0D0D12' }}>{value}</p>
+                  <p className="font-cairo text-xs" style={{ color: '#9494A8', marginTop: '2px', whiteSpace: 'nowrap' }}>{label}</p>
+                </div>
+              ))}
+
+              <div style={{ marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={13} fill="#F39C12" style={{ color: '#F39C12' }} />
+                ))}
+                <span className="font-cairo text-xs font-semibold" style={{ color: '#5A5A72', marginRight: '4px' }}>4.9/5</span>
+              </div>
+            </div>
+
+            {/* Feature chips */}
+            <div className="hero-fade-in hero-fade-in-delay-5" style={{
+              marginTop: '20px', display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px',
+            }}>
+              {CAPABILITIES.map(({ icon: Icon, label, bg, color }) => (
+                <div
+                  key={label}
+                  className="nm-pressable font-cairo"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 14px', borderRadius: '12px',
+                    background: '#FFFFFF', border: '1px solid #E2E2E9',
+                    transition: 'all 180ms ease',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = '#C8C8D8'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.06)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = '#E2E2E9'; e.currentTarget.style.boxShadow = 'none' }}
+                >
+                  <div style={{ width: '30px', height: '30px', borderRadius: '8px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <Icon size={14} style={{ color }} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#0D0D12' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Visual */}
+          <CommercePreview />
+        </div>
       </div>
     </section>
   )

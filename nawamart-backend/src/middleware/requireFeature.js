@@ -15,7 +15,7 @@ function requireFeature(featureKey, options = {}) {
         return res.status(400).json({
           success: false,
           data: null,
-          message: 'storeId is required for this feature',
+          message: 'معرّف المتجر مطلوب لهذه الميزة',
         });
       }
 
@@ -29,12 +29,13 @@ function requireFeature(featureKey, options = {}) {
         return res.status(404).json({
           success: false,
           data: null,
-          message: 'Store not found or not owned by this account',
+          message: 'المتجر غير موجود أو لا تملك صلاحية الوصول إليه',
         });
       }
 
       if (!canUseFeature(store, featureKey)) {
         const feature = describeFeature(featureKey);
+        const toggleDisabled = store.featureToggles && store.featureToggles[featureKey] === false;
         return res.status(403).json({
           success: false,
           data: {
@@ -43,8 +44,11 @@ function requireFeature(featureKey, options = {}) {
             allowedStoreTypes: feature?.storeTypes || [],
             currentPlan: store.plan,
             currentStoreType: store.type,
+            toggleDisabled,
           },
-          message: 'This feature is not available for the current plan/store type',
+          message: toggleDisabled
+            ? 'هذه الميزة معطلة في إعدادات متجرك'
+            : 'هذه الميزة غير متاحة في خطتك الحالية أو لنوع متجرك',
         });
       }
 

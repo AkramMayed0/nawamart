@@ -92,7 +92,7 @@ export default function MessageBubble({ msg, currentUserId, onReply, onImageClic
           >
             <Reply size={10} className="shrink-0 opacity-60" />
             <span className="truncate max-w-[180px]">
-              {msg.replyType === 'image' ? '📷 صورة' : msg.replyType === 'file' ? '📎 ملف' : msg.replyContent || '…'}
+              {msg.replyType === 'image' ? ' صورة' : msg.replyType === 'file' ? ' ملف' : msg.replyContent || '…'}
             </span>
           </div>
         )}

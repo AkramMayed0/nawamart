@@ -45,6 +45,14 @@ function normalizeStoreType(type) {
   return String(type || '').toLowerCase();
 }
 
+const FEATURE_TOGGLE_MAP = {
+  blog:          'blog',
+  reviews:       'reviews',
+  wishlists:     'wishlists',
+  multiLanguage: 'multiLanguage',
+  dropshipping:  'dropshipping',
+};
+
 function canUseFeature(store, featureKey) {
   const feature = FEATURES[featureKey];
   if (!store || !feature) return false;
@@ -54,7 +62,12 @@ function canUseFeature(store, featureKey) {
   const requiredRank = PLAN_RANK[feature.minPlan] || Infinity;
   const storeType = normalizeStoreType(store.type);
 
-  return planRank >= requiredRank && feature.storeTypes.includes(storeType);
+  if (!(planRank >= requiredRank && feature.storeTypes.includes(storeType))) return false;
+
+  const toggleKey = FEATURE_TOGGLE_MAP[featureKey];
+  if (toggleKey && store.featureToggles && store.featureToggles[toggleKey] === false) return false;
+
+  return true;
 }
 
 function getFeatureAccessMap(store) {

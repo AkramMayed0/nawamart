@@ -22,6 +22,12 @@ const PLAN_HIERARCHY = Object.freeze({
   business: 3,
 });
 
+const MAX_STORES_PER_PLAN = Object.freeze({
+  starter:  1,
+  pro:      3,
+  business: Infinity,
+});
+
 function getPlanPrice(plan, billing) {
   if (!VALID_PLANS.includes(plan)) throw new Error(`Invalid plan: ${plan}`);
   if (!VALID_BILLING.includes(billing)) throw new Error(`Invalid billing: ${billing}`);
@@ -62,14 +68,20 @@ function daysBetween(a, b) {
   return Math.max(0, Math.floor((new Date(b) - new Date(a)) / (1000 * 60 * 60 * 24)));
 }
 
+function getMaxStores(plan) {
+  return MAX_STORES_PER_PLAN[plan] ?? 1;
+}
+
 module.exports = {
   VALID_PLANS,
   VALID_BILLING,
   PLAN_PRICES,
   PLAN_HIERARCHY,
   BILLING_DAYS,
+  MAX_STORES_PER_PLAN,
   getPlanPrice,
   getBillingDays,
   validateUpgrade,
   daysBetween,
+  getMaxStores,
 };

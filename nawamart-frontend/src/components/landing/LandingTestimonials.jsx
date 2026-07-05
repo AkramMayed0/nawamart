@@ -18,7 +18,7 @@ export default function LandingTestimonials() {
           <div className="flex justify-center mb-4">
             <span className="nm-kicker-center">آراء التجار</span>
           </div>
-          <h2 className="font-cairo font-extrabold text-[40px] leading-[1.15] text-text mb-4">
+          <h2 className="font-cairo font-extrabold text-[28px] sm:text-[40px] leading-[1.15] text-text mb-4">
             تجار يثقون بنا
           </h2>
           <p className="font-cairo text-[17px] leading-[1.7] text-text-muted">
@@ -31,7 +31,7 @@ export default function LandingTestimonials() {
           {TESTIMONIALS.map((q, i) => (
             <div
               key={i}
-              className="group relative bg-white border border-border rounded-3xl p-7 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:border-border-strong hover:shadow-lg overflow-hidden"
+              className="group relative bg-surface border border-border rounded-3xl p-7 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:border-border-strong hover:shadow-lg overflow-hidden"
             >
               {/* Subtle bg on hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-accent/2 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl pointer-events-none" />

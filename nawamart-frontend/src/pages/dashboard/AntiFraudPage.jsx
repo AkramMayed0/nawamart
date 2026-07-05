@@ -19,7 +19,8 @@ export default function AntiFraudPage() {
   const [reportNotes, setReportNotes] = useState('')
   const [reportSubmitting, setReportSubmitting] = useState(false)
 
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
 
   useEffect(() => {
     fetchMyReports()
@@ -109,7 +110,7 @@ export default function AntiFraudPage() {
         {/* Left Column: Check and Report */}
         <div className="space-y-6">
           {/* Check Form */}
-          <div className="bg-white rounded-2xl border border-[#E1DED8] p-5 shadow-sm">
+          <div className="bg-surface rounded-2xl border border-[#E1DED8] p-5 shadow-sm">
             <h2 className="font-bold text-lg text-[#1D2430] mb-4 flex items-center gap-2">
               <Search size={18} className="text-[#9298A3]" />
               فحص رقم العميل
@@ -164,23 +165,23 @@ export default function AntiFraudPage() {
                     
                     {result.sharedHistory?.length > 0 ? (
                       <div className="space-y-2 mt-3">
-                        <p className="text-xs font-bold text-gray-600">البلاغات السابقة:</p>
+                        <p className="text-xs font-bold text-text-muted">البلاغات السابقة:</p>
                         {result.sharedHistory.map((h, i) => (
                           <div key={i} className="bg-white/60 p-2 rounded text-xs border border-white/40">
                             <span className={clsx(
                               'inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ml-2',
                               h.severity === 'high' ? 'bg-red-100 text-red-700' :
                               h.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                              'bg-gray-100 text-gray-700'
+                              'bg-bg-soft text-text'
                             )}>
                               {h.severity === 'high' ? 'عالي' : h.severity === 'medium' ? 'متوسط' : 'منخفض'}
                             </span>
-                            <span className="text-gray-700">{h.notes}</span>
+                            <span className="text-text">{h.notes}</span>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-xs text-gray-500">لا توجد بلاغات مسجلة ضد هذا الرقم.</p>
+                      <p className="text-xs text-text-muted">لا توجد بلاغات مسجلة ضد هذا الرقم.</p>
                     )}
                   </div>
                 </div>
@@ -189,7 +190,7 @@ export default function AntiFraudPage() {
           </div>
 
           {/* Report Form */}
-          <div className="bg-white rounded-2xl border border-[#E1DED8] p-5 shadow-sm">
+          <div className="bg-surface rounded-2xl border border-[#E1DED8] p-5 shadow-sm">
             <h2 className="font-bold text-lg text-[#1D2430] mb-4 flex items-center gap-2">
               <AlertTriangle size={18} className="text-[#C93F2B]" />
               الإبلاغ عن عميل
@@ -241,7 +242,7 @@ export default function AntiFraudPage() {
         </div>
 
         {/* Right Column: My Reports */}
-        <div className="bg-white rounded-2xl border border-[#E1DED8] p-5 shadow-sm h-[600px] flex flex-col">
+        <div className="bg-surface rounded-2xl border border-[#E1DED8] p-5 shadow-sm h-[600px] flex flex-col">
           <h2 className="font-bold text-lg text-[#1D2430] mb-4 flex items-center gap-2 shrink-0">
             <History size={18} className="text-[#9298A3]" />
             بلاغاتي السابقة
@@ -267,7 +268,7 @@ export default function AntiFraudPage() {
                         'text-[10px] px-2 py-0.5 rounded-full font-bold',
                         report.severity === 'high' ? 'bg-red-100 text-red-700' :
                         report.severity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                        'bg-gray-200 text-gray-700'
+                        'bg-gray-200 text-text'
                       )}>
                         {report.severity === 'high' ? 'عالي' : report.severity === 'medium' ? 'متوسط' : 'منخفض'}
                       </span>

@@ -1,12 +1,30 @@
 import clsx from 'clsx'
 
-export default function Card({ children, className = '', padding = 'md', ...props }) {
-  const paddings = { sm: 'p-4', md: 'p-5', lg: 'p-8', none: '' }
+const variantStyles = {
+  default: 'bg-white border-border shadow-sm',
+  glass: 'nm-card',
+  ghost: 'bg-transparent border-transparent',
+  outline: 'bg-white border-2 border-border-strong',
+  gradient: 'gradient-border bg-white border-0',
+}
+
+const paddings = { sm: 'p-4', md: 'p-5', lg: 'p-8', none: '' }
+
+export default function Card({
+  children,
+  className = '',
+  padding = 'md',
+  variant = 'default',
+  hover = false,
+  ...props
+}) {
   return (
     <div
       className={clsx(
-        'bg-white border border-border rounded-lg',
+        'rounded-lg border transition-all duration-default dark:border-border',
+        variantStyles[variant],
         paddings[padding],
+        hover && 'hover:-translate-y-0.5 hover:shadow-md cursor-pointer',
         className,
       )}
       {...props}

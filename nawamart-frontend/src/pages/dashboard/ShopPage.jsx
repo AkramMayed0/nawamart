@@ -53,7 +53,8 @@ function MiniProduct({ product }) {
 
 export default function ShopPage() {
   usePageTitle('متجري العام')
-  const store = useAuthStore((state) => state.store)
+  const storeRaw = useAuthStore((state) => state.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
   const shopPath = store?.slug ? `/store/${store.slug}` : ''
   const shopUrl = store?.slug ? `${window.location.origin}${shopPath}` : ''
 

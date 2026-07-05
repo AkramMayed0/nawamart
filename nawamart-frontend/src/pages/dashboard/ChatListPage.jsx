@@ -61,15 +61,15 @@ function ChatRow({ item, plan = 'starter', onClick }) {
   let preview, TypeIcon, previewIcon
   if (hasChat) {
     const last = item.lastMessage
-    if (last?.type === 'image')       { preview = 'صورة'; previewIcon = '📷' }
-    else if (last?.type === 'file')   { preview = 'ملف';  previewIcon = '📎' }
+    if (last?.type === 'image')       { preview = 'صورة'; previewIcon = Image }
+    else if (last?.type === 'file')   { preview = 'ملف';  previewIcon = Paperclip }
     else if (last?.content)           { preview = last.content }
     else                              { preview = 'ابدأ المحادثة' }
   } else {
     preview = plan === 'pro'
       ? `رقم: ${order.contactHandle || order.deliveryAddress?.phone || '—'}`
       : `تواصل عبر ${cm.label}`
-    previewIcon = ''
+    previewIcon = null
   }
 
   const unread     = item.merchantUnread ?? 0
@@ -114,7 +114,7 @@ function ChatRow({ item, plan = 'starter', onClick }) {
             'text-xs truncate',
             unread > 0 ? 'text-[#1D2430] font-semibold' : 'text-[#9298A3]'
           )}>
-            {previewIcon && <span className="mr-1">{previewIcon}</span>}
+            {previewIcon && <span className="mr-1">{previewIcon({ size: 12, className: 'inline' })}</span>}
             {preview}
           </p>
 

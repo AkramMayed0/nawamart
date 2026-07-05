@@ -5,6 +5,8 @@ const {
   getMyStores,
   getStoreBySlug,
   updateStore,
+  switchStore,
+  duplicateStore,
 } = require('../controllers/store.controller');
 const { verifyToken, requireRole } = require('../middleware/verifyToken');
 const { uploadStore } = require('../utils/cloudinary');
@@ -16,6 +18,9 @@ const storeUploads = uploadStore.fields([
 ]);
 
 // ─── Protected Routes (Merchant Only) — must come BEFORE /:slug ──────────────
+// POST /api/stores/switch — switches active store context
+router.post('/switch', verifyToken, requireRole('merchant'), switchStore);
+
 // GET /api/stores/my
 router.get('/my', verifyToken, requireRole('merchant'), getMyStores);
 
@@ -25,8 +30,11 @@ router.post('/', verifyToken, requireRole('merchant'), storeUploads, createStore
 // PUT /api/stores/:id
 router.put('/:id', verifyToken, requireRole('merchant'), storeUploads, updateStore);
 
+// POST /api/stores/:id/duplicate — duplicate store with products for backup/testing
+router.post('/:id/duplicate', verifyToken, requireRole('merchant'), duplicateStore);
+
 // ─── Public Routes ────────────────────────────────────────────────────────────
-// GET /api/stores/:slug  (must come LAST to not shadow /my)
+// GET /api/stores/:slug
 router.get('/:slug', getStoreBySlug);
 
 module.exports = router;

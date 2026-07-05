@@ -56,6 +56,7 @@ const storeSchema = new mongoose.Schema(
       enum: ['live', 'under_construction', 'paused', 'closed'],
       default: 'under_construction',
     },
+    isActive: { type: Boolean, default: true },
     constructionPassword: { type: String, default: null },
     suspendedUntil: { type: Date, default: null },
     // ─── Subscription / Plan ─────────────────────────────────────────────────

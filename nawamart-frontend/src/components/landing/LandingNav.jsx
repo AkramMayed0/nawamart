@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Sparkles } from 'lucide-react'
-import Button from '@/components/ui/Button'
+import { Menu, X, Sparkles, Sun, Moon } from 'lucide-react'
+import { useThemeStore } from '@/store/themeStore'
 
 const NAV_LINKS = [
   { label: 'المنصة', href: '#platform' },
@@ -21,6 +21,9 @@ export default function LandingNav() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const theme = useThemeStore((s) => s.theme)
+  const toggleTheme = useThemeStore((s) => s.toggleTheme)
+
   function scrollTo(href) {
     setMenuOpen(false)
     const el = document.getElementById(href.replace('#', ''))
@@ -30,8 +33,8 @@ export default function LandingNav() {
   return (
     <nav className={`sticky top-0 z-40 transition-all duration-300 ${
       scrolled
-        ? 'bg-white/90 backdrop-blur-2xl shadow-sm border-b border-border/60'
-        : 'bg-white/70 backdrop-blur-xl border-b border-transparent'
+        ? 'bg-white/90 dark:bg-surface/90 backdrop-blur-2xl shadow-sm border-b border-border/60'
+        : 'bg-white/70 dark:bg-surface/70 backdrop-blur-xl border-b border-transparent'
     }`}>
       {/* Top accent line */}
       <div className="h-[2.5px] w-full bg-gradient-to-l from-transparent via-accent to-transparent opacity-70" />
@@ -60,6 +63,15 @@ export default function LandingNav() {
           ))}
         </div>
 
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text hover:bg-bg-soft transition-colors"
+          aria-label={theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'}
+        >
+          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        </button>
+
         {/* CTA actions */}
         <div className="hidden items-center gap-2 md:flex">
           <button
@@ -82,7 +94,7 @@ export default function LandingNav() {
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}
-          className="ms-auto flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-text transition-colors hover:bg-bg md:hidden"
+          className="ms-auto flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-surface text-text transition-colors hover:bg-bg md:hidden"
           aria-label="فتح القائمة"
         >
           {menuOpen ? <X size={18} /> : <Menu size={18} />}
@@ -91,7 +103,7 @@ export default function LandingNav() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="border-t border-border bg-white/95 backdrop-blur-xl px-4 py-4 md:hidden shadow-lg">
+        <div className="border-t border-border bg-white/95 dark:bg-surface/95 backdrop-blur-xl px-4 py-4 md:hidden shadow-lg">
           <div className="flex flex-col gap-0.5">
             {NAV_LINKS.map((link) => (
               <a
@@ -107,7 +119,14 @@ export default function LandingNav() {
               </a>
             ))}
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            onClick={toggleTheme}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-bg py-3 font-cairo text-sm font-extrabold text-text transition-colors hover:bg-bg-soft mb-2"
+          >
+            {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+            {theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'}
+          </button>
+          <div className="mt-2 grid grid-cols-2 gap-2">
             <button
               className="rounded-xl border border-border bg-bg py-3 font-cairo text-sm font-extrabold text-text text-center transition-colors hover:bg-bg-soft"
               onClick={() => { setMenuOpen(false); navigate('/merchant/login') }}

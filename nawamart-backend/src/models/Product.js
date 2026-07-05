@@ -59,6 +59,33 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    inventoryState: {
+      type: String,
+      enum: ['in_stock', 'out_of_stock', 'backorder', 'coming_soon'],
+      default: 'out_of_stock',
+    },
+    lowStockThreshold: {
+      type: Number,
+      default: 5,
+      min: [0, 'الحد الأدنى لا يمكن أن يكون سالباً'],
+    },
+    isBundle: {
+      type: Boolean,
+      default: false,
+    },
+    bundleComponents: [
+      {
+        product: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Product',
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: [1, 'الكمية يجب أن تكون 1 على الأقل'],
+        },
+      },
+    ],
     isActive: {
       type: Boolean,
       default: true,
@@ -67,6 +94,10 @@ const productSchema = new mongoose.Schema(
     isDeleted: {
       type: Boolean,
       default: false,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
     },
     // Product weight in grams (for shipping)
     weight: {
@@ -77,6 +108,17 @@ const productSchema = new mongoose.Schema(
     sku: {
       type: String,
       trim: true,
+      default: null,
+    },
+    // Who created / last updated this product (for audit trail)
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Merchant',
+      default: null,
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Merchant',
       default: null,
     },
     // Brand name
@@ -132,6 +174,7 @@ productSchema.virtual('effectivePrice').get(function () {
 
 // ─── Indexes ────────────────────────────────────────────────────────────────
 productSchema.index({ store: 1, isDeleted: 1 });
+productSchema.index({ isDeleted: 1, deletedAt: 1 });
 productSchema.index({ merchant: 1 });
 productSchema.index({ name: 'text', description: 'text' }); // Full-text search
 productSchema.index({ store: 1, 'digitalDelivery.enabled': 1 });

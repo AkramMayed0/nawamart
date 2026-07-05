@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/nawamart-backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+
+  - package-ecosystem: "npm"
+    directory: "/nawamart-frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "fix"
+      prefix-development: "chore"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "ci"

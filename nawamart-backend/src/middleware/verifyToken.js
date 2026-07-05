@@ -73,6 +73,7 @@ const verifyToken = async (req, res, next) => {
     req.user = user;
     req.userRole = decoded.role;
     if (decoded.storeId) req.customerStoreId = decoded.storeId;
+    if (decoded.storeRole) req.userStoreRole = decoded.storeRole;
     next();
   } catch (error) {
     next(error);

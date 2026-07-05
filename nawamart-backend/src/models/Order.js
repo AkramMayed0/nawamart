@@ -82,7 +82,7 @@ const orderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
-        values: ['pending', 'payment_under_review', 'confirmed', 'rejected', 'shipped', 'delivered'],
+        values: ['pending', 'payment_under_review', 'confirmed', 'processing', 'rejected', 'shipped', 'delivered', 'returned', 'cancelled'],
         message: 'حالة الطلب غير صالحة',
       },
       default: 'pending',
@@ -143,16 +143,52 @@ const orderSchema = new mongoose.Schema(
       ],
       error: { type: String, default: null },
     },
+    // Packing slip metadata
+    packingSlip: {
+      generatedAt:  { type: Date, default: null },
+      generatedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+      printedCount: { type: Number, default: 0 },
+    },
+    // Total fulfilled quantity across all fulfillments
+    fulfilledQuantity: { type: Number, default: 0 },
+    isFullyFulfilled:  { type: Boolean, default: false },
     // Flag to indicate if this order is available in the courier pool
     inCourierPool: {
       type: Boolean,
       default: false,
     },
+    // Who performed each status transition (for audit trail)
+    confirmedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    rejectedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    shippedBy:    { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    deliveredBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    processingBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    cancelledBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+    returnedBy:   { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
     // Timestamps for each status transition
     confirmedAt:  { type: Date, default: null },
     rejectedAt:   { type: Date, default: null },
     shippedAt:    { type: Date, default: null },
     deliveredAt:  { type: Date, default: null },
+    processingAt: { type: Date, default: null },
+    cancelledAt:  { type: Date, default: null },
+    returnedAt:   { type: Date, default: null },
+    cancellationReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    // Order timeline (computed audit trail)
+    orderTimeline: [
+      {
+        action:  { type: String, required: true },
+        label:   { type: String, required: true },
+        performedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Merchant', default: null },
+        performedByName: { type: String, default: 'النظام' },
+        timestamp: { type: Date, default: Date.now },
+        details: { type: String, default: null },
+      },
+    ],
   },
   {
     timestamps: true,
@@ -164,6 +200,9 @@ const orderSchema = new mongoose.Schema(
 // ─── Indexes ────────────────────────────────────────────────────────────────
 orderSchema.index({ store: 1, status: 1 });
 orderSchema.index({ merchant: 1, createdAt: -1 });
+orderSchema.index({ merchant: 1, status: 1, createdAt: -1 });
+orderSchema.index({ merchant: 1, store: 1, createdAt: -1 });
 orderSchema.index({ customer: 1, createdAt: -1 });
+orderSchema.index({ store: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

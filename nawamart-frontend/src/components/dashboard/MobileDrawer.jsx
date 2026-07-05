@@ -41,8 +41,8 @@ export default function MobileDrawer({ open, onClose }) {
 
       {/* ── Drawer panel (slides from right / RTL end) ── */}
       <div
-        className="relative w-72 max-w-[85vw] h-full bg-white rounded-l-3xl shadow-2xl flex flex-col overflow-hidden"
-        style={{ animation: 'slideInRight 220ms cubic-bezier(.4,0,.2,1)' }}
+        className="relative w-72 max-w-[85vw] h-full rounded-l-3xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ background: 'var(--color-surface)', animation: 'slideInRight 220ms cubic-bezier(.4,0,.2,1)' }}
       >
         {/* Thin accent line at top */}
         <div className="h-0.5 w-full bg-gradient-to-l from-accent via-primary to-accent shrink-0" />

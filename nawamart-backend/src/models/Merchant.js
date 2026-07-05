@@ -34,7 +34,7 @@ const merchantSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'كلمة المرور مطلوبة'],
-      minlength: [6, 'كلمة المرور يجب أن تكون على الأقل 6 أحرف'],
+      minlength: [8, 'كلمة المرور يجب أن تكون على الأقل 8 أحرف'],
       select: false, // Never return password in queries by default
     },
     isVerified: {
@@ -62,6 +62,28 @@ const merchantSchema = new mongoose.Schema(
       type: String,
       enum: ['email', 'google'],
       default: 'email',
+    },
+    // ─── MFA ──────────────────────────────────────────────────────────────────
+    mfaSecret: {
+      type: String,
+      default: null,
+      select: false,
+    },
+    mfaEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    mfaBackupCodes: [
+      {
+        code: { type: String },
+        used: { type: Boolean, default: false },
+      },
+    ],
+    // ─── Store Role (for staff members) ────────────────────────────────────────
+    storeRole: {
+      type: String,
+      enum: ['store_owner', 'store_manager', 'staff', 'designer', 'content_editor', 'viewer', null],
+      default: null,
     },
     resetPasswordToken: {
       type: String,
@@ -107,6 +129,8 @@ merchantSchema.methods.comparePassword = async function (candidatePassword) {
 merchantSchema.methods.toSafeJSON = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.mfaSecret;
+  delete obj.mfaBackupCodes;
   delete obj.__v;
   return obj;
 };

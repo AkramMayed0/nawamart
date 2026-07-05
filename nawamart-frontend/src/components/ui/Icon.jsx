@@ -69,13 +69,17 @@ export default function Icon({ name, size = 18, strokeWidth = 1.7, className = '
 // ─── StatusBadge ────────────────────────────────────────────────────────────
 
 const STATUS_MAP = {
-  pending:             { label: 'بانتظار الوصل',  color: 'bg-warning-100 text-yellow-700' },
-  confirmed:           { label: 'مؤكد',            color: 'bg-success-100 text-success' },
-  shipped:             { label: 'تم الشحن',        color: 'bg-info-100 text-info' },
-  delivered:           { label: 'تم التسليم',      color: 'bg-green-100 text-success-dark' },
-  rejected:            { label: 'مرفوض',            color: 'bg-danger-100 text-danger' },
-  'chat-open':         { label: 'محادثة مفتوحة',   color: 'bg-info-100 text-info' },
-  'digital-delivered': { label: 'تم التسليم',      color: 'bg-green-100 text-success-dark' },
+  pending:              { label: 'بانتظار الوصل',      color: 'bg-warning-100 text-yellow-700' },
+  payment_under_review: { label: 'قيد المراجعة',        color: 'bg-warning-100 text-yellow-700' },
+  confirmed:            { label: 'مؤكد',                color: 'bg-success-100 text-success' },
+  processing:           { label: 'قيد المعالجة',        color: 'bg-info-100 text-blue-600' },
+  shipped:              { label: 'تم الشحن',            color: 'bg-info-100 text-info' },
+  delivered:            { label: 'تم التسليم',          color: 'bg-green-100 text-success-dark' },
+  returned:             { label: 'مرتجع',               color: 'bg-purple-100 text-purple-600' },
+  cancelled:            { label: 'ملغي',                color: 'bg-gray-100 text-gray-600' },
+  rejected:             { label: 'مرفوض',               color: 'bg-danger-100 text-danger' },
+  'chat-open':          { label: 'محادثة مفتوحة',       color: 'bg-info-100 text-info' },
+  'digital-delivered':  { label: 'تم التسليم',          color: 'bg-green-100 text-success-dark' },
 }
 
 export function StatusBadge({ status }) {

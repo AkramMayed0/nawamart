@@ -56,3 +56,27 @@ export const getAdminCustomers = (params = {}) =>
 
 export const toggleCustomerActive = (id, days) =>
   api.patch(`/admin/customers/${id}/toggle-active`, days ? { days } : {}, withAdminAuth())
+
+export const getFeatureFlags = () =>
+  api.get('/admin/features', withAdminAuth())
+
+export const createFeatureFlag = (data) =>
+  api.post('/admin/features', data, withAdminAuth())
+
+export const updateFeatureFlag = (id, data) =>
+  api.put(`/admin/features/${id}`, data, withAdminAuth())
+
+export const deleteFeatureFlag = (id) =>
+  api.delete(`/admin/features/${id}`, withAdminAuth())
+
+export const getChangelogEntries = () =>
+  api.get('/admin/changelog', withAdminAuth())
+
+export const createChangelogEntry = (data) =>
+  api.post('/admin/changelog', data, withAdminAuth())
+
+export const updateChangelogEntry = (id, data) =>
+  api.put(`/admin/changelog/${id}`, data, withAdminAuth())
+
+export const deleteChangelogEntry = (id) =>
+  api.delete(`/admin/changelog/${id}`, withAdminAuth())

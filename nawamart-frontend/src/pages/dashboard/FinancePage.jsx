@@ -15,7 +15,7 @@ function formatPrice(value) {
 
 function StatCard({ icon: Icon, label, value, sub, iconBg }) {
   return (
-    <div className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
+    <div className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all">
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}>
         <Icon size={18} />
       </div>
@@ -49,7 +49,8 @@ const MONTH_NAMES = {
 export default function FinancePage() {
   usePageTitle('المالية')
 
-  const store = useAuthStore(s => s.store)
+  const storeRaw = useAuthStore(s => s.store)
+  const store = Array.isArray(storeRaw) ? storeRaw[0] : storeRaw
   const plan = store?.plan || 'starter'
   const isPaid = plan !== 'starter'
 
@@ -171,7 +172,7 @@ export default function FinancePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white border border-border rounded-2xl p-5 flex flex-col gap-3 animate-pulse">
+            <div key={i} className="bg-surface border border-border rounded-2xl p-5 flex flex-col gap-3 animate-pulse">
               <div className="w-9 h-9 rounded-xl bg-bg-soft" />
               <div className="h-7 w-16 bg-bg-soft rounded" />
               <div className="h-3 w-24 bg-bg-soft rounded" />
@@ -202,7 +203,7 @@ export default function FinancePage() {
 
       {/* Date filter bar */}
       {isPaid && (
-        <div className="bg-white border border-border rounded-2xl p-4 mb-6 shadow-sm">
+        <div className="bg-surface border border-border rounded-2xl p-4 mb-6 shadow-sm">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-cairo text-xs font-semibold text-text-muted">من تاريخ</label>
@@ -210,7 +211,7 @@ export default function FinancePage() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="h-11 rounded-xl border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
+                className="h-11 rounded-xl border border-border bg-surface px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -219,7 +220,7 @@ export default function FinancePage() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="h-11 rounded-xl border border-border bg-white px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
+                className="h-11 rounded-xl border border-border bg-surface px-3 font-cairo text-sm text-text outline-none focus:border-primary focus:shadow-[0_0_0_3px_rgba(24,33,47,0.08)] transition-all"
               />
             </div>
             {hasFilters && (
@@ -274,7 +275,7 @@ export default function FinancePage() {
       </div>
 
       {monthlyData.length > 0 && plan !== 'starter' && (
-        <div className="bg-white border border-border rounded-2xl p-6 mb-6">
+        <div className="bg-surface border border-border rounded-2xl p-6 mb-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">
               <TrendingUp size={18} />
@@ -310,7 +311,7 @@ export default function FinancePage() {
 
       {/* Upgrade prompt for Free plan — unlock charts */}
       {plan === 'starter' && (
-        <div className="bg-white border border-border rounded-2xl p-6 mb-6 flex items-start gap-4">
+        <div className="bg-surface border border-border rounded-2xl p-6 mb-6 flex items-start gap-4">
           <div className="w-10 h-10 rounded-xl bg-bg-soft flex items-center justify-center shrink-0 text-text-subtle">
             <BarChart3 size={20} />
           </div>
@@ -330,7 +331,7 @@ export default function FinancePage() {
         </div>
       )}
 
-      <div className="bg-white border border-border rounded-2xl overflow-hidden shadow-sm">
+      <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
@@ -399,7 +400,7 @@ export default function FinancePage() {
 
       {/* Subscription Finance — paid plans only */}
       {isPaid && (
-        <div className="bg-white border border-border rounded-2xl overflow-hidden mt-6">
+        <div className="bg-surface border border-border rounded-2xl overflow-hidden mt-6">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-accent-50 text-accent-700 flex items-center justify-center">

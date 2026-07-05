@@ -28,7 +28,7 @@ export function LandingFinalCta() {
           </div>
 
           {/* Headline */}
-          <h2 className="font-cairo font-extrabold text-[48px] leading-[1.1] text-white mb-5">
+          <h2 className="font-cairo font-extrabold text-[32px] sm:text-[48px] leading-[1.1] text-white mb-5">
             متجرك جاهز
             <br />
             على بُعد{' '}

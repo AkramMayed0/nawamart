@@ -84,4 +84,4 @@ const sendPasswordResetEmail = async ({ to, name, resetLink }) => {
   }
 };
 
-module.exports = { sendPasswordResetEmail };
+module.exports = { sendPasswordResetEmail, getTransporter };

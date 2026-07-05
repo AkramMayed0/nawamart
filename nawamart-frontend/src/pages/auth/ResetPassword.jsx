@@ -24,8 +24,17 @@ export default function ResetPassword() {
     const errs = {}
     if (!password) {
       errs.password = 'كلمة المرور الجديدة مطلوبة'
-    } else if (password.length < 6) {
-      errs.password = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'
+    } else if (password.length < 8) {
+      errs.password = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'
+    } else {
+      const missing = []
+      if (!/[a-z]/.test(password)) missing.push('حرف صغير')
+      if (!/[A-Z]/.test(password)) missing.push('حرف كبير')
+      if (!/[0-9]/.test(password)) missing.push('رقم')
+      if (!/[!@#$%^&*]/.test(password)) missing.push('رمز خاص')
+      if (missing.length > 0) {
+        errs.password = `يجب أن تحتوي على: ${missing.join('، ')}`
+      }
     }
     if (!confirmPassword) {
       errs.confirmPassword = 'تأكيد كلمة المرور مطلوب'
@@ -83,9 +92,9 @@ export default function ResetPassword() {
       </div>
 
       {/* ── Form panel ── */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-white to-bg">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-bg via-surface to-bg">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
+          <div className="bg-surface rounded-3xl shadow-xl p-8 sm:p-10 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-l from-primary via-accent to-primary" />
 
             <img src="/logo.svg" alt="نوامارت" className="h-8 mb-8 lg:hidden" />

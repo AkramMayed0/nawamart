@@ -87,6 +87,11 @@ const themeSchema = new mongoose.Schema(
         elementGap: { type: String, default: '1.5rem' },
       },
     },
+    fullSettings: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+      description: 'Optional rich ThemeSetting-compatible overrides merged on install',
+    },
     assets: {
       css: { type: String, default: null },
       js: { type: String, default: null },

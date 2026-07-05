@@ -63,7 +63,7 @@ export default function ChatInput({ onSendText, onSendFile, onSendProductCard, s
               رداً على {replyTo.senderRole === 'merchant' ? 'التاجر' : 'العميل'}
             </p>
             <p className="text-xs text-[#5F6673] truncate">
-              {replyTo.type === 'image' ? '📷 صورة' : replyTo.type === 'file' ? '📎 ملف' : replyTo.content}
+              {replyTo.type === 'image' ? ' صورة' : replyTo.type === 'file' ? ' ملف' : replyTo.content}
             </p>
           </div>
           <button

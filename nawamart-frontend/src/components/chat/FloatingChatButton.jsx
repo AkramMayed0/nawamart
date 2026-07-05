@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { MessageSquare, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import clsx from 'clsx'
@@ -9,7 +9,7 @@ export default function FloatingChatButton({ storeId }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
+  const isAuthenticated = useAuthStore(s => !!s.token)
 
   const handleStartChat = async () => {
     if (!isAuthenticated) {

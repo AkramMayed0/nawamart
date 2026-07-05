@@ -12,12 +12,12 @@ const getMyFeatures = asyncHandler(async (req, res) => {
     return res.status(404).json({
       success: false,
       data: null,
-      message: 'Store not found',
+      message: 'المتجر غير موجود',
     });
   }
 
   return apiResponse(res, {
-    message: 'Feature access loaded',
+    message: 'تم جلب صلاحيات الميزات',
     data: {
       store: {
         _id: store._id,

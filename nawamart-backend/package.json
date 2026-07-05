@@ -8,7 +8,13 @@
     "dev": "nodemon src/server.js",
     "test": "node test-proration.js",
     "test:integration": "node test-subscription-limits.js",
-    "check": "node --check src/server.js && node --check src/app.js"
+    "check": "node --check src/server.js && node --check src/app.js",
+    "audit": "npm audit --audit-level=high",
+    "security:check": "npm run check && npm audit --audit-level=high",
+    "outdated": "npm outdated",
+    "backup:create": "node scripts/backup-create.js",
+    "backup:restore": "node scripts/backup-restore.js",
+    "backup:list": "node scripts/backup-list.js"
   },
   "keywords": [
     "nawamart",
@@ -34,11 +40,12 @@
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^8.0.10",
+    "otplib": "^13.4.1",
+    "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "validator": "^13.12.0",
     "winston": "^3.19.0",
-    "winston-daily-rotate-file": "^5.0.0",
-    "xss-clean": "^0.1.4"
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
